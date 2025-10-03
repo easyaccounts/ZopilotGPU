@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  zopilot-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zopilot-gpu
+    runtime: nvidia  # Requires nvidia-docker
+    environment:
+      # Load from .env file (copy from .env.development or .env.production)
+      - HUGGING_FACE_TOKEN=${HUGGING_FACE_TOKEN}
+      - ZOPILOT_GPU_API_KEY=${ZOPILOT_GPU_API_KEY}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
+      - NANONETS_API_KEY=${NANONETS_API_KEY}
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - HEALTH_CHECK_PUBLIC=${HEALTH_CHECK_PUBLIC:-true}
+      - TRANSFORMERS_CACHE=/app/models
+      - HF_HOME=/app/models
+      - TORCH_HOME=/app/models
+      - CUDA_VISIBLE_DEVICES=0
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app
+      - PRELOAD_MODELS=${PRELOAD_MODELS:-false}
+      - ENABLE_METRICS=${ENABLE_METRICS:-false}
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist model cache across container restarts
+      - model-cache:/app/models
+      # Mount logs directory
+      - ./logs:/app/logs
+      # Mount temp directory for document processing
+      - ./temp:/app/temp
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 60s
+      timeout: 30s
+      start_period: 180s  # Allow time for model loading
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - zopilot-network
+
+volumes:
+  model-cache:
+    driver: local
+
+networks:
+  zopilot-network:
+    driver: bridge

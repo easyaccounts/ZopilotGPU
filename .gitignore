@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+
+# Environment files - CRITICAL: NEVER COMMIT!
+.env
+.env.*
+*.env
+!.env.example
+
+# Model cache (large files)
+models/
+*.pt
+*.bin
+*.safetensors
+pytorch_model.bin
+model.safetensors
+.cache/
+huggingface/
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Docker
+.dockerignore
+
+# API keys and secrets - CRITICAL: NEVER COMMIT!
+*_api_key*
+*_secret*
+*_token*
+credentials.json
+service-account*.json
+
+# Cloud provider configs
+runpod.json
+vast.json
+lambda.json
+
+# Backups
+*.bak
+*.backup
