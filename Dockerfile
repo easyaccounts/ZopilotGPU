@@ -34,7 +34,8 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Use --ignore-installed for system packages that can't be uninstalled
+RUN pip install --no-cache-dir --ignore-installed blinker -r requirements.txt
 
 # Install PyTorch with CUDA 12.1 support for Mixtral 8x7B
 RUN pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 --index-url https://download.pytorch.org/whl/cu121
