@@ -1,8 +1,8 @@
 # ZopilotGPU - AI Document Processing Service
 
-A production-ready FastAPI service that combines **Mixtral 8x7B Instruct** (Mixture of Experts) and **Docstrange (NanoNets)** to extract structured data from accounting documents and generate journal entries with superior reasoning capabilities.
+Production-ready GPU service with **Mixtral 8x7B Instruct** and **Docstrange** for document extraction and AI reasoning.
 
-> **🚀 Production Ready:** Secured with API key authentication, environment-based CORS, comprehensive monitoring, and cloud GPU deployment support!
+**🚀 Deploy to RunPod Serverless in 5 minutes** - Auto-scaling GPU with pay-per-second billing.
 
 ## ✨ Features
 
@@ -81,11 +81,18 @@ docker build -t zopilot-gpu .
 docker run --gpus all -p 8000:8000 --env-file .env zopilot-gpu
 ```
 
-**Option 3: Cloud GPU (Recommended)**
-See [CLOUD_DEPLOYMENT_GUIDE.md](CLOUD_DEPLOYMENT_GUIDE.md) for detailed instructions on:
-- RunPod deployment (~$0.34-0.69/hr)
-- Vast.ai deployment (~$0.25-0.40/hr)
-- Lambda Labs deployment (~$1.10/hr)
+**Option 3: RunPod Serverless (Recommended for Production)**
+
+1. Push to GitHub
+2. Go to https://runpod.io/console/serverless
+3. New Endpoint → GitHub → Select your repo
+4. Add environment variables (see `.env.production`)
+5. Select GPU: RTX 4090 or A5000
+6. Deploy!
+
+**Cost**: Pay per second (~$0.19/month for 100 docs) - Auto-scales to zero when idle.
+
+See [PRODUCTION_READY.md](PRODUCTION_READY.md) for complete steps.
 
 ### First Time Setup
 

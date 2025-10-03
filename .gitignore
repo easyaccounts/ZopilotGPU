@@ -60,3 +60,13 @@ lambda.json
 # Backups
 *.bak
 *.backup
+
+# Test files (keep locally, don't commit)
+test_*.py
+
+# Old documentation
+document_router.py
+
+# Log files
+*.log
+logs.*
