@@ -29,8 +29,13 @@ requests>=2.31.0
 pillow>=10.1.0
 numpy>=1.24.0,<2.0.0
 
-# Flash Attention 2 for RTX 4090 optimization (2-3x faster)
-flash-attn>=2.5.0; platform_machine == "x86_64"
+# Build dependencies (needed for compilation)
+packaging>=23.0
+wheel>=0.40.0
+setuptools>=65.0
+
+# Flash Attention 2 installed separately in Dockerfile (optional optimization)
+# flash-attn>=2.5.0
 
 # RunPod
 runpod>=1.3.0
