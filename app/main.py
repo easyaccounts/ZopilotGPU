@@ -22,15 +22,35 @@ logger = logging.getLogger(__name__)
 
 # Pydantic models
 class ExtractionInput(BaseModel):
-    document_url: str = Field(..., description="Pre-signed URL to download document from R2 storage")
+    document_url: Optional[str] = Field(None, description="Pre-signed URL to download document from R2 storage")
+    document_content_base64: Optional[str] = Field(None, description="Base64-encoded file content (alternative to URL)")
     document_id: Optional[str] = Field(None, description="Document ID for tracking")
+    filename: Optional[str] = Field("document.pdf", description="Filename for extraction")
 
 class ExtractionResponse(BaseModel):
+    """
+    DEPRECATED: No longer used as response_model to avoid Pydantic validation issues.
+    
+    GPU returns FLAT JSON with dynamic fields at root level:
+    {
+        "success": true,
+        "extraction_method": "docstrange_local",
+        "document_id": "doc-123",
+        "invoice_number": "INV-001",  # Dynamic fields at root
+        "vendor_name": "Acme Corp",
+        "total_amount": 1234.56,
+        "_metadata": {...}
+    }
+    
+    Pydantic's extra='allow' doesn't work well with response_model validation
+    because it still requires base fields and causes validation errors.
+    Solution: Return JSONResponse(content=dict) instead of Pydantic model.
+    """
     success: bool
-    document_id: Optional[str]
+    document_id: Optional[str] = None
     extraction_method: str
-    data: Dict[str, Any]
-    metadata: Dict[str, Any]
+    class Config:
+        extra = 'allow'
 
 class PromptInput(BaseModel):
     prompt: str = Field(..., description="Natural language instruction for Mixtral")
@@ -46,6 +66,10 @@ class HealthResponse(BaseModel):
     models_loaded: Dict[str, bool]
     gpu_available: bool
     memory_info: Optional[Dict[str, Any]] = None
+
+# Retry prevention: Track recent extraction requests to avoid duplicate processing
+recent_extractions = {}  # {document_id: timestamp}
+EXTRACTION_DEDUP_WINDOW = 60  # seconds
 
 # Application lifespan management
 @asynccontextmanager
@@ -207,38 +231,57 @@ async def health_check(request: Request):
 # ============================================
 # ENDPOINT 1: DOCUMENT EXTRACTION
 # ============================================
-@app.post("/extract", response_model=ExtractionResponse)
+@app.post("/extract")
 async def extract_endpoint(request: Request, data: ExtractionInput):
     """
-    Extract structured data from document using Docstrange.
+    Extract structured data from document using Docstrange LOCAL extraction.
     
-    Downloads document from pre-signed URL, processes with Docstrange OCR,
-    and returns structured JSON data (invoice fields, receipt data, etc.).
+    Supports two input methods:
+    1. document_url: Downloads from pre-signed R2 URL (slower, 2 network calls)
+    2. document_content_base64: Direct file content (faster, 1 network call)
+    
+    Returns FLAT JSON with all fields at root level (matches backend cloud format).
+    Response is NOT validated by Pydantic to allow dynamic fields.
     
     Requires API key authentication.
     """
     await verify_api_key(request)
     
     try:
-        logger.info(f"[EXTRACT] Document ID: {data.document_id}, URL: {data.document_url[:100]}...")
+        # Validate input: must provide either URL or content
+        if not data.document_url and not data.document_content_base64:
+            raise HTTPException(
+                status_code=400, 
+                detail="Must provide either document_url or document_content_base64"
+            )
         
-        # Download file from pre-signed URL
-        import httpx
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.get(data.document_url)
-            response.raise_for_status()
-            file_content = response.content
+        # Method 1: Direct file content (RECOMMENDED - faster, no R2 download)
+        if data.document_content_base64:
+            logger.info(f"[EXTRACT] Document ID: {data.document_id}, Using direct file content (faster)")
+            import base64
+            file_content = base64.b64decode(data.document_content_base64)
             file_size = len(file_content)
+            filename = data.filename or "document.pdf"
+        
+        # Method 2: Download from URL (slower, backward compatible)
+        else:
+            logger.info(f"[EXTRACT] Document ID: {data.document_id}, URL: {data.document_url[:100]}...")
+            import httpx
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(data.document_url)
+                response.raise_for_status()
+                file_content = response.content
+                file_size = len(file_content)
+            filename = data.filename or "document.pdf"
         
         # Validate file size (25MB limit)
         max_size = 25 * 1024 * 1024
         if file_size > max_size:
             raise HTTPException(status_code=413, detail="File too large (max 25MB)")
         
-        filename = "document.pdf"  # Generic filename for temp file processing
-        logger.info(f"[EXTRACT] Processing document ({file_size} bytes)")
+        logger.info(f"[EXTRACT] Processing document ({file_size} bytes) with LOCAL extraction")
         
-        # Extract with Docstrange
+        # Extract with Docstrange LOCAL mode (no cloud API calls)
         extracted_data = await asyncio.get_event_loop().run_in_executor(
             None, extract_with_docstrange, file_content, filename
         )
@@ -246,15 +289,16 @@ async def extract_endpoint(request: Request, data: ExtractionInput):
         # Add document_id to response
         extracted_data['document_id'] = data.document_id
         
-        return ExtractionResponse(**extracted_data)
+        logger.info(f"[EXTRACT] Success: {data.document_id}, Method: {extracted_data.get('extraction_method')}")
         
-    except httpx.HTTPError as e:
-        logger.error(f"[EXTRACT] Download failed: {str(e)}")
-        raise HTTPException(status_code=400, detail=f"Failed to download document: {str(e)}")
+        # Return plain dict (no Pydantic validation) to allow dynamic fields at root level
+        # This matches backend's Docstrange cloud format exactly
+        return JSONResponse(content=extracted_data)
+        
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[EXTRACT] Failed: {str(e)}")
+        logger.error(f"[EXTRACT] Failed for {data.document_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Extraction failed: {str(e)}")
 
 # ============================================

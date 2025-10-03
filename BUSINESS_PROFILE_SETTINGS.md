@@ -16,12 +16,14 @@ This document defines business profile settings that enable intelligent, sector-
 
 ---
 
-**Existing Fields (20 total):**
+**Existing Fields (19 total):**
 - ✅ sector, subsector, business_type, employee_count, currency, **country** (2-letter code: IN, US, GB, etc.)
 - ✅ registered_name, contact info, tax identifiers (GSTIN/PAN/EIN/VAT), fiscal year
-- ✅ industry_software (hints at operations: Shopify, Square, Toast, etc.)
 
-**Key Field for Tax Logic:** `country` → determines tax terminology (GST vs Sales Tax vs VAT)
+**Key Fields for Classification:**
+- `registered_name` → direction detection (buyer vs seller)
+- `country` → tax terminology (GST vs Sales Tax vs VAT)
+- `currency` → foreign currency detection
 
 ---
 

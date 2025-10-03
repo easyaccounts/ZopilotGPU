@@ -24,13 +24,26 @@ logger = logging.getLogger(__name__)
 
 class DocstrageProcessor:
     def __init__(self):
-        # Initialize DocumentExtractor with GPU acceleration for faster processing
-        # Cloud extraction is handled by backend, GPU only does local fallback processing
-        # Setting cpu=False allows Docstrange to use GPU if available (RunPod has GPU)
+        # Initialize DocumentExtractor with LOCAL extraction only (no cloud API calls)
+        # GPU service should NEVER call cloud APIs - that's the backend's job
+        # Force cpu=True to ensure local extraction, and explicitly disable cloud
         try:
-            self.extractor = DocumentExtractor(cpu=False)
+            # CRITICAL: Force local extraction only (per official API documentation)
+            # cpu=True automatically disables cloud mode (self.cloud_mode = not self.cpu)
+            # No api_key ensures cloud cannot be used even if enabled
+            self.extractor = DocumentExtractor(
+                cpu=True,          # Force local CPU/GPU extraction (disables cloud automatically)
+                preserve_layout=True,    # Preserve document structure
+                include_images=False,    # Skip images to save bandwidth
+                ocr_enabled=True         # Enable OCR for scanned documents
+            )
             processing_mode = self.extractor.get_processing_mode()
-            logger.info(f"DocStrange initialized with {processing_mode} processing mode")
+            logger.info(f"DocStrange initialized: mode={processing_mode}, cloud_mode={self.extractor.cloud_mode}")
+            
+            # Verify cloud is actually disabled
+            if self.extractor.cloud_mode:
+                raise RuntimeError("Cloud mode is enabled! GPU service must use local extraction only.")
+                
         except Exception as e:
             logger.error(f"Failed to initialize DocStrange: {e}")
             raise
@@ -51,37 +64,38 @@ class DocstrageProcessor:
                 temp_path = temp_file.name
             
             try:
-                # Extract document using DocStrange
+                # Extract document using DocStrange (official API)
                 result = self.extractor.extract(temp_path)
                 
-                # Extract ALL available fields (no filtering)
-                structured_data = result.extract_data()  # Get all fields
+                # extract_data() returns: {"document": {...fields...}, "format": "json"}
+                # Per official API: https://github.com/NanoNets/docstrange
+                extraction_result = result.extract_data()
                 
-                # Also get general document data
-                general_data = result.extract_data()
+                # Extract the actual document fields (official format)
+                document_fields = extraction_result.get('document', {})
                 
                 # Get clean markdown for text analysis
                 markdown_content = result.extract_markdown()
                 
-                # Combine structured and general extraction - pure data output
+                # Prepare data for normalization
                 combined_data = {
-                    'structured_fields': structured_data.get('extracted_fields', {}),
-                    'general_data': general_data,
+                    'document_fields': document_fields,
                     'markdown_content': markdown_content[:2000],  # Limit for performance
                     'metadata': {
                         'processing_mode': self.extractor.get_processing_mode(),
-                        'cloud_enabled': self.extractor.is_cloud_enabled(),
-                        'content_length': len(markdown_content)
+                        'cloud_enabled': False,  # Always false - cloud disabled
+                        'content_length': len(markdown_content),
+                        'extraction_format': extraction_result.get('format', 'json')
                     }
                 }
                 
                 # Return normalized JSON extraction without classification
                 if self._validate_extraction(combined_data):
-                    logger.info(f"Successfully extracted data using DocStrange ({self.extractor.get_processing_mode()} mode)")
-                    return self._normalize_extraction(combined_data, 'docstrange_official')
+                    logger.info(f"Successfully extracted data using DocStrange (local mode)")
+                    return self._normalize_extraction(combined_data, 'docstrange_local')
                 else:
                     logger.warning("Extraction validation failed, low confidence result")
-                    return self._normalize_extraction(combined_data, 'docstrange_low_confidence')
+                    return self._normalize_extraction(combined_data, 'docstrange_local_low_confidence')
                     
             finally:
                 # Clean up temporary file
@@ -106,18 +120,16 @@ class DocstrageProcessor:
         if not data:
             return False
         
-        # Check for structured fields extraction
-        structured_fields = data.get('structured_fields', {})
-        if structured_fields and any(v for v in structured_fields.values() if v):
-            logger.info(f"Found {len([v for v in structured_fields.values() if v])} structured fields")
-            return True
+        # Check for document fields (official API format)
+        document_fields = data.get('document_fields', {})
+        if document_fields and isinstance(document_fields, dict):
+            # Count non-empty fields
+            filled_fields = [k for k, v in document_fields.items() if v]
+            if filled_fields:
+                logger.info(f"Found {len(filled_fields)} document fields")
+                return True
         
-        # Check general data
-        general_data = data.get('general_data', {})
-        if isinstance(general_data, dict) and general_data.get('content'):
-            return True
-        
-        # Check markdown content
+        # Check markdown content as fallback
         markdown = data.get('markdown_content', '')
         if markdown and len(markdown.strip()) > 50:  # At least some meaningful content
             return True
@@ -143,36 +155,41 @@ class DocstrageProcessor:
         }
     
     def _normalize_extraction(self, data: Dict[str, Any], method: str) -> Dict[str, Any]:
-        """Normalize extracted data to FLAT JSON format."""
-        # Calculate confidence based on ALL fields found (no predefined list)
-        structured_fields = data.get('structured_fields', {})
-        non_empty_fields = {k: v for k, v in structured_fields.items() if v}
-        field_count = len(non_empty_fields)
+        """
+        Normalize extraction data to FLAT JSON format matching backend's Docstrange cloud format.
         
-        # Dynamic confidence based on number of fields extracted
-        # 0-5 fields: 0.3-0.45, 5-10 fields: 0.45-0.6, 10-20 fields: 0.6-0.9, 20+ fields: 0.9-0.95
+        Backend expects ALL fields at root level (not nested), with _metadata as special key.
+        This matches docstrangeExtractor.ts normalizeResponse() format.
+        
+        Official API returns: {"document": {fields...}, "format": "json"}
+        We flatten the 'document' object to root level.
+        """
+        # Get document fields from official API format
+        document_fields = data.get('document_fields', {})
+        
+        # Calculate confidence based on field count (same as backend)
+        field_count = len(document_fields) if isinstance(document_fields, dict) else 0
+        # 0-5 fields: 0.3-0.5, 5-10: 0.5-0.7, 10-20: 0.7-0.9, 20+: 0.9-0.95
         confidence = min(0.95, 0.3 + (field_count * 0.03))
         
-        # Return FLAT JSON - all fields at root level
-        normalized = {
-            'extraction_method': method,
+        # Return FLAT JSON - all fields at root level (matches backend format)
+        return {
             'success': True,
-            # Spread all extracted fields at root level
-            **non_empty_fields,
-            # Add metadata under special key to avoid conflicts
+            'extraction_method': method,
+            # Spread all document fields at root level (FLAT, not nested)
+            **document_fields,
+            # Add metadata with underscore prefix to avoid field conflicts
             '_metadata': {
                 'processed_at': self._get_timestamp(),
-                'structured_fields_found': field_count,
-                'total_fields_searched': field_count,
+                'fields_extracted': field_count,
                 'confidence': confidence,
-                'processing_mode': data.get('metadata', {}).get('processing_mode', 'unknown'),
-                'cloud_enabled': data.get('metadata', {}).get('cloud_enabled', False),
+                'processing_mode': data.get('metadata', {}).get('processing_mode', 'local'),
+                'cloud_enabled': False,
                 'content_length': data.get('metadata', {}).get('content_length', 0),
-                'raw_response': data.get('general_data'),
-                'markdown_content': data.get('markdown_content', '')
+                'extraction_format': data.get('metadata', {}).get('extraction_format', 'json'),
+                'markdown_preview': data.get('markdown_content', '')[:500]
             }
         }
-        return normalized
     
     def _get_file_extension(self, filename: str) -> str:
         """Get file extension for temporary file creation."""
