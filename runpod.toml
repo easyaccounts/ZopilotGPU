@@ -1,0 +1,9 @@
+# RunPod Serverless Configuration
+# https://docs.runpod.io/serverless/references/runpod-toml
+
+[build]
+dockerfile = "Dockerfile"
+context = "."
+
+[handler]
+file = "handler.py"
