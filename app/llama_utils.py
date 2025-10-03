@@ -34,6 +34,16 @@ class LlamaProcessor:
             logger.info(f"Loading {self.model_name} (MoE architecture)...")
             logger.info("Note: Mixtral 8x7B requires ~24GB VRAM with 4-bit quantization")
             
+            # Verify token exists
+            hf_token = os.getenv("HUGGING_FACE_TOKEN")
+            if not hf_token:
+                raise ValueError(
+                    "HUGGING_FACE_TOKEN environment variable not set. "
+                    "Please add it to your RunPod endpoint environment variables."
+                )
+            
+            logger.info(f"Using Hugging Face token: {hf_token[:10]}...")
+            
             # Configure quantization for efficient GPU usage (critical for MoE models)
             quantization_config = BitsAndBytesConfig(
                 load_in_4bit=True,
@@ -43,31 +53,52 @@ class LlamaProcessor:
             )
             
             # Load tokenizer
+            logger.info("Loading tokenizer...")
             self.tokenizer = AutoTokenizer.from_pretrained(
                 self.model_name,
-                token=os.getenv("HUGGING_FACE_TOKEN"),
+                token=hf_token,
                 trust_remote_code=True
             )
             
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
             
+            logger.info("Tokenizer loaded successfully")
+            
             # Load model with quantization
+            logger.info("Loading model (this may take 5-10 minutes on first run)...")
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
                 quantization_config=quantization_config,
                 device_map="auto",
                 torch_dtype=torch.float16,
-                token=os.getenv("HUGGING_FACE_TOKEN"),
+                token=hf_token,
                 trust_remote_code=True,
                 low_cpu_mem_usage=True
             )
             
-            logger.info("Model loaded successfully")
+            logger.info("✅ Model loaded successfully")
             
         except Exception as e:
-            logger.error(f"Failed to load model: {str(e)}")
-            raise RuntimeError(f"Model initialization failed: {str(e)}")
+            error_msg = str(e)
+            logger.error(f"❌ Failed to load model: {error_msg}")
+            
+            # Provide helpful error messages
+            if "access" in error_msg.lower() or "permission" in error_msg.lower():
+                logger.error(
+                    "⚠️  Permission Error: Please ensure:\n"
+                    "1. You've accepted the Mixtral license at:\n"
+                    "   https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1\n"
+                    "2. Your token has read access\n"
+                    "3. You're using the correct token in HUGGING_FACE_TOKEN env var"
+                )
+            
+            raise RuntimeError(
+                f"Unable to access model '{self.model_name}'. "
+                f"Please ensure the model exists and you have permission to access it. "
+                f"For private models, make sure the HuggingFace token is properly configured. "
+                f"Original error: {error_msg}"
+            )
     
     def generate_journal_entry(self, prompt: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
         """Generate a structured journal entry in JSON format."""

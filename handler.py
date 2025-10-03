@@ -2,6 +2,39 @@
 RunPod Serverless Handler for ZopilotGPU
 Wraps FastAPI endpoints for RunPod serverless format
 """
+import os
+import sys
+
+# Verify critical environment variables BEFORE any imports
+REQUIRED_ENV_VARS = {
+    'HUGGING_FACE_TOKEN': 'Hugging Face API token',
+    'ZOPILOT_GPU_API_KEY': 'ZopilotGPU API key',
+}
+
+print("=" * 60)
+print("RunPod Serverless Handler - Environment Check")
+print("=" * 60)
+
+missing_vars = []
+for var, description in REQUIRED_ENV_VARS.items():
+    value = os.getenv(var)
+    if value:
+        # Show first 10 chars of token for verification
+        masked = f"{value[:10]}..." if len(value) > 10 else value
+        print(f"✅ {var}: {masked}")
+    else:
+        print(f"❌ {var}: MISSING")
+        missing_vars.append(f"{var} ({description})")
+
+if missing_vars:
+    print("\n⚠️  CRITICAL: Missing environment variables:")
+    for var in missing_vars:
+        print(f"   - {var}")
+    print("\nPlease add these in RunPod endpoint settings under 'Environment Variables'")
+    sys.exit(1)
+
+print("=" * 60)
+
 try:
     import runpod  # type: ignore
 except ImportError:
