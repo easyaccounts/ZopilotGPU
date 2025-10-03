@@ -41,10 +41,11 @@ RUN pip install --no-cache-dir packaging wheel setuptools
 # Updated to 2.2.0+ for better RTX 4090 (Ada Lovelace) support
 RUN pip install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cu121
 
-# Install Flash Attention 2 for RTX 4090 optimization (optional but recommended)
-# This provides 2-3x faster inference on Ada Lovelace architecture
-# Note: This may take 10-15 minutes to compile CUDA kernels
-RUN pip install flash-attn>=2.5.0 --no-build-isolation || \
+# Flash Attention 2 for RTX 4090 optimization (optional but recommended)
+# Try pre-built wheel first (fast), compile from source as fallback (slow)
+RUN pip install flash-attn --no-build-isolation --timeout=3600 \
+    --extra-index-url https://flashinfer.ai/whl/cu121/torch2.2 || \
+    pip install flash-attn>=2.5.0 --no-build-isolation --timeout=3600 || \
     echo "⚠️  Flash Attention installation failed, will use standard attention"
 
 # Install Python dependencies
