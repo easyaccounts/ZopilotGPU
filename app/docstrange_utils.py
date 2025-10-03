@@ -5,6 +5,14 @@ from typing import Dict, Any, Optional, List
 from docstrange import DocumentExtractor
 from docstrange.exceptions import ConversionError, UnsupportedFormatError, FileNotFoundError as DocstrageFileNotFoundError
 
+# Custom exception for GPU extraction failures
+class GPUExtractionFailedError(Exception):
+    """
+    Raised when GPU local extraction fails and backend should route to cloud API.
+    This is different from returning error structures - it signals backend to use cloud fallback.
+    """
+    pass
+
 # Load environment variables from .env file
 try:
     from dotenv import load_dotenv
@@ -39,6 +47,7 @@ class DocstrageProcessor:
             )
             processing_mode = self.extractor.get_processing_mode()
             logger.info(f"DocStrange initialized: mode={processing_mode}, cloud_mode={self.extractor.cloud_mode}")
+            logger.info("CRITICAL: GPU will use LOCAL neural models ONLY, NO cloud API calls")
             
             # Verify cloud is actually disabled
             if self.extractor.cloud_mode:
@@ -46,6 +55,8 @@ class DocstrageProcessor:
                 
         except Exception as e:
             logger.error(f"Failed to initialize DocStrange: {e}")
+            logger.error("This usually indicates missing dependencies (torchvision, transformers)")
+            logger.error("Check that torchvision is installed and compatible with torch version")
             raise
         
     def extract_with_docstrange(self, file_content: bytes, filename: str) -> Dict[str, Any]:
@@ -104,16 +115,16 @@ class DocstrageProcessor:
                     
         except DocstrageFileNotFoundError as e:
             logger.error(f"File not found: {filename}")
-            return self._error_fallback(filename, f"File not found: {str(e)}")
+            raise GPUExtractionFailedError(f"File not found: {str(e)}")
         except UnsupportedFormatError as e:
             logger.error(f"Unsupported file format: {filename}")
-            return self._error_fallback(filename, f"Unsupported format: {str(e)}")
+            raise GPUExtractionFailedError(f"Unsupported format: {str(e)}")
         except ConversionError as e:
             logger.error(f"DocStrange conversion failed for {filename}: {str(e)}")
-            return self._error_fallback(filename, f"Conversion error: {str(e)}")
+            raise GPUExtractionFailedError(f"Conversion error: {str(e)}")
         except Exception as e:
             logger.error(f"Unexpected error processing {filename}: {str(e)}")
-            return self._error_fallback(filename, f"Unexpected error: {str(e)}")
+            raise GPUExtractionFailedError(f"Unexpected error: {str(e)}")
     
     def _validate_extraction(self, data: Dict[str, Any]) -> bool:
         """Validate that extraction contains meaningful data for accounting."""

@@ -9,8 +9,9 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 import aiofiles
 from pathlib import Path
+import torch  # For CUDA OOM error handling
 
-from app.docstrange_utils import extract_with_docstrange, get_docstrange_processor
+from app.docstrange_utils import extract_with_docstrange, get_docstrange_processor, GPUExtractionFailedError
 from app.llama_utils import generate_with_llama, get_llama_processor
 
 # Configure logging
@@ -297,20 +298,36 @@ async def extract_endpoint(request: Request, data: ExtractionInput):
         
     except HTTPException:
         raise
+    except GPUExtractionFailedError as e:
+        # GPU extraction failed - backend should route to cloud API
+        logger.error(f"[EXTRACT] GPU extraction failed for {data.document_id}: {str(e)}")
+        logger.info(f"[EXTRACT] Returning 503 - backend will route to cloud API")
+        return JSONResponse(
+            status_code=503,
+            content={
+                "error": "GPU_EXTRACTION_FAILED",
+                "reason": str(e),
+                "use_cloud": True,
+                "document_id": data.document_id
+            }
+        )
     except Exception as e:
-        logger.error(f"[EXTRACT] Failed for {data.document_id}: {str(e)}")
+        logger.error(f"[EXTRACT] Unexpected error for {data.document_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Extraction failed: {str(e)}")
 
 # ============================================
 # ENDPOINT 2: MIXTRAL PROMPTING
 # ============================================
-@app.post("/prompt", response_model=PromptResponse)
+@app.post("/prompt")
 async def prompt_endpoint(request: Request, data: PromptInput):
     """
     Send prompt to Mixtral 8x7B and get AI-generated output.
     
     Takes natural language prompt (with optional context data) and returns
-    Mixtral's response. Use for journal entries, categorization, analysis, etc.
+    Mixtral's structured response (typically a journal entry dict).
+    
+    Response format: {"success": bool, "output": dict|str, "metadata": {...}}
+    No Pydantic validation to allow dynamic response structure from Mixtral.
     
     Requires API key authentication.
     """
@@ -319,27 +336,48 @@ async def prompt_endpoint(request: Request, data: PromptInput):
     try:
         logger.info(f"[PROMPT] Sending to Mixtral: {data.prompt[:100]}...")
         
-        # Generate with Mixtral
+        # Generate with Mixtral (runs in thread pool to avoid blocking)
         output = await asyncio.get_event_loop().run_in_executor(
             None, generate_with_llama, data.prompt, data.context
         )
         
+        # Preserve output structure (dict or string)
+        # generate_with_llama returns dict (journal entry), keep it as-is
         response_data = {
             "success": True,
-            "output": output if isinstance(output, str) else str(output),
+            "output": output,  # Keep dict structure (don't stringify)
             "metadata": {
                 "generated_at": get_timestamp(),
                 "prompt_length": len(data.prompt),
                 "context_provided": data.context is not None,
-                "model": "mistralai/Mixtral-8x7B-Instruct-v0.1"
+                "model": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+                "output_type": type(output).__name__
             }
         }
         
-        return PromptResponse(**response_data)
+        logger.info(f"[PROMPT] Success, output type: {type(output).__name__}")
+        
+        # Return plain JSON (no Pydantic validation) to preserve dynamic structure
+        return JSONResponse(content=response_data)
+        
+    except RuntimeError as e:
+        # Model initialization errors
+        error_msg = str(e)
+        logger.error(f"[PROMPT] Model error: {error_msg}")
+        if "not initialized" in error_msg.lower():
+            raise HTTPException(status_code=503, detail="Model not loaded. Service starting up.")
+        raise HTTPException(status_code=500, detail=f"Model error: {error_msg}")
+        
+    except torch.cuda.OutOfMemoryError:
+        # VRAM exhausted
+        logger.error(f"[PROMPT] CUDA OOM - VRAM exhausted")
+        torch.cuda.empty_cache()
+        raise HTTPException(status_code=507, detail="GPU memory exhausted. Try again in a moment.")
         
     except Exception as e:
+        # Other errors
         logger.error(f"[PROMPT] Failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Prompt failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Prompt generation failed: {str(e)}")
 
 # ============================================
 # HELPER FUNCTIONS

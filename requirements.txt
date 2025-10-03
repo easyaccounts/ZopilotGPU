@@ -1,5 +1,11 @@
-# Core FastAPI
-fastapi>=0.104.0,<0.115.0
+# Core FastA# ML/AI - Core
+# PyTorch 2.2.1+ required for RTX 4090 (Ada Lovelace) full support
+torch>=2.2.1,<2.5.0
+torchvision>=0.17.0,<0.20.0
+transformers>=4.36.0,<4.50.0
+acceler ate>=0.25.0
+# BitsAndBytes 0.42.0+ required for RTX 4090 Ada Lovelace architecture
+bitsandbytes>=0.42.0api>=0.104.0,<0.115.0
 uvicorn[standard]>=0.24.0,<0.32.0
 pydantic>=2.5.0,<3.0.0
 python-multipart>=0.0.6
