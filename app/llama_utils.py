@@ -73,32 +73,19 @@ class LlamaProcessor:
             # Load model with quantization
             logger.info("Loading model (this may take 5-10 minutes on first run)...")
             
-            # Try Flash Attention 2 for RTX 4090 (2-3x faster inference)
-            try:
-                self.model = AutoModelForCausalLM.from_pretrained(
-                    self.model_name,
-                    quantization_config=quantization_config,
-                    device_map="auto",
-                    torch_dtype=torch.float16,
-                    token=hf_token,
-                    trust_remote_code=True,
-                    low_cpu_mem_usage=True,
-                    attn_implementation="flash_attention_2"
-                )
-                logger.info("✅ Model loaded with Flash Attention 2 (optimized for RTX 4090)")
-            except Exception as flash_error:
-                logger.warning(f"Flash Attention 2 not available: {flash_error}")
-                logger.info("Falling back to standard attention...")
-                self.model = AutoModelForCausalLM.from_pretrained(
-                    self.model_name,
-                    quantization_config=quantization_config,
-                    device_map="auto",
-                    torch_dtype=torch.float16,
-                    token=hf_token,
-                    trust_remote_code=True,
-                    low_cpu_mem_usage=True
-                )
-                logger.info("✅ Model loaded successfully (standard attention)")
+            # Load model with standard attention (Flash Attention 2 disabled for faster builds)
+            # Flash Attention can be enabled by uncommenting attn_implementation parameter
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                quantization_config=quantization_config,
+                device_map="auto",
+                torch_dtype=torch.float16,
+                token=hf_token,
+                trust_remote_code=True,
+                low_cpu_mem_usage=True,
+                # attn_implementation="flash_attention_2"  # Requires flash-attn package
+            )
+            logger.info("✅ Model loaded successfully with standard attention")
             
         except Exception as e:
             error_msg = str(e)

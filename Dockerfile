@@ -34,19 +34,12 @@ WORKDIR /app
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install build dependencies first (required for flash-attn and other packages)
+# Install build dependencies first (required for package compilation)
 RUN pip install --no-cache-dir packaging wheel setuptools
 
 # Install PyTorch with CUDA 12.1 support FIRST (required by many packages)
 # Updated to 2.2.0+ for better RTX 4090 (Ada Lovelace) support
 RUN pip install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cu121
-
-# Flash Attention 2 for RTX 4090 optimization (optional but recommended)
-# Try pre-built wheel first (fast), compile from source as fallback (slow)
-RUN pip install flash-attn --no-build-isolation --timeout=3600 \
-    --extra-index-url https://flashinfer.ai/whl/cu121/torch2.2 || \
-    pip install flash-attn>=2.5.0 --no-build-isolation --timeout=3600 || \
-    echo "⚠️  Flash Attention installation failed, will use standard attention"
 
 # Install Python dependencies
 # Use --ignore-installed for system packages that can't be uninstalled
