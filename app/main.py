@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 class ExtractionInput(BaseModel):
     document_url: str = Field(..., description="Pre-signed URL to download document from R2 storage")
     document_id: Optional[str] = Field(None, description="Document ID for tracking")
-    document_type: Optional[str] = Field(None, description="Type of document (invoice, receipt, bill, etc.)")
 
 class ExtractionResponse(BaseModel):
     success: bool
@@ -236,8 +235,8 @@ async def extract_endpoint(request: Request, data: ExtractionInput):
         if file_size > max_size:
             raise HTTPException(status_code=413, detail="File too large (max 25MB)")
         
-        filename = data.document_type or "document.pdf"
-        logger.info(f"[EXTRACT] Processing: {filename} ({file_size} bytes)")
+        filename = "document.pdf"  # Generic filename for temp file processing
+        logger.info(f"[EXTRACT] Processing document ({file_size} bytes)")
         
         # Extract with Docstrange
         extracted_data = await asyncio.get_event_loop().run_in_executor(

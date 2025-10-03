@@ -24,45 +24,14 @@ logger = logging.getLogger(__name__)
 
 class DocstrageProcessor:
     def __init__(self):
-        # Initialize DocumentExtractor with API key from environment for cloud processing
-        # This provides 10k documents/month without requiring login authentication
-        api_key = os.environ.get('NANONETS_API_KEY')
-        
+        # Initialize DocumentExtractor for local CPU processing only
+        # Cloud extraction is handled by backend, GPU only does local fallback processing
         try:
-            if api_key and api_key != 'your_nanonets_api_key_here':
-                # Use API key for authenticated cloud processing (10k docs/month)
-                self.extractor = DocumentExtractor(api_key=api_key)
-                logger.info(f"DocStrange initialized with API key authentication (10k docs/month)")
-            else:
-                logger.warning("NANONETS_API_KEY not found or not set in environment")
-                # Fallback to default cloud mode (rate-limited)
-                self.extractor = DocumentExtractor()
-                logger.info("DocStrange initialized with default cloud processing (rate-limited)")
-                
-        except Exception as e:
-            logger.warning(f"Cloud initialization failed, falling back to local processing: {e}")
-            # Fallback to local CPU processing if cloud is unavailable
             self.extractor = DocumentExtractor(cpu=True)
-            logger.info("DocStrange initialized with local CPU processing")
-        
-        # Define accounting-specific fields for structured extraction
-        self.accounting_fields = [
-            "invoice_number", "receipt_number", "transaction_id",
-            "total_amount", "subtotal", "tax_amount", "discount",
-            "vendor_name", "supplier", "merchant_name", "company_name",
-            "date", "invoice_date", "transaction_date", "due_date",
-            "description", "memo", "purpose", "category",
-            "account_number", "reference", "payment_method",
-            "line_items", "items", "products", "services",
-            "customer_name", "bill_to", "ship_to",
-            "currency", "exchange_rate"
-        ]
-        
-        # Company name patterns for invoice direction detection
-        self.company_identifiers = [
-            "your company", "your business", "your corp", "your inc",
-            "easyaccounts", "easy accounts"  # Add your actual company name here
-        ]
+            logger.info("DocStrange initialized with local CPU processing (GPU fallback mode)")
+        except Exception as e:
+            logger.error(f"Failed to initialize DocStrange: {e}")
+            raise
         
     def extract_with_docstrange(self, file_content: bytes, filename: str) -> Dict[str, Any]:
         """
@@ -83,8 +52,8 @@ class DocstrageProcessor:
                 # Extract document using DocStrange
                 result = self.extractor.extract(temp_path)
                 
-                # Use structured field extraction for accounting documents
-                structured_data = result.extract_data(specified_fields=self.accounting_fields)
+                # Extract ALL available fields (no filtering)
+                structured_data = result.extract_data()  # Get all fields
                 
                 # Also get general document data
                 general_data = result.extract_data()
@@ -92,7 +61,7 @@ class DocstrageProcessor:
                 # Get clean markdown for text analysis
                 markdown_content = result.extract_markdown()
                 
-                # Combine structured and general extraction
+                # Combine structured and general extraction - pure data output
                 combined_data = {
                     'structured_fields': structured_data.get('extracted_fields', {}),
                     'general_data': general_data,
@@ -104,10 +73,7 @@ class DocstrageProcessor:
                     }
                 }
                 
-                # Add invoice direction detection
-                invoice_direction = self._detect_invoice_direction(combined_data['structured_fields'])
-                combined_data['invoice_classification'] = invoice_direction
-                
+                # Return normalized JSON extraction without classification
                 if self._validate_extraction(combined_data):
                     logger.info(f"Successfully extracted data using DocStrange ({self.extractor.get_processing_mode()} mode)")
                     return self._normalize_extraction(combined_data, 'docstrange_official')
@@ -175,22 +141,33 @@ class DocstrageProcessor:
         }
     
     def _normalize_extraction(self, data: Dict[str, Any], method: str) -> Dict[str, Any]:
-        """Normalize extracted data to consistent format."""
-        # Calculate confidence based on structured fields found
+        """Normalize extracted data to FLAT JSON format."""
+        # Calculate confidence based on ALL fields found (no predefined list)
         structured_fields = data.get('structured_fields', {})
         non_empty_fields = {k: v for k, v in structured_fields.items() if v}
-        confidence = min(0.95, len(non_empty_fields) * 0.1 + 0.3)  # Base confidence + field bonus
+        field_count = len(non_empty_fields)
         
+        # Dynamic confidence based on number of fields extracted
+        # 0-5 fields: 0.3-0.45, 5-10 fields: 0.45-0.6, 10-20 fields: 0.6-0.9, 20+ fields: 0.9-0.95
+        confidence = min(0.95, 0.3 + (field_count * 0.03))
+        
+        # Return FLAT JSON - all fields at root level
         normalized = {
             'extraction_method': method,
             'success': True,
-            'data': data,
-            'metadata': {
+            # Spread all extracted fields at root level
+            **non_empty_fields,
+            # Add metadata under special key to avoid conflicts
+            '_metadata': {
                 'processed_at': self._get_timestamp(),
-                'structured_fields_found': len(non_empty_fields),
-                'total_fields_searched': len(self.accounting_fields),
+                'structured_fields_found': field_count,
+                'total_fields_searched': field_count,
                 'confidence': confidence,
-                'processing_mode': data.get('metadata', {}).get('processing_mode', 'unknown')
+                'processing_mode': data.get('metadata', {}).get('processing_mode', 'unknown'),
+                'cloud_enabled': data.get('metadata', {}).get('cloud_enabled', False),
+                'content_length': data.get('metadata', {}).get('content_length', 0),
+                'raw_response': data.get('general_data'),
+                'markdown_content': data.get('markdown_content', '')
             }
         }
         return normalized
@@ -203,75 +180,6 @@ class DocstrageProcessor:
         """Get current timestamp."""
         from datetime import datetime
         return datetime.now().isoformat()
-    
-    def _detect_invoice_direction(self, structured_fields: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Detect if invoice is incoming (vendor bill) or outgoing (customer invoice).
-        
-        Returns:
-            Dict with invoice direction classification and confidence
-        """
-        try:
-            # Get key fields for analysis
-            bill_to = str(structured_fields.get('bill_to', '')).lower()
-            customer_name = str(structured_fields.get('customer_name', '')).lower() 
-            vendor_name = str(structured_fields.get('vendor_name', '')).lower()
-            supplier = str(structured_fields.get('supplier', '')).lower()
-            
-            # Check if bill_to or customer contains your company identifiers
-            is_incoming = any(identifier in bill_to or identifier in customer_name 
-                            for identifier in self.company_identifiers)
-            
-            # Check if vendor/supplier contains your company identifiers
-            is_outgoing = any(identifier in vendor_name or identifier in supplier
-                            for identifier in self.company_identifiers)
-            
-            # Determine direction with confidence
-            if is_incoming and not is_outgoing:
-                direction = "incoming"  # Vendor bill (you owe money)
-                confidence = 0.9
-                description = "Vendor Invoice - You receive this from a supplier/vendor"
-                accounting_impact = "Accounts Payable (credit), Expense/Asset (debit)"
-            elif is_outgoing and not is_incoming:
-                direction = "outgoing"  # Customer invoice (they owe you)
-                confidence = 0.9
-                description = "Customer Invoice - You send this to a customer" 
-                accounting_impact = "Accounts Receivable (debit), Revenue (credit)"
-            elif is_incoming and is_outgoing:
-                # Ambiguous case - both directions detected
-                direction = "ambiguous"
-                confidence = 0.3
-                description = "Ambiguous - Cannot clearly determine direction"
-                accounting_impact = "Manual review required"
-            else:
-                # No clear direction detected
-                direction = "unknown"
-                confidence = 0.1
-                description = "Unknown - No company identifiers found"
-                accounting_impact = "Manual classification needed"
-            
-            return {
-                'direction': direction,
-                'confidence': confidence,
-                'description': description,
-                'accounting_impact': accounting_impact,
-                'analysis': {
-                    'bill_to_matches_company': is_incoming,
-                    'vendor_matches_company': is_outgoing,
-                    'bill_to_text': bill_to[:100],  # First 100 chars for debugging
-                    'vendor_text': (vendor_name or supplier)[:50]  # First 50 chars
-                }
-            }
-            
-        except Exception as e:
-            logger.warning(f"Invoice direction detection failed: {str(e)}")
-            return {
-                'direction': 'error',
-                'confidence': 0.0,
-                'description': f"Detection failed: {str(e)}",
-                'accounting_impact': 'Manual review required',
-                'analysis': {'error': str(e)}
-            }
 
 # Global instance
 _docstrange_processor = None
