@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     build-essential \
     software-properties-common \
+    ninja-build \
     && rm -rf /var/lib/apt/lists/*
 
 # Create symbolic link for python
@@ -37,8 +38,19 @@ COPY requirements.txt .
 # Use --ignore-installed for system packages that can't be uninstalled
 RUN pip install --no-cache-dir --ignore-installed blinker -r requirements.txt
 
+# Rebuild BitsAndBytes with CUDA 12.1 support for RTX 4090
+# This ensures proper Ada Lovelace (compute capability 8.9) support
+RUN pip uninstall -y bitsandbytes && \
+    pip install bitsandbytes>=0.42.0 --no-cache-dir
+
 # Install PyTorch with CUDA 12.1 support for Mixtral 8x7B
-RUN pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 --index-url https://download.pytorch.org/whl/cu121
+# Updated to 2.2.0+ for better RTX 4090 (Ada Lovelace) support
+RUN pip install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cu121
+
+# Install Flash Attention 2 for RTX 4090 optimization (optional but recommended)
+# This provides 2-3x faster inference on Ada Lovelace architecture
+RUN pip install flash-attn>=2.5.0 --no-build-isolation || \
+    echo "⚠️  Flash Attention installation failed, will use standard attention"
 
 # Copy application code
 COPY app/ ./app/
@@ -64,7 +76,9 @@ ENV TORCH_HOME=/app/models
 # GPU-specific environment variables for Mixtral 8x7B
 # Mixtral 8x7B requires ~24GB VRAM with 4-bit quantization
 ENV CUDA_VISIBLE_DEVICES=0
-ENV PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
+# RTX 4090 optimized memory allocation settings
+ENV PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512,expandable_segments:True
+ENV CUDA_LAUNCH_BLOCKING=0
 
 # Health check (allow time for model loading on first start)
 HEALTHCHECK --interval=60s --timeout=30s --start-period=180s --retries=3 \
@@ -73,7 +87,6 @@ HEALTHCHECK --interval=60s --timeout=30s --start-period=180s --retries=3 \
 # Expose port (configurable via environment)
 EXPOSE 8000
 
-# Default command - can be overridden for RunPod serverless
-# For FastAPI: use start.sh (default)
-# For RunPod Serverless: override with python handler.py
-CMD ["/app/start.sh"]
+# Default command for RunPod Serverless
+# Use handler.py for serverless, start.sh for direct deployment
+CMD ["python", "handler.py"]

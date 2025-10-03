@@ -33,6 +33,24 @@ if missing_vars:
     print("\nPlease add these in RunPod endpoint settings under 'Environment Variables'")
     sys.exit(1)
 
+# Check GPU availability and memory
+try:
+    import torch
+    if torch.cuda.is_available():
+        gpu_name = torch.cuda.get_device_name(0)
+        gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)  # GB
+        print(f"🎮 GPU: {gpu_name}")
+        print(f"💾 VRAM: {gpu_memory:.1f} GB")
+        
+        # Warn if insufficient memory for Mixtral 8x7B
+        if gpu_memory < 22:
+            print(f"⚠️  WARNING: Mixtral 8x7B requires ~24GB VRAM, you have {gpu_memory:.1f}GB")
+            print("   Model loading may fail or run very slowly")
+    else:
+        print("⚠️  No GPU detected - will fall back to CPU (very slow)")
+except ImportError:
+    print("⚠️  PyTorch not available for GPU check")
+
 print("=" * 60)
 
 try:
@@ -121,19 +139,8 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
         }
 
 
-def handler(job: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Synchronous wrapper for async handler
-    Required by RunPod serverless
-    """
-    try:
-        return asyncio.run(async_handler(job))
-    except Exception as e:
-        logger.error(f"[RunPod] Sync handler error: {str(e)}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
+# Rename async_handler to handler (RunPod supports async handlers directly)
+handler = async_handler
 
 
 # Start RunPod serverless worker
