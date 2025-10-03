@@ -1,6 +1,6 @@
 # Production Dockerfile for ZopilotGPU with Mixtral 8x7B
 # Optimized for Cloud GPU deployment (RunPod, Vast.ai, Lambda Labs)
-FROM nvidia/cuda:12.1.0-devel-ubuntu22.04 as base
+FROM nvidia/cuda:12.1.0-devel-ubuntu22.04 AS base
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
