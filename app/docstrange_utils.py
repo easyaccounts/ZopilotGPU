@@ -24,11 +24,13 @@ logger = logging.getLogger(__name__)
 
 class DocstrageProcessor:
     def __init__(self):
-        # Initialize DocumentExtractor for local CPU processing only
+        # Initialize DocumentExtractor with GPU acceleration for faster processing
         # Cloud extraction is handled by backend, GPU only does local fallback processing
+        # Setting cpu=False allows Docstrange to use GPU if available (RunPod has GPU)
         try:
-            self.extractor = DocumentExtractor(cpu=True)
-            logger.info("DocStrange initialized with local CPU processing (GPU fallback mode)")
+            self.extractor = DocumentExtractor(cpu=False)
+            processing_mode = self.extractor.get_processing_mode()
+            logger.info(f"DocStrange initialized with {processing_mode} processing mode")
         except Exception as e:
             logger.error(f"Failed to initialize DocStrange: {e}")
             raise
