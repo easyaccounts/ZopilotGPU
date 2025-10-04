@@ -32,9 +32,9 @@ class LlamaProcessor:
         """Initialize Mixtral 8x7B model with GPU optimization and quantization."""
         try:
             logger.info(f"Loading {self.model_name} (MoE architecture)...")
-            logger.info("Note: Mixtral 8x7B requires ~24GB VRAM with 4-bit quantization")
+            logger.info("Note: Mixtral 8x7B requires ~24GB VRAM with 8-bit quantization")
             
-            # Clear GPU cache before loading (critical for RTX 4090 24GB)
+            # Clear GPU cache before loading (critical for 24GB VRAM)
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 logger.info(f"GPU cache cleared before model loading")
@@ -49,12 +49,12 @@ class LlamaProcessor:
             
             logger.info(f"Using Hugging Face token: {hf_token[:10]}...")
             
-            # Configure quantization for efficient GPU usage (critical for MoE models)
+            # Configure 8-bit quantization for best quality/VRAM balance
+            # 8-bit provides 98-99% of FP16 quality while fitting in 24GB VRAM
             quantization_config = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_quant_type="nf4",
-                bnb_4bit_use_double_quant=True,
-                bnb_4bit_compute_dtype=torch.float16
+                load_in_8bit=True,
+                llm_int8_threshold=6.0,  # Threshold for outlier detection
+                llm_int8_has_fp16_weight=False  # Use 8-bit weights
             )
             
             # Load tokenizer

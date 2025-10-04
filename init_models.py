@@ -11,7 +11,7 @@ def check_and_download_models():
     """Check if models exist, download if needed."""
     
     # Check if models already exist in volume
-    volume_path = Path("/runpod-volume")
+    volume_path = Path("/workspace")
     docstrange_path = volume_path / "docstrange" / "models"
     mixtral_path = volume_path / "huggingface" / "hub"
     
@@ -37,7 +37,8 @@ def check_and_download_models():
         print("✅ Docstrange models downloaded")
         
         # Download Mixtral model
-        print("\n2️⃣ Downloading Mixtral 8x7B model (~47GB)...")
+        print("\n2️⃣ Downloading Mixtral 8x7B FP16 model (~93GB)...")
+        print("   Model will be quantized to 8-bit at load time (~24GB VRAM)")
         from app.llama_utils import get_llama_processor
         get_llama_processor()
         print("✅ Mixtral model downloaded")

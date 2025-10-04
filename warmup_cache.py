@@ -21,9 +21,9 @@ def warmup_models():
     print("=" * 80)
     
     # Check volume exists
-    volume_path = Path("/runpod-volume")
+    volume_path = Path("/workspace")
     if not volume_path.exists():
-        print("⚠️  WARNING: /runpod-volume not found - models will download to container")
+        print("⚠️  WARNING: /workspace not found - models will download to container")
         print("   Make sure network volume is mounted!")
     else:
         print(f"✅ Network volume found: {volume_path}")
@@ -45,8 +45,9 @@ def warmup_models():
         
         # 2. Download Mixtral model
         print("\n" + "=" * 80)
-        print("📦 Step 2/2: Downloading Mixtral 8x7B model (~47GB)")
-        print("⏱️  This will take 15-25 minutes depending on network speed...")
+        print("📦 Step 2/2: Downloading Mixtral 8x7B FP16 model (~93GB)")
+        print("   Model will be quantized to 8-bit at load time (~24GB VRAM)")
+        print("⏱️  This will take 30-45 minutes depending on network speed...")
         print("=" * 80)
         
         from app.llama_utils import get_llama_processor

@@ -12,8 +12,8 @@ print("=" * 80)
 
 # Common mount paths to check
 common_paths = [
+    "/workspace",  # RunPod's default network volume mount
     "/runpod-volume",
-    "/workspace",
     "/data",
     "/mnt/volume",
     "/volume",

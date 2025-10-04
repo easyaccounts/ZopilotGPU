@@ -37,7 +37,8 @@ except ImportError:
 
 def download_mixtral():
     """Download Mixtral model."""
-    print("\n📦 Downloading Mixtral 8x7B (~47GB)...")
+    print("\n📦 Downloading Mixtral 8x7B FP16 model (~93GB)...")
+    print("   Model will be quantized to 8-bit at load time (~24GB VRAM)")
     print("⚠️  You need HUGGING_FACE_TOKEN environment variable set")
     
     hf_token = os.getenv("HUGGING_FACE_TOKEN")

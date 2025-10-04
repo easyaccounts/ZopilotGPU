@@ -62,15 +62,16 @@ RUN mkdir -p /app/models /app/temp /app/logs
 # Instead, use one of these approaches:
 #
 # APPROACH 1 (RECOMMENDED): Persistent Network Volume
-#   - Mount a persistent volume to /root/.cache (where models download)
-#   - First worker downloads models once (~53GB, 20-30 min)
+#   - Mount a persistent volume to /workspace (where models download)
+#   - First worker downloads models once (~123GB: 93GB Mixtral FP16 + 30GB Docstrange, 30-45 min)
+#   - Models are quantized to 8-bit at load time (~24GB VRAM)
 #   - All subsequent workers share the same volume (instant startup)
-#   - RunPod: Create Network Volume, mount to /root/.cache
-#   - Cost: ~$0.10/GB/month = ~$5/month for 53GB
+#   - RunPod: Create Network Volume (120GB+), mount to /workspace
+#   - Cost: ~$0.15/GB/month = ~$18/month for 120GB
 #
 # APPROACH 2: Bake into Image (for reference, not recommended)
 #   - Uncomment the RUN commands below to pre-download during build
-#   - Makes image ~53GB (slow push/pull, expensive storage)
+#   - Makes image ~123GB (very slow push/pull, expensive storage)
 #   - Any code change requires rebuilding entire image
 #
 # APPROACH 3: MIN_WORKERS=1
@@ -81,14 +82,14 @@ RUN mkdir -p /app/models /app/temp /app/logs
 
 # Uncomment to bake models into image (NOT RECOMMENDED):
 # RUN python -c "from app.docstrange_utils import get_docstrange_processor; \
-#     print('📦 Downloading Docstrange (~6GB)...'); \
+#     print('📦 Downloading Docstrange (~30GB)...'); \
 #     get_docstrange_processor(); \
 #     print('✅ Docstrange ready!')"
 #
 # ARG HUGGING_FACE_TOKEN
 # RUN if [ -n "$HUGGING_FACE_TOKEN" ]; then \
 #         python -c "from app.llama_utils import get_llama_processor; \
-#         print('📦 Downloading Mixtral (~47GB)...'); \
+#         print('📦 Downloading Mixtral FP16 (~93GB, will be 8-bit quantized at load)...'); \
 #         get_llama_processor(); \
 #         print('✅ Mixtral ready!')"; \
 #     fi
@@ -111,9 +112,9 @@ ENV TORCH_HOME=/workspace/torch
 ENV XDG_CACHE_HOME=/workspace
 
 # GPU-specific environment variables for Mixtral 8x7B
-# Mixtral 8x7B requires ~24GB VRAM with 4-bit quantization
+# Mixtral 8x7B requires ~24GB VRAM with 8-bit quantization
 ENV CUDA_VISIBLE_DEVICES=0
-# RTX 4090 optimized memory allocation settings
+# GPU memory allocation settings optimized for 8-bit quantization
 ENV PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512,expandable_segments:True
 ENV CUDA_LAUNCH_BLOCKING=0
 

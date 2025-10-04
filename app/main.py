@@ -248,7 +248,7 @@ async def warmup_endpoint(request: Request):
         results = {}
         
         # Check if models already cached
-        volume_path = Path("/runpod-volume")
+        volume_path = Path("/workspace")
         docstrange_cached = (volume_path / "docstrange" / "models").exists()
         mixtral_cached = (volume_path / "huggingface" / "hub").exists()
         
