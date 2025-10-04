@@ -100,6 +100,12 @@ RUN chmod +x /app/start.sh
 # Set permissions
 RUN chmod -R 755 /app
 
+# Create workspace directory and symlink for cache
+# This ensures Docstrange models are stored in network volume
+RUN mkdir -p /workspace && \
+    rm -rf /root/.cache && \
+    ln -s /workspace /root/.cache
+
 # Environment variables for production
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1

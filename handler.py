@@ -4,6 +4,28 @@ Wraps FastAPI endpoints for RunPod serverless format
 """
 import os
 import sys
+from pathlib import Path
+
+# CRITICAL: Ensure /root/.cache symlink points to /workspace for Docstrange
+# This must happen before any model imports
+cache_path = Path("/root/.cache")
+workspace_path = Path("/workspace")
+
+if not cache_path.exists():
+    # Create symlink if it doesn't exist
+    try:
+        cache_path.symlink_to(workspace_path)
+        print(f"✅ Created symlink: /root/.cache -> /workspace")
+    except Exception as e:
+        print(f"⚠️  Warning: Could not create /root/.cache symlink: {e}")
+elif cache_path.is_symlink():
+    target = cache_path.resolve()
+    if target != workspace_path:
+        print(f"⚠️  Warning: /root/.cache points to {target}, expected /workspace")
+    else:
+        print(f"✅ Symlink verified: /root/.cache -> /workspace")
+else:
+    print(f"⚠️  Warning: /root/.cache exists but is not a symlink")
 
 # Verify critical environment variables BEFORE any imports
 REQUIRED_ENV_VARS = {
