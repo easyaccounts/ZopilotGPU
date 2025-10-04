@@ -58,6 +58,41 @@ COPY start.sh ./
 # Create necessary directories
 RUN mkdir -p /app/models /app/temp /app/logs
 
+# NOTE: Models are NOT baked into image for efficiency
+# Instead, use one of these approaches:
+#
+# APPROACH 1 (RECOMMENDED): Persistent Network Volume
+#   - Mount a persistent volume to /root/.cache (where models download)
+#   - First worker downloads models once (~53GB, 20-30 min)
+#   - All subsequent workers share the same volume (instant startup)
+#   - RunPod: Create Network Volume, mount to /root/.cache
+#   - Cost: ~$0.10/GB/month = ~$5/month for 53GB
+#
+# APPROACH 2: Bake into Image (for reference, not recommended)
+#   - Uncomment the RUN commands below to pre-download during build
+#   - Makes image ~53GB (slow push/pull, expensive storage)
+#   - Any code change requires rebuilding entire image
+#
+# APPROACH 3: MIN_WORKERS=1
+#   - Keep 1 worker always warm with models in memory
+#   - First download happens once on deployment
+#   - Models stay in container filesystem until restart
+#   - Cost: ~$7-12/day GPU cost
+
+# Uncomment to bake models into image (NOT RECOMMENDED):
+# RUN python -c "from app.docstrange_utils import get_docstrange_processor; \
+#     print('📦 Downloading Docstrange (~6GB)...'); \
+#     get_docstrange_processor(); \
+#     print('✅ Docstrange ready!')"
+#
+# ARG HUGGING_FACE_TOKEN
+# RUN if [ -n "$HUGGING_FACE_TOKEN" ]; then \
+#         python -c "from app.llama_utils import get_llama_processor; \
+#         print('📦 Downloading Mixtral (~47GB)...'); \
+#         get_llama_processor(); \
+#         print('✅ Mixtral ready!')"; \
+#     fi
+
 # Make start script executable
 RUN chmod +x /app/start.sh
 
@@ -67,9 +102,14 @@ RUN chmod -R 755 /app
 # Environment variables for production
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
-ENV TRANSFORMERS_CACHE=/app/models
-ENV HF_HOME=/app/models
-ENV TORCH_HOME=/app/models
+
+# Model cache paths - will use /runpod-volume if available, fallback to /app/models
+# RunPod automatically mounts network volumes to /runpod-volume
+ENV TRANSFORMERS_CACHE=/runpod-volume/huggingface
+ENV HF_HOME=/runpod-volume/huggingface
+ENV TORCH_HOME=/runpod-volume/torch
+# Docstrange uses XDG_CACHE_HOME or falls back to ~/.cache
+ENV XDG_CACHE_HOME=/runpod-volume
 
 # GPU-specific environment variables for Mixtral 8x7B
 # Mixtral 8x7B requires ~24GB VRAM with 4-bit quantization

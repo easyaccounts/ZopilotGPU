@@ -6,6 +6,13 @@ set -e
 
 echo "🚀 Starting ZopilotGPU with Mixtral 8x7B..."
 
+# Initialize models (downloads to network volume if not cached)
+echo "🔧 Checking model cache..."
+python /app/init_models.py
+if [ $? -ne 0 ]; then
+    echo "⚠️  Model initialization had issues, but continuing..."
+fi
+
 # Detect cloud provider
 if [[ -n "${RUNPOD_POD_ID}" ]]; then
     echo "✅ Detected RunPod environment: ${RUNPOD_POD_ID}"

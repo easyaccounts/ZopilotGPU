@@ -229,6 +229,75 @@ async def health_check(request: Request):
         logger.error(f"Health check failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
 
+@app.post("/warmup")
+async def warmup_endpoint(request: Request):
+    """
+    Pre-download and cache all models to network volume.
+    Call this once after deployment to avoid cold start on first real request.
+    
+    Usage: curl -X POST https://your-endpoint/warmup -H "X-API-Key: your-key"
+    """
+    await verify_api_key(request)
+    
+    try:
+        import time
+        from pathlib import Path
+        
+        logger.info("🔥 Warmup requested - pre-caching models...")
+        start_time = time.time()
+        results = {}
+        
+        # Check if models already cached
+        volume_path = Path("/runpod-volume")
+        docstrange_cached = (volume_path / "docstrange" / "models").exists()
+        mixtral_cached = (volume_path / "huggingface" / "hub").exists()
+        
+        if docstrange_cached and mixtral_cached:
+            logger.info("✅ Models already cached - skipping download")
+            return {
+                "status": "already_cached",
+                "message": "Models already exist in cache",
+                "volume_path": str(volume_path)
+            }
+        
+        # Download Docstrange
+        if not docstrange_cached:
+            logger.info("📦 Downloading Docstrange models...")
+            doc_start = time.time()
+            get_docstrange_processor()
+            results["docstrange"] = {
+                "status": "downloaded",
+                "time_seconds": time.time() - doc_start
+            }
+        else:
+            results["docstrange"] = {"status": "already_cached"}
+        
+        # Download Mixtral
+        if not mixtral_cached:
+            logger.info("📦 Downloading Mixtral 8x7B model (this may take 15-25 min)...")
+            mix_start = time.time()
+            get_llama_processor()
+            results["mixtral"] = {
+                "status": "downloaded",
+                "time_seconds": time.time() - mix_start
+            }
+        else:
+            results["mixtral"] = {"status": "already_cached"}
+        
+        total_time = time.time() - start_time
+        logger.info(f"✅ Warmup complete in {total_time/60:.1f} minutes")
+        
+        return {
+            "status": "success",
+            "message": "Models cached successfully",
+            "total_time_seconds": total_time,
+            "models": results
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Warmup failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Warmup failed: {str(e)}")
+
 # ============================================
 # ENDPOINT 1: DOCUMENT EXTRACTION
 # ============================================
