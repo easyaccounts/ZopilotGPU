@@ -36,6 +36,9 @@ class DocstrageProcessor:
         # GPU service should NEVER call cloud APIs - that's the backend's job
         # Force cpu=True to ensure local extraction, and explicitly disable cloud
         try:
+            # CRITICAL: Ensure cache directory exists and is writable before initialization
+            self._ensure_cache_directory()
+            
             # CRITICAL: Force local extraction only (per official API documentation)
             # cpu=True automatically disables cloud mode (self.cloud_mode = not self.cpu)
             # No api_key ensures cloud cannot be used even if enabled
@@ -58,6 +61,37 @@ class DocstrageProcessor:
             logger.error("This usually indicates missing dependencies (torchvision, transformers)")
             logger.error("Check that torchvision is installed and compatible with torch version")
             raise
+    
+    def _ensure_cache_directory(self):
+        """Ensure cache directories exist and are writable."""
+        cache_dirs = [
+            os.path.expanduser("~/.cache"),
+            os.path.expanduser("~/.cache/docstrange"),
+            os.path.expanduser("~/.cache/huggingface"),
+        ]
+        
+        for cache_dir in cache_dirs:
+            cache_path = os.path.abspath(cache_dir)
+            try:
+                # If it exists as a file, remove it
+                if os.path.exists(cache_path) and not os.path.isdir(cache_path):
+                    logger.warning(f"Removing {cache_path} (was a file, need directory)")
+                    os.remove(cache_path)
+                
+                # Create directory if it doesn't exist
+                os.makedirs(cache_path, exist_ok=True)
+                
+                # Test write permissions
+                test_file = os.path.join(cache_path, '.write_test')
+                with open(test_file, 'w') as f:
+                    f.write('test')
+                os.remove(test_file)
+                
+                logger.info(f"✅ Cache directory ready: {cache_path}")
+            except Exception as e:
+                logger.error(f"❌ Cannot create/access cache directory {cache_path}: {e}")
+                # Try to continue anyway - may work with different cache location
+                pass
         
     def extract_with_docstrange(self, file_content: bytes, filename: str) -> Dict[str, Any]:
         """

@@ -11,10 +11,19 @@ from pathlib import Path
 cache_path = Path("/root/.cache")
 workspace_path = Path("/workspace")
 
-# Handle /root/.cache symlink - remove if it's a directory, create if missing
+# Handle /root/.cache symlink - remove if it's a directory or file, create if missing
 if cache_path.exists() and not cache_path.is_symlink():
     import shutil
-    shutil.rmtree(cache_path, ignore_errors=True)
+    try:
+        cache_type = 'dir' if cache_path.is_dir() else 'file'
+        if cache_path.is_dir():
+            shutil.rmtree(cache_path, ignore_errors=True)
+        else:
+            # It's a file, remove it
+            cache_path.unlink(missing_ok=True)
+        print(f"🗑️  Removed existing /root/.cache (was {cache_type})")
+    except Exception as e:
+        print(f"⚠️  Warning: Could not remove existing cache: {e}")
 
 if not cache_path.exists():
     try:
@@ -22,6 +31,12 @@ if not cache_path.exists():
         print(f"✅ Created symlink: /root/.cache -> /workspace")
     except Exception as e:
         print(f"⚠️  Warning: Could not create symlink: {e}")
+        # Try creating as directory if symlink fails
+        try:
+            cache_path.mkdir(parents=True, exist_ok=True)
+            print(f"✅ Created directory: /root/.cache (fallback)")
+        except Exception as e2:
+            print(f"❌ CRITICAL: Cannot create cache directory: {e2}")
 
 # Verify critical environment variables BEFORE any imports
 REQUIRED_ENV_VARS = {
