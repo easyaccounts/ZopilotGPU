@@ -51,10 +51,12 @@ class LlamaProcessor:
             
             # Configure 8-bit quantization for best quality/VRAM balance
             # 8-bit provides 98-99% of FP16 quality while fitting in 24GB VRAM
+            # Enable CPU offload for layers that don't fit in VRAM
             quantization_config = BitsAndBytesConfig(
                 load_in_8bit=True,
                 llm_int8_threshold=6.0,  # Threshold for outlier detection
-                llm_int8_has_fp16_weight=False  # Use 8-bit weights
+                llm_int8_has_fp16_weight=False,  # Use 8-bit weights
+                llm_int8_enable_fp32_cpu_offload=True  # Allow CPU offload for tight VRAM
             )
             
             # Load tokenizer
