@@ -36,6 +36,12 @@ class DocstrageProcessor:
         # GPU service should NEVER call cloud APIs - that's the backend's job
         # Force cpu=True to ensure local extraction, and explicitly disable cloud
         try:
+            # Log cache paths BEFORE initialization
+            logger.info(f"🔍 Docstrange cache check:")
+            logger.info(f"   XDG_CACHE_HOME: {os.getenv('XDG_CACHE_HOME', 'NOT SET')}")
+            logger.info(f"   /root/.cache exists: {os.path.exists('/root/.cache')}")
+            logger.info(f"   /workspace/docstrange exists: {os.path.exists('/workspace/docstrange')}")
+            
             # CRITICAL: Force local extraction only (per official API documentation)
             # cpu=True automatically disables cloud mode (self.cloud_mode = not self.cpu)
             # No api_key ensures cloud cannot be used even if enabled
@@ -46,7 +52,7 @@ class DocstrageProcessor:
                 ocr_enabled=True         # Enable OCR for scanned documents
             )
             processing_mode = self.extractor.get_processing_mode()
-            logger.info(f"DocStrange initialized: mode={processing_mode}, cloud_mode={self.extractor.cloud_mode}")
+            logger.info(f"✅ DocStrange initialized: mode={processing_mode}, cloud_mode={self.extractor.cloud_mode}")
             logger.info("CRITICAL: GPU will use LOCAL neural models ONLY, NO cloud API calls")
             
             # Verify cloud is actually disabled

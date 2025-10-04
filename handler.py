@@ -7,25 +7,50 @@ import sys
 from pathlib import Path
 
 # CRITICAL: Ensure /root/.cache symlink points to /workspace for Docstrange
-# This must happen before any model imports
+# This must happen BEFORE any model imports
 cache_path = Path("/root/.cache")
 workspace_path = Path("/workspace")
 
+print("=" * 60)
+print("🔧 Cache Setup - Ensuring models load from network volume")
+print("=" * 60)
+
+# Check if workspace exists
+if not workspace_path.exists():
+    print(f"❌ ERROR: /workspace not mounted! Network volume missing!")
+else:
+    print(f"✅ Network volume mounted at: /workspace")
+    # Show what's in workspace
+    if workspace_path.exists():
+        items = list(workspace_path.iterdir())[:5]
+        print(f"   Contents: {[str(p.name) for p in items]}")
+
+# Handle /root/.cache symlink
+if cache_path.exists() and not cache_path.is_symlink():
+    print(f"⚠️  /root/.cache exists as directory, removing...")
+    import shutil
+    shutil.rmtree(cache_path, ignore_errors=True)
+
 if not cache_path.exists():
-    # Create symlink if it doesn't exist
     try:
         cache_path.symlink_to(workspace_path)
         print(f"✅ Created symlink: /root/.cache -> /workspace")
     except Exception as e:
-        print(f"⚠️  Warning: Could not create /root/.cache symlink: {e}")
+        print(f"❌ ERROR: Could not create symlink: {e}")
 elif cache_path.is_symlink():
     target = cache_path.resolve()
-    if target != workspace_path:
-        print(f"⚠️  Warning: /root/.cache points to {target}, expected /workspace")
-    else:
+    if target == workspace_path:
         print(f"✅ Symlink verified: /root/.cache -> /workspace")
-else:
-    print(f"⚠️  Warning: /root/.cache exists but is not a symlink")
+    else:
+        print(f"⚠️  Symlink points to wrong location: {target}")
+        print(f"   Expected: {workspace_path}")
+
+# Verify environment variables
+print("\n📁 Model Cache Paths:")
+print(f"   TRANSFORMERS_CACHE: {os.getenv('TRANSFORMERS_CACHE', 'NOT SET')}")
+print(f"   HF_HOME: {os.getenv('HF_HOME', 'NOT SET')}")
+print(f"   XDG_CACHE_HOME: {os.getenv('XDG_CACHE_HOME', 'NOT SET')}")
+print("=" * 60 + "\n")
 
 # Verify critical environment variables BEFORE any imports
 REQUIRED_ENV_VARS = {

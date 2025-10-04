@@ -31,6 +31,11 @@ class LlamaProcessor:
     def _initialize_model(self):
         """Initialize Mixtral 8x7B model with GPU optimization and quantization."""
         try:
+            logger.info(f"🔍 Mixtral cache check:")
+            logger.info(f"   TRANSFORMERS_CACHE: {os.getenv('TRANSFORMERS_CACHE', 'NOT SET')}")
+            logger.info(f"   HF_HOME: {os.getenv('HF_HOME', 'NOT SET')}")
+            logger.info(f"   /workspace/huggingface exists: {os.path.exists('/workspace/huggingface')}")
+            
             logger.info(f"Loading {self.model_name} (MoE architecture)...")
             logger.info("Note: Mixtral 8x7B requires ~24GB VRAM with 8-bit quantization")
             
