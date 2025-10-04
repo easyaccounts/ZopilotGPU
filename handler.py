@@ -11,23 +11,8 @@ from pathlib import Path
 cache_path = Path("/root/.cache")
 workspace_path = Path("/workspace")
 
-print("=" * 60)
-print("🔧 Cache Setup - Ensuring models load from network volume")
-print("=" * 60)
-
-# Check if workspace exists
-if not workspace_path.exists():
-    print(f"❌ ERROR: /workspace not mounted! Network volume missing!")
-else:
-    print(f"✅ Network volume mounted at: /workspace")
-    # Show what's in workspace
-    if workspace_path.exists():
-        items = list(workspace_path.iterdir())[:5]
-        print(f"   Contents: {[str(p.name) for p in items]}")
-
-# Handle /root/.cache symlink
+# Handle /root/.cache symlink - remove if it's a directory, create if missing
 if cache_path.exists() and not cache_path.is_symlink():
-    print(f"⚠️  /root/.cache exists as directory, removing...")
     import shutil
     shutil.rmtree(cache_path, ignore_errors=True)
 
@@ -36,21 +21,7 @@ if not cache_path.exists():
         cache_path.symlink_to(workspace_path)
         print(f"✅ Created symlink: /root/.cache -> /workspace")
     except Exception as e:
-        print(f"❌ ERROR: Could not create symlink: {e}")
-elif cache_path.is_symlink():
-    target = cache_path.resolve()
-    if target == workspace_path:
-        print(f"✅ Symlink verified: /root/.cache -> /workspace")
-    else:
-        print(f"⚠️  Symlink points to wrong location: {target}")
-        print(f"   Expected: {workspace_path}")
-
-# Verify environment variables
-print("\n📁 Model Cache Paths:")
-print(f"   TRANSFORMERS_CACHE: {os.getenv('TRANSFORMERS_CACHE', 'NOT SET')}")
-print(f"   HF_HOME: {os.getenv('HF_HOME', 'NOT SET')}")
-print(f"   XDG_CACHE_HOME: {os.getenv('XDG_CACHE_HOME', 'NOT SET')}")
-print("=" * 60 + "\n")
+        print(f"⚠️  Warning: Could not create symlink: {e}")
 
 # Verify critical environment variables BEFORE any imports
 REQUIRED_ENV_VARS = {

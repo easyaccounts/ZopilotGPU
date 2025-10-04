@@ -109,10 +109,11 @@ ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
 # Model cache paths - RunPod network volumes mount at /workspace
-ENV TRANSFORMERS_CACHE=/workspace/transformers
+# HuggingFace uses HF_HOME/hub for model storage
 ENV HF_HOME=/workspace/huggingface
+ENV TRANSFORMERS_CACHE=/workspace/huggingface
 ENV TORCH_HOME=/workspace/torch
-# Docstrange uses XDG_CACHE_HOME
+# Docstrange uses XDG_CACHE_HOME (stores models in XDG_CACHE_HOME/docstrange)
 ENV XDG_CACHE_HOME=/workspace
 
 # GPU-specific environment variables for Mixtral 8x7B
