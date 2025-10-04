@@ -103,13 +103,12 @@ RUN chmod -R 755 /app
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# Model cache paths - will use /runpod-volume if available, fallback to /app/models
-# RunPod automatically mounts network volumes to /runpod-volume
-ENV TRANSFORMERS_CACHE=/runpod-volume/huggingface
-ENV HF_HOME=/runpod-volume/huggingface
-ENV TORCH_HOME=/runpod-volume/torch
-# Docstrange uses XDG_CACHE_HOME or falls back to ~/.cache
-ENV XDG_CACHE_HOME=/runpod-volume
+# Model cache paths - RunPod network volumes mount at /workspace
+ENV TRANSFORMERS_CACHE=/workspace/transformers
+ENV HF_HOME=/workspace/huggingface
+ENV TORCH_HOME=/workspace/torch
+# Docstrange uses XDG_CACHE_HOME
+ENV XDG_CACHE_HOME=/workspace
 
 # GPU-specific environment variables for Mixtral 8x7B
 # Mixtral 8x7B requires ~24GB VRAM with 4-bit quantization
