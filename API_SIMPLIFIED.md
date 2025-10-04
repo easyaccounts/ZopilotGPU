@@ -1,6 +1,3 @@
-# ZopilotGPU API - Simplified 2-Endpoint Design
-
-## 🎯 Overview
 
 Simplified GPU service with **2 main endpoints**:
 1. **`/extract`** - Document extraction using Docstrange
