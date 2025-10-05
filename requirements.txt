@@ -27,7 +27,8 @@ huggingface-hub>=0.23.0
 
 # Scientific Stack - NumPy 1.x compatible versions (required by docstrange)
 # scipy will be installed FIRST in Dockerfile to prevent ufunc errors
-scipy>=1.11.0,<1.14.0
+# scipy 1.11.x is NumPy 1.x compatible (1.13.0+ requires NumPy 2.x)
+scipy>=1.11.0,<1.13.0
 pandas>=2.0.0,<2.3.0
 
 # Image Processing - NumPy 1.x compatible versions

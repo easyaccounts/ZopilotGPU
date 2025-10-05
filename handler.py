@@ -27,13 +27,26 @@ except Exception as e:
     print(f"❌ CRITICAL: /runpod-volume is not writable: {e}")
     sys.exit(1)
 
+# Configure environment variables for model caching BEFORE any imports
+# This ensures all ML libraries use persistent storage on /runpod-volume
+os.environ['HF_HOME'] = str(workspace_path / "huggingface")  # HuggingFace (used by transformers)
+os.environ['TORCH_HOME'] = str(workspace_path / "torch")     # PyTorch models
+os.environ['XDG_CACHE_HOME'] = str(workspace_path)           # Generic cache (used by some libs)
+
+# CRITICAL: EasyOCR cache configuration
+# EasyOCR downloads models to MODULE_PATH/model by default (ephemeral!)
+# We need to redirect it to persistent storage using EASYOCR_MODULE_PATH
+easyocr_cache = workspace_path / "easyocr"
+easyocr_cache.mkdir(parents=True, exist_ok=True)
+os.environ['EASYOCR_MODULE_PATH'] = str(easyocr_cache)
+print(f"📦 EasyOCR cache: {easyocr_cache}")
+
 # Verify model cache directories exist
-# Note: HuggingFace cache structure is: /huggingface/models--<org>--<model>/
-#       NOT /huggingface/hub/models--<org>--<model>/
 required_cache_dirs = [
     workspace_path / "huggingface",  # HF models stored directly here
     workspace_path / "docstrange" / "models",  # DocStrange models in /models subfolder
-    workspace_path / "torch"
+    workspace_path / "torch",  # PyTorch models
+    easyocr_cache  # EasyOCR models
 ]
 
 for cache_dir in required_cache_dirs:
@@ -65,6 +78,20 @@ elif docstrange_symlink.is_symlink():
     print(f"✅ DocStrange symlink exists: {docstrange_symlink} -> {docstrange_symlink.readlink()}")
 else:
     print(f"⚠️  {docstrange_symlink} exists but is not a symlink")
+
+# CRITICAL: Create symlink for EasyOCR too (it uses ~/.EasyOCR/ by default)
+# This is a backup in case EASYOCR_MODULE_PATH doesn't work
+easyocr_symlink = Path("/root/.EasyOCR")
+if not easyocr_symlink.exists():
+    try:
+        easyocr_symlink.symlink_to(easyocr_cache)
+        print(f"✅ Created symlink: {easyocr_symlink} -> {easyocr_cache}")
+    except Exception as e:
+        print(f"⚠️  Could not create EasyOCR symlink: {e}")
+elif easyocr_symlink.is_symlink():
+    print(f"✅ EasyOCR symlink exists: {easyocr_symlink} -> {easyocr_symlink.readlink()}")
+else:
+    print(f"⚠️  {easyocr_symlink} exists but is not a symlink")
 
 # Verify critical environment variables BEFORE any imports
 REQUIRED_ENV_VARS = {
@@ -232,7 +259,20 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
                 logger.info(f"[RunPod] Extraction started (concurrent: {4 - extraction_semaphore._value}/{4})")
                 input_data = ExtractionInput(**data)
                 result = await extract_endpoint(mock_request, input_data)
-                return result.dict()
+                
+                # Handle JSONResponse (extract content from response body)
+                if hasattr(result, 'body'):
+                    import json
+                    # JSONResponse stores content as bytes in body attribute
+                    return json.loads(result.body.decode('utf-8'))
+                # Handle dict response (backward compatibility)
+                elif isinstance(result, dict):
+                    return result
+                # Handle Pydantic model response
+                elif hasattr(result, 'dict'):
+                    return result.dict()
+                else:
+                    raise ValueError(f"Unexpected result type: {type(result)}")
             
         elif endpoint == '/prompt':
             # Handle prompting with semaphore (limit to 1 concurrent classification)
@@ -240,7 +280,20 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
                 logger.info(f"[RunPod] Classification started (GPU locked)")
                 input_data = PromptInput(**data)
                 result = await prompt_endpoint(mock_request, input_data)
-                return result.dict()
+                
+                # Handle JSONResponse (extract content from response body)
+                if hasattr(result, 'body'):
+                    import json
+                    # JSONResponse stores content as bytes in body attribute
+                    return json.loads(result.body.decode('utf-8'))
+                # Handle dict response (backward compatibility)
+                elif isinstance(result, dict):
+                    return result
+                # Handle Pydantic model response
+                elif hasattr(result, 'dict'):
+                    return result.dict()
+                else:
+                    raise ValueError(f"Unexpected result type: {type(result)}")
             
         elif endpoint == '/health':
             # Health check with GPU memory info
