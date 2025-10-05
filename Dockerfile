@@ -20,6 +20,12 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     software-properties-common \
     ninja-build \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create symbolic link for python
@@ -37,15 +43,20 @@ COPY requirements.txt .
 # Install build dependencies first (required for package compilation)
 RUN pip install --no-cache-dir packaging wheel setuptools
 
+# CRITICAL FIX: Install NumPy 1.x FIRST to prevent all compatibility issues
+# NumPy 2.x breaks scipy, docstrange, and many scientific libraries
+# Must be installed BEFORE torch/torchvision to avoid dependency conflicts
+RUN pip install --no-cache-dir "numpy>=1.24.0,<2.0.0"
+
 # Install PyTorch with CUDA 12.1 support (required by many packages)
 # Using 2.3.1+ for complete torchvision operator support (includes nms)
-RUN pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu121
+# Installing after numpy ensures compatibility
+RUN pip install --no-cache-dir torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu121
 
-# CRITICAL FIX: Install scipy+numpy FIRST to prevent docstrange ufunc errors
-# This ensures scipy is compiled against the same NumPy version it will use at runtime
-# Must happen BEFORE docstrange is installed
+# Install scipy with NumPy 1.x (required by docstrange)
 # scipy 1.11.x-1.12.x are NumPy 1.x compatible (1.13.0+ requires NumPy 2.x)
-RUN pip install --no-cache-dir "numpy>=1.24.0,<2.0.0" "scipy>=1.11.0,<1.13.0"
+# Must happen BEFORE docstrange is installed
+RUN pip install --no-cache-dir "scipy>=1.11.0,<1.13.0"
 
 # Install remaining Python dependencies
 # scipy and numpy already installed above, so they won't be reinstalled
@@ -56,9 +67,15 @@ RUN pip install --no-cache-dir --ignore-installed blinker -r requirements.txt
 RUN pip uninstall -y bitsandbytes && \
     pip install bitsandbytes>=0.42.0 --no-cache-dir
 
-# Verify NumPy 1.x and scipy installation (required by docstrange)
-# Verify NumPy 1.x and scipy installation (required by docstrange)
-RUN python -c "import numpy, scipy; print(f'✓ NumPy {numpy.__version__} + scipy {scipy.__version__} installed'); assert numpy.__version__.startswith('1.'), f'Expected NumPy 1.x, got {numpy.__version__}'; assert scipy.__version__.startswith('1.1'), f'Expected scipy 1.11-1.12, got {scipy.__version__}'"
+# Verify NumPy 1.x, scipy, torch, and torchvision installation
+RUN python -c "import numpy, scipy, torch, torchvision; \
+    print(f'✓ NumPy {numpy.__version__}'); \
+    print(f'✓ scipy {scipy.__version__}'); \
+    print(f'✓ torch {torch.__version__}'); \
+    print(f'✓ torchvision {torchvision.__version__}'); \
+    assert numpy.__version__.startswith('1.'), f'ERROR: Expected NumPy 1.x, got {numpy.__version__}'; \
+    assert scipy.__version__.startswith('1.1'), f'ERROR: Expected scipy 1.11-1.12, got {scipy.__version__}'; \
+    print('✅ All core dependencies verified!')"
 
 # Copy application code
 COPY app/ ./app/
