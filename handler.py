@@ -47,6 +47,25 @@ for cache_dir in required_cache_dirs:
         except Exception as e:
             print(f"   Warning: Could not create {cache_dir}: {e}")
 
+# Create symlink for DocStrange (it ignores XDG_CACHE_HOME and uses ~/.cache)
+# This ensures DocStrange finds the cached models at /runpod-volume/docstrange
+root_cache = Path("/root/.cache")
+root_cache.mkdir(parents=True, exist_ok=True)
+
+docstrange_symlink = root_cache / "docstrange"
+docstrange_cache = workspace_path / "docstrange"
+
+if not docstrange_symlink.exists():
+    try:
+        docstrange_symlink.symlink_to(docstrange_cache)
+        print(f"✅ Created symlink: {docstrange_symlink} -> {docstrange_cache}")
+    except Exception as e:
+        print(f"⚠️  Could not create DocStrange symlink: {e}")
+elif docstrange_symlink.is_symlink():
+    print(f"✅ DocStrange symlink exists: {docstrange_symlink} -> {docstrange_symlink.readlink()}")
+else:
+    print(f"⚠️  {docstrange_symlink} exists but is not a symlink")
+
 # Verify critical environment variables BEFORE any imports
 REQUIRED_ENV_VARS = {
     'HUGGING_FACE_TOKEN': 'Hugging Face API token',
