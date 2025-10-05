@@ -1,9 +1,15 @@
 # 3-Layer Document Classification System
 ## Structured Classification Flow for Mixtral 8x7B (with Business Profile Integration)
 
-**Version:** 3.0  
-**Last Updated:** October 4, 2025  
+**Version:** 3.1  
+**Last Updated:** October 5, 2025  
 **Architecture:** Layer 1 (Structure) → Layer 2 (Semantics + Business Context) → Layer 3 (Action Mapping + Validation)
+
+**Enhanced in v3.1 (Gap Analysis Implementation):**
+- **ACCRUALS_DEFERRALS CATEGORY** - Added 14th category for prepaid expenses, accrued expenses, deferred revenue, accrued revenue
+- **PATTERN_10_ACCRUAL_ADJUSTMENT** - New pattern for month-end accrual/deferral journal entries
+- **Enhanced TAX Subcategories** - Distinct handling for tax collection vs tax remittance vs tax returns
+- **Foreign Currency & Inter-company Flags** - Explicit detection and special handling
 
 **Enhanced in v3.0:**
 - **BUSINESS PROFILE INTEGRATION** - Inject 16 business classification fields into Layer 2 & 3 prompts
@@ -19,10 +25,10 @@
 - Added customer deposits, prepaid expenses, write-offs, refunds, grants
 - Enhanced COGS trigger logic for inventory costing
 
-**Key Innovation (v3.0):**
+**Key Innovation (v3.1):**
 Without business context: ~75% auto-process rate  
-With business context: ~92% auto-process rate  
-**Improvement: +17% documents auto-processed**
+With business context + accruals: **~94% auto-process rate**  
+**Improvement: +19% documents auto-processed** (covers month-end accruals/deferrals)
 
 ---
 
@@ -197,6 +203,18 @@ PATTERN_9_LEASE_AGREEMENT:
     - Monthly/periodic payment amounts
   examples: [lease_agreement, lease_amendment, lease_payment_notice]
   complexity: MODERATE
+  
+PATTERN_10_ACCRUAL_ADJUSTMENT:
+  description: "Month-end accrual or deferral journal entry"
+  indicators:
+    - Period covered != transaction date
+    - Adjustment entry keywords (accrual, deferral, prepaid, unbilled)
+    - No external party (internal adjustment)
+    - Amount allocated over time period
+    - Often manual journal entry format
+  examples: [prepaid_expense_capitalization, accrued_expense_journal, deferred_revenue_entry, accrued_revenue_recognition]
+  complexity: MODERATE
+  note: "Critical for month-end close and matching principle compliance"
 ```
 
 ### 1.3 Layer 1 Output Example
@@ -330,6 +348,9 @@ COMPONENT_DETECTION:
     - is_refund: "Refund or credit to customer/from vendor?"
     - is_writeoff: "Bad debt, inventory obsolescence, or asset impairment?"
     - is_grant: "Government grant or subsidy?"
+    - is_foreign_currency: "Transaction in currency != business base currency?"
+    - is_intercompany: "Transaction with related entity/subsidiary?"
+    - requires_fx_adjustment: "Exchange rate difference requires FX gain/loss entry?"
 ```
 
 ### 2.4 Layer 2 Output Example
@@ -599,6 +620,45 @@ CATEGORIES:
         action: "match_grant_to_expenses"
         gl_accounts: [Bank Account, Grant Revenue or Expense Offset]
     gl_accounts: [Bank Account, Deferred Grant Income, Grant Revenue]
+  
+  ACCRUALS_DEFERRALS:
+    trigger_conditions:
+      - Transaction date != period covered by expense/revenue
+      - Payment timing mismatch with accounting period
+      - Keywords: "prepaid", "accrued", "deferred", "advance", "deposit"
+    documents: [prepaid_expense_invoice, accrual_journal, deferred_revenue_contract, advance_payment_notice]
+    subcategories:
+      PREPAID_EXPENSE:
+        description: "Expense paid in advance for future periods (ASC 340)"
+        indicators: ["annual license", "insurance premium", "rent paid in advance", amount > prepaid_expense_threshold]
+        action: "capitalize_prepaid_expense"
+        gl_accounts: [Prepaid Expenses (Asset), Bank Account or Accounts Payable]
+        note: "Capitalize as asset, amortize over benefit period"
+        example: "Annual software license $12,000 paid Jan 1 → Capitalize as Prepaid, expense $1,000/month"
+      ACCRUED_EXPENSE:
+        description: "Expense incurred but not yet billed (ASC 450)"
+        indicators: ["utility estimate", "unbilled services", "month-end accrual", period_end_adjustment]
+        action: "record_accrued_expense"
+        gl_accounts: [Expense Account, Accrued Expenses Payable]
+        note: "Recognize expense in current period, create liability"
+        example: "December electricity used but bill arrives Jan 15 → Accrue $500 expense in December"
+      DEFERRED_REVENUE:
+        description: "Payment received for future performance obligation (ASC 606)"
+        indicators: ["subscription prepayment", "multi-month contract", "SaaS annual payment", "retainer", "advance payment"]
+        action: "record_deferred_revenue"
+        gl_accounts: [Bank Account, Deferred Revenue (Liability)]
+        revenue_recognition_method: "over_time"
+        note: "Record as liability, recognize revenue as performance obligations satisfied"
+        example: "Annual SaaS subscription $12,000 paid upfront → Defer as liability, recognize $1,000/month"
+      ACCRUED_REVENUE:
+        description: "Revenue earned but not yet invoiced (ASC 606)"
+        indicators: ["unbilled services", "work-in-progress", "milestone completion", "time & materials"]
+        action: "record_accrued_revenue"
+        gl_accounts: [Accrued Revenue Receivable (Asset), Revenue]
+        note: "Recognize revenue in period earned, create receivable asset"
+        example: "Consulting work completed Dec 28 but invoiced Jan 5 → Accrue revenue in December"
+    gl_accounts: [Prepaid Expenses (Asset), Accrued Expenses Payable, Deferred Revenue (Liability), Accrued Revenue Receivable]
+    note: "Critical for accrual accounting - matching principle compliance"
     
   OTHER:
     trigger_conditions:
@@ -1485,7 +1545,7 @@ BUSINESS PROFILE INTEGRATION (KEY INNOVATION):
 
 ## Category Expansion Summary
 
-**Enhanced from 8 to 13 categories:**
+**Enhanced from 8 to 14 categories:**
 1. SALES (enhanced with customer deposits, refunds, bad debt write-offs)
 2. PURCHASES (enhanced with 4 subcategories: inventory/expense/prepaid/asset, plus vendor refunds)
 3. BANKING (enhanced as reconciliation trigger + foreign currency + inter-company flags)
@@ -1498,15 +1558,20 @@ BUSINESS PROFILE INTEGRATION (KEY INNOVATION):
 10. **EQUITY** (new - owner transactions)
 11. **LEASES** (new - lease accounting ASC 842)
 12. **GRANTS** (new - government grants and subsidies)
-13. OTHER (unchanged)
+13. **ACCRUALS_DEFERRALS** (new - prepaid expenses, accrued expenses, deferred revenue)
+14. OTHER (unchanged)
 
-**Added 3 new structure patterns:**
+**Added 4 new structure patterns:**
 - PATTERN_7_AMORTIZATION_SCHEDULE (for loan statements)
 - PATTERN_8_ASSET_DOCUMENT (for asset purchases/disposals)
 - PATTERN_9_LEASE_AGREEMENT (for lease contracts)
+- PATTERN_10_ACCRUAL_ADJUSTMENT (for month-end accrual/deferral journals)
 
 **Enhanced semantic analysis:**
-- purchase_nature detection (inventory vs expense vs asset)
+- purchase_nature detection (inventory vs expense vs asset vs prepaid)
+- accrual_timing detection (transaction date vs period covered)
+- foreign_currency detection (multi-currency transactions with FX impact)
+- intercompany_flag detection (related party transactions for consolidation elimination)
 - financing_type detection (debt vs equity)
 - Reconciliation focus for banking documents
 

@@ -50,6 +50,11 @@ RUN pip install --no-cache-dir --ignore-installed blinker -r requirements.txt
 RUN pip uninstall -y bitsandbytes && \
     pip install bitsandbytes>=0.42.0 --no-cache-dir
 
+# CRITICAL: Force NumPy 1.x after all other packages
+# Some dependencies (docstrange, scipy, etc.) try to install NumPy 2.x
+# This MUST be the last step before copying application code
+RUN pip install --force-reinstall 'numpy>=1.24.0,<2.0.0' --no-cache-dir
+
 # Copy application code
 COPY app/ ./app/
 COPY *.py ./

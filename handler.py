@@ -131,6 +131,47 @@ from app.main import ExtractionInput, PromptInput
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# GPU Memory management
+GPU_MEMORY_THRESHOLD_GB = 4.0  # Minimum free VRAM required to accept request
+EXTRACTION_MEMORY_ESTIMATE_GB = 2.5  # DocStrange + buffers (CPU mode)
+CLASSIFICATION_MEMORY_ESTIMATE_GB = 24.0  # Mixtral 8x7B 8-bit
+
+# Concurrency control
+# Since DocStrange uses CPU (cpu=True), we can have multiple extraction workers
+# But Mixtral uses GPU, so only 1 classification at a time
+import asyncio
+extraction_semaphore = asyncio.Semaphore(4)  # Max 4 concurrent extractions (CPU-bound)
+classification_semaphore = asyncio.Semaphore(1)  # Max 1 classification (GPU-bound)
+
+
+def check_gpu_memory_available(required_gb: float = GPU_MEMORY_THRESHOLD_GB) -> bool:
+    """
+    Check if sufficient GPU memory is available for processing.
+    Returns True if enough memory, False otherwise.
+    """
+    try:
+        if not torch.cuda.is_available():
+            # No GPU, assume CPU processing (always available)
+            return True
+        
+        torch.cuda.empty_cache()  # Clear cache first
+        torch.cuda.synchronize()  # Ensure all operations complete
+        
+        total_memory = torch.cuda.get_device_properties(0).total_memory
+        allocated_memory = torch.cuda.memory_allocated(0)
+        reserved_memory = torch.cuda.memory_reserved(0)
+        
+        # Use reserved memory (more accurate than allocated)
+        free_memory_gb = (total_memory - reserved_memory) / (1024**3)
+        
+        logger.info(f"GPU Memory: {free_memory_gb:.2f}GB free / {total_memory/(1024**3):.2f}GB total")
+        
+        return free_memory_gb >= required_gb
+        
+    except Exception as e:
+        logger.warning(f"Could not check GPU memory: {e}, assuming available")
+        return True  # Fail open (allow request)
+
 
 class MockRequest:
     """Mock Request object for API key verification"""
@@ -142,7 +183,7 @@ class MockRequest:
 
 async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Handle RunPod serverless job
+    Handle RunPod serverless job with GPU memory checking.
     
     Expected input format:
     {
@@ -162,27 +203,68 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
         
         logger.info(f"[RunPod] Processing endpoint: {endpoint}")
         
+        # Check GPU memory before processing (for GPU endpoints)
+        if endpoint in ['/extract', '/prompt']:
+            # Determine memory requirement based on endpoint
+            if endpoint == '/extract':
+                required_memory = EXTRACTION_MEMORY_ESTIMATE_GB
+                operation = "extraction"
+            else:  # /prompt
+                required_memory = CLASSIFICATION_MEMORY_ESTIMATE_GB
+                operation = "classification"
+            
+            # Check if enough memory available
+            if not check_gpu_memory_available(required_memory):
+                logger.warning(f"[RunPod] Insufficient GPU memory for {operation}, returning retry signal")
+                return {
+                    "success": False,
+                    "error": "GPU memory exhausted, retry shortly",
+                    "error_type": "InsufficientGPUMemory",
+                    "retry_after": 10  # Suggest retry after 10 seconds
+                }
+        
         # Create mock request with API key
         mock_request = MockRequest(api_key=api_key)
         
         if endpoint == '/extract':
-            # Handle extraction
-            input_data = ExtractionInput(**data)
-            result = await extract_endpoint(mock_request, input_data)
-            return result.dict()
+            # Handle extraction with semaphore (limit concurrent extractions)
+            async with extraction_semaphore:
+                logger.info(f"[RunPod] Extraction started (concurrent: {4 - extraction_semaphore._value}/{4})")
+                input_data = ExtractionInput(**data)
+                result = await extract_endpoint(mock_request, input_data)
+                return result.dict()
             
         elif endpoint == '/prompt':
-            # Handle prompting
-            input_data = PromptInput(**data)
-            result = await prompt_endpoint(mock_request, input_data)
-            return result.dict()
+            # Handle prompting with semaphore (limit to 1 concurrent classification)
+            async with classification_semaphore:
+                logger.info(f"[RunPod] Classification started (GPU locked)")
+                input_data = PromptInput(**data)
+                result = await prompt_endpoint(mock_request, input_data)
+                return result.dict()
             
         elif endpoint == '/health':
-            # Health check
+            # Health check with GPU memory info
+            gpu_info = {}
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+                reserved = torch.cuda.memory_reserved(0) / (1024**3)
+                allocated = torch.cuda.memory_allocated(0) / (1024**3)
+                free = total - reserved
+                gpu_info = {
+                    "gpu_available": True,
+                    "gpu_name": torch.cuda.get_device_name(0),
+                    "total_vram_gb": round(total, 2),
+                    "free_vram_gb": round(free, 2),
+                    "allocated_vram_gb": round(allocated, 2),
+                    "reserved_vram_gb": round(reserved, 2)
+                }
+            
             return {
                 "status": "healthy",
                 "service": "ZopilotGPU",
-                "model": "Mixtral-8x7B-Instruct-v0.1"
+                "model": "Mixtral-8x7B-Instruct-v0.1",
+                **gpu_info
             }
             
         else:
@@ -198,6 +280,14 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
             "error": str(e),
             "error_type": type(e).__name__
         }
+    finally:
+        # Always cleanup GPU memory after request
+        try:
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.synchronize()
+        except Exception as cleanup_error:
+            logger.warning(f"GPU cleanup error: {cleanup_error}")
 
 
 # Rename async_handler to handler (RunPod supports async handlers directly)

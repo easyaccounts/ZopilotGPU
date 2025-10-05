@@ -7,3 +7,17 @@ context = "."
 
 [handler]
 file = "handler.py"
+
+# Timeout configuration
+timeout = 300  # 5 minutes for cold start (model loading)
+execution_timeout = 120  # 2 minutes for warm requests
+
+# GPU-aware concurrency
+# RunPod will automatically limit concurrent requests based on available GPU memory
+# Each worker checks GPU memory before accepting requests
+max_concurrency = 4  # Maximum concurrent requests (will be limited by GPU memory)
+
+# Memory reservation per request (optional but recommended)
+# This tells RunPod to reserve GPU memory for each request
+# If not enough memory available, request is queued
+gpu_memory_per_request = "6GB"  # Reserve 6GB per DocStrange worker (conservative estimate)
