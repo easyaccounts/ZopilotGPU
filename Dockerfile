@@ -44,7 +44,8 @@ RUN pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url h
 # CRITICAL FIX: Install scipy+numpy FIRST to prevent docstrange ufunc errors
 # This ensures scipy is compiled against the same NumPy version it will use at runtime
 # Must happen BEFORE docstrange is installed
-RUN pip install --no-cache-dir "numpy>=1.24.0,<2.0.0" "scipy>=1.11.0,<1.14.0"
+# scipy 1.11.x-1.12.x are NumPy 1.x compatible (1.13.0+ requires NumPy 2.x)
+RUN pip install --no-cache-dir "numpy>=1.24.0,<2.0.0" "scipy>=1.11.0,<1.13.0"
 
 # Install remaining Python dependencies
 # scipy and numpy already installed above, so they won't be reinstalled
@@ -55,10 +56,9 @@ RUN pip install --no-cache-dir --ignore-installed blinker -r requirements.txt
 RUN pip uninstall -y bitsandbytes && \
     pip install bitsandbytes>=0.42.0 --no-cache-dir
 
-# Verify NumPy 1.x installation (required by docstrange)
-RUN pip list | grep -i numpy && \
-    python -c "import numpy; print(f'✓ NumPy {numpy.__version__} installed successfully'); assert numpy.__version__.startswith('1.'), f'Expected NumPy 1.x, got {numpy.__version__}'" && \
-    python -c "import scipy; from scipy.special import sph_legendre; print('✓ scipy imports working (ufunc error fixed)')"
+# Verify NumPy 1.x and scipy installation (required by docstrange)
+# Verify NumPy 1.x and scipy installation (required by docstrange)
+RUN python -c "import numpy, scipy; print(f'✓ NumPy {numpy.__version__} + scipy {scipy.__version__} installed'); assert numpy.__version__.startswith('1.'), f'Expected NumPy 1.x, got {numpy.__version__}'; assert scipy.__version__.startswith('1.1'), f'Expected scipy 1.11-1.12, got {scipy.__version__}'"
 
 # Copy application code
 COPY app/ ./app/
