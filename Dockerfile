@@ -37,12 +37,13 @@ COPY requirements.txt .
 # Install build dependencies first (required for package compilation)
 RUN pip install --no-cache-dir packaging wheel setuptools
 
-# Install PyTorch with CUDA 12.1 support FIRST (required by many packages)
+# Install PyTorch with CUDA 12.1 support (required by many packages)
 # Using 2.3.1+ for complete torchvision operator support (includes nms)
+# PyTorch 2.2+ supports NumPy 2.x
 RUN pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu121
 
-# Install Python dependencies
-# Use --ignore-installed for system packages that can't be uninstalled
+# Install Python dependencies - now with NumPy 2.x compatible versions
+# All scientific stack packages (scipy 1.13+, pandas 2.2+) support NumPy 2.x
 RUN pip install --no-cache-dir --ignore-installed blinker -r requirements.txt
 
 # Rebuild BitsAndBytes with CUDA 12.1 support for RTX 4090
@@ -50,10 +51,9 @@ RUN pip install --no-cache-dir --ignore-installed blinker -r requirements.txt
 RUN pip uninstall -y bitsandbytes && \
     pip install bitsandbytes>=0.42.0 --no-cache-dir
 
-# CRITICAL: Force NumPy 1.x after all other packages
-# Some dependencies (docstrange, scipy, etc.) try to install NumPy 2.x
-# This MUST be the last step before copying application code
-RUN pip install --force-reinstall 'numpy>=1.24.0,<2.0.0' --no-cache-dir
+# Verify NumPy 2.x installation
+RUN pip list | grep -i numpy && \
+    python -c "import numpy; print(f'✓ NumPy {numpy.__version__} installed successfully'); assert numpy.__version__.startswith('2.'), f'Expected NumPy 2.x, got {numpy.__version__}'"
 
 # Copy application code
 COPY app/ ./app/
