@@ -53,16 +53,18 @@ RUN pip install --no-cache-dir "numpy>=1.24.0,<2.0.0"
 # Must happen BEFORE docstrange is installed
 RUN pip install --no-cache-dir "scipy>=1.11.0,<1.13.0"
 
-# Install remaining Python dependencies FIRST (before PyTorch)
-# This allows pip to resolve all dependencies correctly
-# scipy and numpy already installed above, so they won't be reinstalled
-RUN pip install --no-cache-dir --ignore-installed blinker -r requirements.txt
+# Install PyTorch with CUDA 12.1 support BEFORE requirements.txt
+# CRITICAL: Using --no-deps to prevent reinstalling/upgrading NumPy
+# torch 2.1.2 has loose numpy>=1.21.2 requirement that triggers NumPy 2.x upgrade with --force-reinstall
+# PyTorch 2.1.2 is last version compatible with NumPy 1.x (2.2.0+ requires NumPy 2.x)
+RUN pip install --no-cache-dir --no-deps \
+    torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 \
+    --index-url https://download.pytorch.org/whl/cu121
 
-# Install PyTorch with CUDA 12.1 support LAST to override any version conflicts
-# CRITICAL: Using PyTorch 2.1.2 (last version compatible with NumPy 1.x)
-# PyTorch 2.2.0+ requires NumPy 2.x which breaks docstrange
-# Force install with --force-reinstall to ensure correct versions
-RUN pip install --no-cache-dir --force-reinstall torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 --index-url https://download.pytorch.org/whl/cu121
+# Install remaining Python dependencies AFTER PyTorch
+# accelerate is constrained to <1.0.0 in requirements.txt (NumPy 1.x compatible)
+# scipy and numpy already installed above, so they won't be upgraded
+RUN pip install --no-cache-dir --ignore-installed blinker -r requirements.txt
 
 # Rebuild BitsAndBytes with CUDA 12.1 support for RTX 4090
 # This ensures proper Ada Lovelace (compute capability 8.9) support

@@ -15,7 +15,8 @@ docstrange
 # NOTE: torch, torchvision, torchaudio installed separately in Dockerfile with CUDA 12.1 support
 # Do not add them here to avoid dependency conflicts
 transformers>=4.36.0,<4.50.0
-accelerate>=0.28.0
+# accelerate 1.0.0+ requires NumPy 2.x, stay on 0.x for NumPy 1.x compatibility
+accelerate>=0.28.0,<1.0.0
 # BitsAndBytes for RTX 4090 Ada Lovelace architecture
 bitsandbytes>=0.43.0
 
