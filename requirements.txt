@@ -11,10 +11,8 @@ aiofiles>=23.0.0
 docstrange
 
 # ML/AI - Core
-# PyTorch 2.3.1+ required for complete torchvision operator support (nms, etc.)
-# PyTorch 2.2+ supports NumPy 2.x
-torch>=2.3.1,<2.5.0
-torchvision>=0.18.1,<0.20.0
+# NOTE: torch, torchvision, torchaudio installed separately in Dockerfile with CUDA 12.1 support
+# Do not add them here to avoid dependency conflicts
 transformers>=4.36.0,<4.50.0
 # Upgraded for better NumPy 2.x support
 accelerate>=0.28.0
