@@ -38,8 +38,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir packaging wheel setuptools
 
 # Install PyTorch with CUDA 12.1 support FIRST (required by many packages)
-# Updated to 2.2.0+ for better RTX 4090 (Ada Lovelace) support
-RUN pip install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cu121
+# Using 2.3.1+ for complete torchvision operator support (includes nms)
+RUN pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu121
 
 # Install Python dependencies
 # Use --ignore-installed for system packages that can't be uninstalled
