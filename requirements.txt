@@ -13,7 +13,8 @@ docstrange
 # ML/AI - Core
 # NOTE: torch, torchvision, torchaudio installed separately in Dockerfile with CUDA 12.1 support
 # Do not add them here to avoid dependency conflicts
-transformers>=4.36.0,<4.50.0
+# transformers 4.44.0+ required for NumPy 2.x support (4.42.x requires numpy<2.0)
+transformers>=4.44.0,<4.50.0
 # Upgraded for better NumPy 2.x support
 accelerate>=0.28.0
 # BitsAndBytes 0.43.0+ for NumPy 2.x + RTX 4090 Ada Lovelace architecture
