@@ -48,19 +48,20 @@ RUN pip install --no-cache-dir packaging wheel setuptools
 # Must be installed BEFORE torch/torchvision to avoid dependency conflicts
 RUN pip install --no-cache-dir "numpy>=1.24.0,<2.0.0"
 
-# Install PyTorch with CUDA 12.1 support (required by many packages)
-# Using 2.3.1+ for complete torchvision operator support (includes nms)
-# Installing after numpy ensures compatibility
-RUN pip install --no-cache-dir torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu121
-
 # Install scipy with NumPy 1.x (required by docstrange)
 # scipy 1.11.x-1.12.x are NumPy 1.x compatible (1.13.0+ requires NumPy 2.x)
 # Must happen BEFORE docstrange is installed
 RUN pip install --no-cache-dir "scipy>=1.11.0,<1.13.0"
 
-# Install remaining Python dependencies
+# Install remaining Python dependencies FIRST (before PyTorch)
+# This allows pip to resolve all dependencies correctly
 # scipy and numpy already installed above, so they won't be reinstalled
 RUN pip install --no-cache-dir --ignore-installed blinker -r requirements.txt
+
+# Install PyTorch with CUDA 12.1 support LAST to override any version conflicts
+# Using 2.3.1+ for complete torchvision operator support (includes nms)
+# Force install with --force-reinstall to ensure correct versions
+RUN pip install --no-cache-dir --force-reinstall torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu121
 
 # Rebuild BitsAndBytes with CUDA 12.1 support for RTX 4090
 # This ensures proper Ada Lovelace (compute capability 8.9) support
