@@ -39,11 +39,15 @@ RUN pip install --no-cache-dir packaging wheel setuptools
 
 # Install PyTorch with CUDA 12.1 support (required by many packages)
 # Using 2.3.1+ for complete torchvision operator support (includes nms)
-# PyTorch 2.2+ supports NumPy 2.x
 RUN pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu121
 
-# Install Python dependencies - now with NumPy 2.x compatible versions
-# All scientific stack packages (scipy 1.13+, pandas 2.2+) support NumPy 2.x
+# CRITICAL FIX: Install scipy+numpy FIRST to prevent docstrange ufunc errors
+# This ensures scipy is compiled against the same NumPy version it will use at runtime
+# Must happen BEFORE docstrange is installed
+RUN pip install --no-cache-dir "numpy>=1.24.0,<2.0.0" "scipy>=1.11.0,<1.14.0"
+
+# Install remaining Python dependencies
+# scipy and numpy already installed above, so they won't be reinstalled
 RUN pip install --no-cache-dir --ignore-installed blinker -r requirements.txt
 
 # Rebuild BitsAndBytes with CUDA 12.1 support for RTX 4090
@@ -51,9 +55,10 @@ RUN pip install --no-cache-dir --ignore-installed blinker -r requirements.txt
 RUN pip uninstall -y bitsandbytes && \
     pip install bitsandbytes>=0.42.0 --no-cache-dir
 
-# Verify NumPy 2.x installation
+# Verify NumPy 1.x installation (required by docstrange)
 RUN pip list | grep -i numpy && \
-    python -c "import numpy; print(f'✓ NumPy {numpy.__version__} installed successfully'); assert numpy.__version__.startswith('2.'), f'Expected NumPy 2.x, got {numpy.__version__}'"
+    python -c "import numpy; print(f'✓ NumPy {numpy.__version__} installed successfully'); assert numpy.__version__.startswith('1.'), f'Expected NumPy 1.x, got {numpy.__version__}'" && \
+    python -c "import scipy; from scipy.special import sph_legendre; print('✓ scipy imports working (ufunc error fixed)')"
 
 # Copy application code
 COPY app/ ./app/
