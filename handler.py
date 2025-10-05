@@ -11,6 +11,14 @@ from pathlib import Path
 cache_path = Path("/root/.cache")
 workspace_path = Path("/workspace")
 
+# Ensure /workspace exists (RunPod creates it, but double-check)
+if not workspace_path.exists():
+    try:
+        workspace_path.mkdir(parents=True, exist_ok=True)
+        print(f"📁 Created /workspace directory")
+    except Exception as e:
+        print(f"⚠️  Warning: Could not create /workspace: {e}")
+
 # Handle /root/.cache symlink - remove if it's a directory or file, create if missing
 if cache_path.exists() and not cache_path.is_symlink():
     import shutil
@@ -37,6 +45,22 @@ if not cache_path.exists():
             print(f"✅ Created directory: /root/.cache (fallback)")
         except Exception as e2:
             print(f"❌ CRITICAL: Cannot create cache directory: {e2}")
+
+# Verify the symlink is valid and writable
+if cache_path.is_symlink():
+    try:
+        # Check if symlink target exists and is writable
+        target = cache_path.resolve()
+        if target.exists() and target.is_dir():
+            # Test write permissions
+            test_file = cache_path / ".write_test"
+            test_file.write_text("test")
+            test_file.unlink()
+            print(f"✅ Symlink verified: /root/.cache -> {cache_path.readlink()}")
+        else:
+            print(f"⚠️  Warning: Symlink target does not exist or is not a directory")
+    except Exception as e:
+        print(f"⚠️  Warning: Symlink verification failed: {e}")
 
 # Verify critical environment variables BEFORE any imports
 REQUIRED_ENV_VARS = {

@@ -73,13 +73,26 @@ class DocstrageProcessor:
         for cache_dir in cache_dirs:
             cache_path = os.path.abspath(cache_dir)
             try:
-                # If it exists as a file, remove it
+                # If it's a symlink, verify the target exists and is a directory
+                if os.path.islink(cache_path):
+                    target = os.readlink(cache_path)
+                    if not os.path.exists(cache_path):
+                        logger.warning(f"Symlink {cache_path} -> {target} has broken target, creating target directory")
+                        os.makedirs(target, exist_ok=True)
+                    elif not os.path.isdir(cache_path):
+                        logger.error(f"Symlink {cache_path} points to a file, not a directory")
+                        raise RuntimeError(f"Invalid cache symlink: {cache_path}")
+                    logger.info(f"✅ Cache symlink ready: {cache_path} -> {target}")
+                    continue
+                
+                # If it exists as a file (not symlink, not dir), remove it
                 if os.path.exists(cache_path) and not os.path.isdir(cache_path):
                     logger.warning(f"Removing {cache_path} (was a file, need directory)")
                     os.remove(cache_path)
                 
-                # Create directory if it doesn't exist
-                os.makedirs(cache_path, exist_ok=True)
+                # Create directory if it doesn't exist (skip if symlink)
+                if not os.path.exists(cache_path):
+                    os.makedirs(cache_path, exist_ok=True)
                 
                 # Test write permissions
                 test_file = os.path.join(cache_path, '.write_test')
