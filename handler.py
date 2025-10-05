@@ -6,17 +6,15 @@ import os
 import sys
 from pathlib import Path
 
-# Verify /runpod-volume/workspace exists (RunPod Serverless Network Volume)
-# Models were downloaded to /workspace subdirectory on the Network Volume
-workspace_path = Path("/runpod-volume/workspace")
+# Verify /runpod-volume exists (RunPod Serverless Network Volume mount point)
+workspace_path = Path("/runpod-volume")
 if not workspace_path.exists():
-    print("❌ CRITICAL: /runpod-volume/workspace directory does not exist!")
+    print("❌ CRITICAL: /runpod-volume directory does not exist!")
     print("   Please ensure RunPod Network Volume is properly attached to the endpoint")
-    print("   and that models were downloaded to /workspace subdirectory")
     sys.exit(1)
 
 if not workspace_path.is_dir():
-    print("❌ CRITICAL: /runpod-volume/workspace exists but is not a directory!")
+    print("❌ CRITICAL: /runpod-volume exists but is not a directory!")
     sys.exit(1)
 
 # Verify workspace is writable
@@ -24,9 +22,9 @@ try:
     test_file = workspace_path / ".write_test"
     test_file.write_text("test")
     test_file.unlink()
-    print(f"✅ /runpod-volume/workspace verified and writable")
+    print(f"✅ /runpod-volume verified and writable")
 except Exception as e:
-    print(f"❌ CRITICAL: /runpod-volume/workspace is not writable: {e}")
+    print(f"❌ CRITICAL: /runpod-volume is not writable: {e}")
     sys.exit(1)
 
 # Verify model cache directories exist

@@ -109,14 +109,14 @@ ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
 # Model cache paths - RunPod Serverless mounts network volumes at /runpod-volume
-# Models are stored in /workspace subdirectory on the Network Volume
+# Models are stored at Network Volume root (mounted as /runpod-volume in serverless)
 # HuggingFace stores models directly in HF_HOME (no /hub subdirectory)
 # Structure: HF_HOME/models--<org>--<model>/snapshots/<commit>/
-ENV HF_HOME=/runpod-volume/workspace/huggingface
-ENV TRANSFORMERS_CACHE=/runpod-volume/workspace/huggingface
-ENV TORCH_HOME=/runpod-volume/workspace/torch
+ENV HF_HOME=/runpod-volume/huggingface
+ENV TRANSFORMERS_CACHE=/runpod-volume/huggingface
+ENV TORCH_HOME=/runpod-volume/torch
 # Docstrange uses XDG_CACHE_HOME (stores models in XDG_CACHE_HOME/docstrange)
-ENV XDG_CACHE_HOME=/runpod-volume/workspace
+ENV XDG_CACHE_HOME=/runpod-volume
 
 # GPU-specific environment variables for Mixtral 8x7B
 # Mixtral 8x7B requires ~24GB VRAM with 8-bit quantization
