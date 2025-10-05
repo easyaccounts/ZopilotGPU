@@ -6,61 +6,46 @@ import os
 import sys
 from pathlib import Path
 
-# CRITICAL: Ensure /root/.cache symlink points to /workspace for Docstrange
-# This must happen BEFORE any model imports
-cache_path = Path("/root/.cache")
+# Verify /workspace exists and is mounted (RunPod Network Volume)
 workspace_path = Path("/workspace")
-
-# Ensure /workspace exists (RunPod creates it, but double-check)
 if not workspace_path.exists():
-    try:
-        workspace_path.mkdir(parents=True, exist_ok=True)
-        print(f"📁 Created /workspace directory")
-    except Exception as e:
-        print(f"⚠️  Warning: Could not create /workspace: {e}")
+    print("❌ CRITICAL: /workspace directory does not exist!")
+    print("   Please ensure RunPod Network Volume is properly mounted to /workspace")
+    sys.exit(1)
 
-# Handle /root/.cache symlink - remove if it's a directory or file, create if missing
-if cache_path.exists() and not cache_path.is_symlink():
-    import shutil
-    try:
-        cache_type = 'dir' if cache_path.is_dir() else 'file'
-        if cache_path.is_dir():
-            shutil.rmtree(cache_path, ignore_errors=True)
-        else:
-            # It's a file, remove it
-            cache_path.unlink(missing_ok=True)
-        print(f"🗑️  Removed existing /root/.cache (was {cache_type})")
-    except Exception as e:
-        print(f"⚠️  Warning: Could not remove existing cache: {e}")
+if not workspace_path.is_dir():
+    print("❌ CRITICAL: /workspace exists but is not a directory!")
+    sys.exit(1)
 
-if not cache_path.exists():
-    try:
-        cache_path.symlink_to(workspace_path)
-        print(f"✅ Created symlink: /root/.cache -> /workspace")
-    except Exception as e:
-        print(f"⚠️  Warning: Could not create symlink: {e}")
-        # Try creating as directory if symlink fails
+# Verify workspace is writable
+try:
+    test_file = workspace_path / ".write_test"
+    test_file.write_text("test")
+    test_file.unlink()
+    print(f"✅ /workspace verified and writable")
+except Exception as e:
+    print(f"❌ CRITICAL: /workspace is not writable: {e}")
+    sys.exit(1)
+
+# Verify model cache directories exist
+# Note: HuggingFace cache structure is: /huggingface/models--<org>--<model>/
+#       NOT /huggingface/hub/models--<org>--<model>/
+required_cache_dirs = [
+    workspace_path / "huggingface",  # HF models stored directly here
+    workspace_path / "docstrange" / "models",  # DocStrange models in /models subfolder
+    workspace_path / "torch"
+]
+
+for cache_dir in required_cache_dirs:
+    if cache_dir.exists():
+        print(f"✅ Found cache: {cache_dir}")
+    else:
+        print(f"⚠️  Cache directory does not exist (will be created): {cache_dir}")
         try:
-            cache_path.mkdir(parents=True, exist_ok=True)
-            print(f"✅ Created directory: /root/.cache (fallback)")
-        except Exception as e2:
-            print(f"❌ CRITICAL: Cannot create cache directory: {e2}")
-
-# Verify the symlink is valid and writable
-if cache_path.is_symlink():
-    try:
-        # Check if symlink target exists and is writable
-        target = cache_path.resolve()
-        if target.exists() and target.is_dir():
-            # Test write permissions
-            test_file = cache_path / ".write_test"
-            test_file.write_text("test")
-            test_file.unlink()
-            print(f"✅ Symlink verified: /root/.cache -> {cache_path.readlink()}")
-        else:
-            print(f"⚠️  Warning: Symlink target does not exist or is not a directory")
-    except Exception as e:
-        print(f"⚠️  Warning: Symlink verification failed: {e}")
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            print(f"   Created: {cache_dir}")
+        except Exception as e:
+            print(f"   Warning: Could not create {cache_dir}: {e}")
 
 # Verify critical environment variables BEFORE any imports
 REQUIRED_ENV_VARS = {

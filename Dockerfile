@@ -109,7 +109,8 @@ ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
 # Model cache paths - RunPod network volumes mount at /workspace
-# HuggingFace uses HF_HOME/hub for model storage
+# HuggingFace stores models directly in HF_HOME (no /hub subdirectory)
+# Structure: HF_HOME/models--<org>--<model>/snapshots/<commit>/
 ENV HF_HOME=/workspace/huggingface
 ENV TRANSFORMERS_CACHE=/workspace/huggingface
 ENV TORCH_HOME=/workspace/torch

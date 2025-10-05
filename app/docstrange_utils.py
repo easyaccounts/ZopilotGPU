@@ -64,47 +64,37 @@ class DocstrageProcessor:
     
     def _ensure_cache_directory(self):
         """Ensure cache directories exist and are writable."""
-        cache_dirs = [
-            os.path.expanduser("~/.cache"),
-            os.path.expanduser("~/.cache/docstrange"),
-            os.path.expanduser("~/.cache/huggingface"),
-        ]
+        # DocStrange uses XDG_CACHE_HOME/docstrange/models for model storage
+        # With XDG_CACHE_HOME=/workspace, it will use /workspace/docstrange/models
         
-        for cache_dir in cache_dirs:
-            cache_path = os.path.abspath(cache_dir)
-            try:
-                # If it's a symlink, verify the target exists and is a directory
-                if os.path.islink(cache_path):
-                    target = os.readlink(cache_path)
-                    if not os.path.exists(cache_path):
-                        logger.warning(f"Symlink {cache_path} -> {target} has broken target, creating target directory")
-                        os.makedirs(target, exist_ok=True)
-                    elif not os.path.isdir(cache_path):
-                        logger.error(f"Symlink {cache_path} points to a file, not a directory")
-                        raise RuntimeError(f"Invalid cache symlink: {cache_path}")
-                    logger.info(f"✅ Cache symlink ready: {cache_path} -> {target}")
-                    continue
+        xdg_cache_home = os.getenv('XDG_CACHE_HOME', os.path.expanduser('~/.cache'))
+        docstrange_cache = os.path.join(xdg_cache_home, 'docstrange', 'models')
+        
+        logger.info(f"DocStrange cache path: {docstrange_cache}")
+        
+        # Ensure the directory exists
+        try:
+            os.makedirs(docstrange_cache, exist_ok=True)
+            
+            # Test write permissions
+            test_file = os.path.join(docstrange_cache, '.write_test')
+            with open(test_file, 'w') as f:
+                f.write('test')
+            os.remove(test_file)
+            
+            logger.info(f"✅ DocStrange cache directory ready: {docstrange_cache}")
+            
+            # Check if models already exist
+            if os.path.exists(docstrange_cache) and len(os.listdir(docstrange_cache)) > 1:  # > 1 to ignore .write_test remnants
+                logger.info(f"✅ Found existing DocStrange models in cache")
+            else:
+                logger.warning(f"⚠️  No models found in cache - will download on first use (~6GB, 5-10 min)")
                 
-                # If it exists as a file (not symlink, not dir), remove it
-                if os.path.exists(cache_path) and not os.path.isdir(cache_path):
-                    logger.warning(f"Removing {cache_path} (was a file, need directory)")
-                    os.remove(cache_path)
-                
-                # Create directory if it doesn't exist (skip if symlink)
-                if not os.path.exists(cache_path):
-                    os.makedirs(cache_path, exist_ok=True)
-                
-                # Test write permissions
-                test_file = os.path.join(cache_path, '.write_test')
-                with open(test_file, 'w') as f:
-                    f.write('test')
-                os.remove(test_file)
-                
-                logger.info(f"✅ Cache directory ready: {cache_path}")
-            except Exception as e:
-                logger.error(f"❌ Cannot create/access cache directory {cache_path}: {e}")
-                # Try to continue anyway - may work with different cache location
-                pass
+        except Exception as e:
+            logger.error(f"❌ Cannot create/access DocStrange cache directory: {e}")
+            logger.error(f"   XDG_CACHE_HOME={xdg_cache_home}")
+            logger.error(f"   Expected path: {docstrange_cache}")
+            raise RuntimeError(f"DocStrange cache directory setup failed: {e}")
         
     def extract_with_docstrange(self, file_content: bytes, filename: str) -> Dict[str, Any]:
         """
