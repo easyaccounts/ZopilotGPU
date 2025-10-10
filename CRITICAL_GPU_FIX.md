@@ -28,35 +28,47 @@ Line 2: main.py:427  [PROMPT] Success, output type: dict
 
 ## 🔧 Fixes Applied
 
-### Fix #1: Prevent CPU Offloading ✅
+### Fix #1: Balance Model Weights vs Activation Memory ✅
 
-**Problem:** `device_map="auto"` automatically offloads weights to CPU when it thinks VRAM is tight
+**Problem:** Model uses too much VRAM for weights (22.93GB), leaving insufficient memory for activations during generation
 
-**Solution:** Add `max_memory` config to force all weights on GPU
+**Error from Logs:**
+```
+CUDA out of memory. Tried to allocate 56.00 MiB. 
+GPU 0 has a total capacity of 23.53 GiB of which 17.62 MiB is free.
+Of the allocated memory 22.93 GiB is allocated by PyTorch
+```
+
+**Solution:** Limit model weight allocation to leave room for activations
 
 ```python
-# ZopilotGPU/app/llama_utils.py:82-90
+# ZopilotGPU/app/llama_utils.py:37-39
+# Enable PyTorch memory expansion to reduce fragmentation
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+
+# ZopilotGPU/app/llama_utils.py:85-92
 max_memory_config = {
-    0: "21GB",  # Use 21GB of GPU 0 (leaves 3GB buffer for activations)
-    "cpu": "0GB"  # Disable CPU offloading completely
+    0: "20GB",  # Conservative: leaves 3.5GB buffer for activations
+    "cpu": "0GB"  # Disable CPU offloading to avoid meta tensor errors
 }
 
 self.model = AutoModelForCausalLM.from_pretrained(
     self.model_name,
     quantization_config=quantization_config,
     device_map="auto",
-    max_memory=max_memory_config,  # NEW: Prevent CPU offloading
+    max_memory=max_memory_config,  # NEW: Balance weights vs activations
     torch_dtype=torch.float16,
     ...
 )
 ```
 
 **Why This Works:**
-- RTX 4090 has 24GB VRAM
-- Mixtral 8x7B 8-bit quantized fits in ~18-20GB
-- Reserve 21GB for model weights, 3GB for activations/buffers
-- Explicitly disable CPU offloading (`"cpu": "0GB"`)
-- If model doesn't fit, loading will fail immediately (better than silent corruption)
+- RTX 4090 has 24GB VRAM (23.5GB available after overhead)
+- Mixtral 8x7B 8-bit fits in ~18-20GB for weights
+- **Previous attempt (21GB)**: Model used 22.93GB → OOM during generation
+- **New approach (20GB)**: Limits weights to 20GB, leaves 3.5GB for activations/buffers
+- `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` reduces memory fragmentation
+- Explicitly disable CPU offloading (`"cpu": "0GB"`) to avoid meta tensor errors
 
 ### Fix #2: Raise Exception on Generation Failure ✅
 

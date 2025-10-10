@@ -34,6 +34,10 @@ class LlamaProcessor:
             logger.info(f"Loading {self.model_name} (MoE architecture)...")
             logger.info("Note: Mixtral 8x7B requires ~24GB VRAM with 8-bit quantization")
             
+            # Enable PyTorch memory expansion to reduce fragmentation
+            # Prevents "CUDA out of memory" errors during generation
+            os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+            
             # Clear GPU cache before loading (critical for 24GB VRAM)
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
@@ -77,13 +81,14 @@ class LlamaProcessor:
             logger.info("⏱️  Cached: ~5 seconds | First download: ~15-30 minutes")
             model_load_start = __import__('time').time()
             
-            # CRITICAL FIX: Prevent CPU offloading
-            # device_map="auto" causes "meta tensor" errors when it offloads weights to CPU
-            # RTX 4090 has 24GB VRAM, Mixtral 8x7B 8-bit fits in ~18-20GB
-            # Use max_memory to ensure all weights stay on GPU
+            # CRITICAL FIX: Balance model weights vs activation memory
+            # RTX 4090 has 24GB VRAM total (23.5GB available after overhead)
+            # Mixtral 8x7B 8-bit needs ~18-20GB for weights + 2-4GB for activations
+            # Current logs show: 22.93GB weights used = TOO MUCH (no room for activations)
+            # Solution: Limit weights to 20GB, leave 3.5GB for activations/buffers
             max_memory_config = {
-                0: "21GB",  # Use 21GB of GPU 0 (leaves 3GB buffer for activations)
-                "cpu": "0GB"  # Disable CPU offloading completely
+                0: "20GB",  # Conservative: leaves 3.5GB buffer for activations
+                "cpu": "0GB"  # Disable CPU offloading to avoid meta tensor errors
             }
             
             # Load model with standard attention (Flash Attention 2 disabled for faster builds)
