@@ -102,7 +102,8 @@ class LlamaProcessor:
                 try:
                     max_memory_config = {
                         0: memory_config["model"],
-                        "cpu": "0GB"  # CRITICAL: Disable CPU offloading to avoid meta tensor errors
+                        "cpu": "0GB",  # CRITICAL: Disable CPU offloading to avoid meta tensor errors
+                        "disk": "0GB"  # CRITICAL: Disable disk offloading to prevent weights expanding during generation
                     }
 
                     logger.info(f"🔄 Attempt {i}/{len(memory_attempts)}: {memory_config['model']} for weights, {memory_config['activations']} for activations")
@@ -113,11 +114,12 @@ class LlamaProcessor:
                         self.model_name,
                         quantization_config=quantization_config,
                         device_map="auto",
-                        max_memory=max_memory_config,  # Prevent CPU offloading
+                        max_memory=max_memory_config,  # Prevent CPU and disk offloading
                         torch_dtype=torch.float16,
                         token=hf_token,
                         trust_remote_code=True,
                         low_cpu_mem_usage=True,
+                        offload_folder=None,  # Explicitly disable disk offloading
                         # attn_implementation="flash_attention_2"  # Requires flash-attn package
                     )
                     
