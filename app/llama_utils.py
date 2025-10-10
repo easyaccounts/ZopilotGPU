@@ -81,29 +81,71 @@ class LlamaProcessor:
             logger.info("⏱️  Cached: ~5 seconds | First download: ~15-30 minutes")
             model_load_start = __import__('time').time()
             
-            # CRITICAL FIX: Balance model weights vs activation memory
+            # CRITICAL: Balance model weights vs activation memory
             # RTX 4090 has 24GB VRAM total (23.5GB available after overhead)
             # Mixtral 8x7B 8-bit needs ~18-20GB for weights + 2-4GB for activations
-            # Current logs show: 22.93GB weights used = TOO MUCH (no room for activations)
-            # Solution: Limit weights to 20GB, leave 3.5GB for activations/buffers
-            max_memory_config = {
-                0: "20GB",  # Conservative: leaves 3.5GB buffer for activations
-                "cpu": "0GB"  # Disable CPU offloading to avoid meta tensor errors
-            }
+            # 
+            # Memory allocation strategy with automatic fallback:
+            # Try 1: 20GB (leaves 3.5GB for activations) - Recommended
+            # Try 2: 21GB (leaves 2.5GB for activations) - If 20GB insufficient
+            # Try 3: Fail with clear error - Model too large for GPU
             
-            # Load model with standard attention (Flash Attention 2 disabled for faster builds)
-            # Flash Attention can be enabled by uncommenting attn_implementation parameter
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_name,
-                quantization_config=quantization_config,
-                device_map="auto",
-                max_memory=max_memory_config,  # Prevent CPU offloading
-                torch_dtype=torch.float16,
-                token=hf_token,
-                trust_remote_code=True,
-                low_cpu_mem_usage=True,
-                # attn_implementation="flash_attention_2"  # Requires flash-attn package
-            )
+            memory_attempts = [
+                {"model": "20GB", "activations": "3.5GB buffer"},  # Conservative
+                {"model": "21GB", "activations": "2.5GB buffer"},  # Aggressive
+            ]
+            
+            model_loaded = False
+            last_error = None
+            
+            for i, memory_config in enumerate(memory_attempts, 1):
+                try:
+                    max_memory_config = {
+                        0: memory_config["model"],
+                        "cpu": "0GB"  # CRITICAL: Disable CPU offloading to avoid meta tensor errors
+                    }
+                    
+                    logger.info(f"Attempt {i}/{len(memory_attempts)}: Loading with {memory_config['model']} for model ({memory_config['activations']} for activations)")
+                    
+                    # Load model with standard attention (Flash Attention 2 disabled for faster builds)
+                    # Flash Attention can be enabled by uncommenting attn_implementation parameter
+                    self.model = AutoModelForCausalLM.from_pretrained(
+                        self.model_name,
+                        quantization_config=quantization_config,
+                        device_map="auto",
+                        max_memory=max_memory_config,  # Prevent CPU offloading
+                        torch_dtype=torch.float16,
+                        token=hf_token,
+                        trust_remote_code=True,
+                        low_cpu_mem_usage=True,
+                        # attn_implementation="flash_attention_2"  # Requires flash-attn package
+                    )
+                    
+                    model_loaded = True
+                    logger.info(f"✅ Model loaded successfully with {memory_config['model']} allocation")
+                    break  # Success, exit loop
+                    
+                except Exception as attempt_error:
+                    last_error = attempt_error
+                    error_msg = str(attempt_error)
+                    logger.warning(f"⚠️  Attempt {i} failed with {memory_config['model']}: {error_msg[:100]}...")
+                    
+                    if i < len(memory_attempts):
+                        logger.info(f"🔄 Trying next configuration...")
+                        # Clear GPU cache before next attempt
+                        if torch.cuda.is_available():
+                            torch.cuda.empty_cache()
+                    continue
+            
+            # If all attempts failed, raise clear error
+            if not model_loaded:
+                error_msg = (
+                    f"❌ CRITICAL: Failed to load Mixtral model after {len(memory_attempts)} attempts. "
+                    f"GPU VRAM (23.5GB) insufficient for Mixtral 8x7B 8-bit quantization. "
+                    f"Last error: {str(last_error)[:200]}"
+                )
+                logger.error(error_msg)
+                raise RuntimeError(error_msg) from last_error
             
             # Report actual load time
             model_load_time = __import__('time').time() - model_load_start
@@ -111,6 +153,30 @@ class LlamaProcessor:
                 logger.info(f"✅ Model loaded from cache in {model_load_time:.1f} seconds")
             else:
                 logger.info(f"✅ Model loaded in {model_load_time:.1f} seconds (downloaded from HuggingFace)")
+            
+            # CRITICAL: Verify no CPU offloading (check for meta device)
+            if hasattr(self.model, 'hf_device_map'):
+                device_map = self.model.hf_device_map
+                cpu_layers = [k for k, v in device_map.items() if 'cpu' in str(v).lower() or 'meta' in str(v).lower()]
+                
+                if cpu_layers:
+                    logger.error(f"❌ CRITICAL: {len(cpu_layers)} layers on CPU/meta device!")
+                    logger.error(f"   First few: {cpu_layers[:5]}")
+                    raise RuntimeError(
+                        f"Model has {len(cpu_layers)} layers on CPU/meta device. "
+                        f"This will cause 'Cannot copy out of meta tensor' errors during generation. "
+                        f"Increase GPU memory allocation or use smaller model."
+                    )
+                else:
+                    logger.info(f"✅ All model layers on GPU (no CPU offloading)")
+            
+            # Report GPU memory usage after loading
+            if torch.cuda.is_available():
+                allocated = torch.cuda.memory_allocated(0) / (1024**3)
+                reserved = torch.cuda.memory_reserved(0) / (1024**3)
+                total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+                free = total - reserved
+                logger.info(f"📊 GPU Memory: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved, {free:.2f}GB free")
             
         except Exception as e:
             error_msg = str(e)
