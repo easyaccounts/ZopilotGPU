@@ -102,8 +102,7 @@ class LlamaProcessor:
                 try:
                     max_memory_config = {
                         0: memory_config["model"],
-                        "cpu": "0GB",  # CRITICAL: Disable CPU offloading to avoid meta tensor errors
-                        "disk": "0GB"  # CRITICAL: Disable disk offloading to prevent weights expanding during generation
+                        "cpu": "0GB"  # CRITICAL: Disable CPU offloading to avoid meta tensor errors
                     }
 
                     logger.info(f"🔄 Attempt {i}/{len(memory_attempts)}: {memory_config['model']} for weights, {memory_config['activations']} for activations")
