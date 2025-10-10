@@ -73,7 +73,18 @@ class LlamaProcessor:
             logger.info("Tokenizer loaded successfully")
             
             # Load model with quantization
-            logger.info("Loading model (this may take 5-10 minutes on first run)...")
+            logger.info("Loading model from cache...")
+            logger.info("⏱️  Cached: ~5 seconds | First download: ~15-30 minutes")
+            model_load_start = __import__('time').time()
+            
+            # CRITICAL FIX: Prevent CPU offloading
+            # device_map="auto" causes "meta tensor" errors when it offloads weights to CPU
+            # RTX 4090 has 24GB VRAM, Mixtral 8x7B 8-bit fits in ~18-20GB
+            # Use max_memory to ensure all weights stay on GPU
+            max_memory_config = {
+                0: "21GB",  # Use 21GB of GPU 0 (leaves 3GB buffer for activations)
+                "cpu": "0GB"  # Disable CPU offloading completely
+            }
             
             # Load model with standard attention (Flash Attention 2 disabled for faster builds)
             # Flash Attention can be enabled by uncommenting attn_implementation parameter
@@ -81,13 +92,20 @@ class LlamaProcessor:
                 self.model_name,
                 quantization_config=quantization_config,
                 device_map="auto",
+                max_memory=max_memory_config,  # Prevent CPU offloading
                 torch_dtype=torch.float16,
                 token=hf_token,
                 trust_remote_code=True,
                 low_cpu_mem_usage=True,
                 # attn_implementation="flash_attention_2"  # Requires flash-attn package
             )
-            logger.info("✅ Model loaded successfully with standard attention")
+            
+            # Report actual load time
+            model_load_time = __import__('time').time() - model_load_start
+            if model_load_time < 30:
+                logger.info(f"✅ Model loaded from cache in {model_load_time:.1f} seconds")
+            else:
+                logger.info(f"✅ Model loaded in {model_load_time:.1f} seconds (downloaded from HuggingFace)")
             
         except Exception as e:
             error_msg = str(e)
@@ -116,16 +134,25 @@ class LlamaProcessor:
             raise RuntimeError("Model not initialized")
         
         try:
+            logger.info("🎯 Starting generation...")
+            gen_start = __import__('time').time()
+            
             # Build the system prompt for structured JSON output
             system_message = self._build_system_prompt(context, prompt)
+            logger.info(f"📝 Prompt built: {len(system_message)} chars")
             
             # Format for Mixtral-Instruct (uses [INST] tags)
             formatted_prompt = f"<s>[INST] {system_message}\n\nGenerate the journal entry in the specified JSON format. [/INST]"
             
             # Tokenize and generate
+            logger.info("🔢 Tokenizing input...")
             inputs = self.tokenizer(formatted_prompt, return_tensors="pt", truncation=True, max_length=2048)
             inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
+            input_tokens = len(inputs["input_ids"][0])
+            logger.info(f"   Input tokens: {input_tokens}")
             
+            logger.info("🚀 Generating response (max 1024 tokens)...")
+            gen_only_start = __import__('time').time()
             with torch.no_grad():
                 outputs = self.model.generate(
                     **inputs,
@@ -138,16 +165,32 @@ class LlamaProcessor:
                     pad_token_id=self.tokenizer.eos_token_id,
                     eos_token_id=self.tokenizer.eos_token_id
                 )
+            gen_time = __import__('time').time() - gen_only_start
+            output_tokens = len(outputs[0]) - input_tokens
+            tokens_per_sec = output_tokens / gen_time if gen_time > 0 else 0
+            logger.info(f"✅ Generated {output_tokens} tokens in {gen_time:.1f}s ({tokens_per_sec:.1f} tok/s)")
             
             # Decode response
+            logger.info("📖 Decoding response...")
             response = self.tokenizer.decode(outputs[0][len(inputs["input_ids"][0]):], skip_special_tokens=True)
+            logger.info(f"   Response length: {len(response)} chars")
             
             # Parse JSON from response
-            return self._parse_journal_response(response)
+            logger.info("🔍 Parsing JSON response...")
+            result = self._parse_journal_response(response)
+            
+            total_time = __import__('time').time() - gen_start
+            logger.info(f"🎉 Generation complete in {total_time:.1f}s total")
+            return result
             
         except Exception as e:
-            logger.error(f"Generation failed: {str(e)}")
-            return self._fallback_journal_entry(context, str(e))
+            import traceback
+            logger.error(f"❌ Generation failed: {str(e)}")
+            logger.error(f"🔍 Traceback:\n{traceback.format_exc()}")
+            
+            # CRITICAL: Don't return fallback - raise exception so backend knows generation failed
+            # Returning fallback causes silent failures where backend gets empty/incorrect data
+            raise RuntimeError(f"Mixtral generation failed: {str(e)}") from e
     
     def _build_system_prompt(self, context: Optional[Dict[str, Any]], user_prompt: str) -> str:
         """Build system prompt for structured journal entry generation."""

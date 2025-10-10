@@ -330,7 +330,8 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
         data = job_input.get('data', {})
         api_key = job_input.get('api_key')
         
-        logger.info(f"[RunPod] Processing endpoint: {endpoint}")
+        logger.info(f"[RunPod] 📨 Processing endpoint: {endpoint}")
+        logger.info(f"[RunPod] 📦 Payload size: {len(str(data))} bytes")
         
         # Check GPU memory before processing (for GPU endpoints)
         if endpoint in ['/extract', '/prompt']:
@@ -379,23 +380,45 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
         elif endpoint == '/prompt':
             # Handle prompting with semaphore (limit to 1 concurrent classification)
             async with classification_semaphore:
-                logger.info(f"[RunPod] Classification started (GPU locked)")
-                input_data = PromptInput(**data)
-                result = await prompt_endpoint(mock_request, input_data)
+                logger.info(f"[RunPod] 🎯 Classification started (GPU locked)")
                 
-                # Handle JSONResponse (extract content from response body)
-                if hasattr(result, 'body'):
-                    import json
-                    # JSONResponse stores content as bytes in body attribute
-                    return json.loads(result.body.decode('utf-8'))
-                # Handle dict response (backward compatibility)
-                elif isinstance(result, dict):
-                    return result
-                # Handle Pydantic model response
-                elif hasattr(result, 'dict'):
-                    return result.dict()
-                else:
-                    raise ValueError(f"Unexpected result type: {type(result)}")
+                try:
+                    input_data = PromptInput(**data)
+                    logger.info(f"[RunPod] 📝 Prompt length: {len(input_data.prompt)} chars")
+                    
+                    result = await prompt_endpoint(mock_request, input_data)
+                    logger.info(f"[RunPod] ✅ Classification completed successfully")
+                    
+                    # Handle JSONResponse (extract content from response body)
+                    if hasattr(result, 'body'):
+                        import json
+                        # JSONResponse stores content as bytes in body attribute
+                        return json.loads(result.body.decode('utf-8'))
+                    # Handle dict response (backward compatibility)
+                    elif isinstance(result, dict):
+                        return result
+                    # Handle Pydantic model response
+                    elif hasattr(result, 'dict'):
+                        return result.dict()
+                    else:
+                        raise ValueError(f"Unexpected result type: {type(result)}")
+                        
+                except Exception as prompt_error:
+                    logger.error(f"[RunPod] ❌ Classification failed: {str(prompt_error)}")
+                    logger.error(f"[RunPod] 📋 Error type: {type(prompt_error).__name__}")
+                    
+                    # Import traceback for detailed error info
+                    import traceback
+                    error_traceback = traceback.format_exc()
+                    logger.error(f"[RunPod] 🔍 Traceback:\n{error_traceback}")
+                    
+                    # Return error response (don't raise - RunPod needs a response)
+                    return {
+                        "success": False,
+                        "error": str(prompt_error),
+                        "error_type": type(prompt_error).__name__,
+                        "traceback": error_traceback[:1000]  # Limit traceback size
+                    }
             
         elif endpoint == '/health':
             # Health check with GPU memory info
@@ -429,11 +452,15 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
             }
             
     except Exception as e:
-        logger.error(f"[RunPod] Handler error: {str(e)}")
+        import traceback
+        error_traceback = traceback.format_exc()
+        logger.error(f"[RunPod] ❌ Handler error: {str(e)}")
+        logger.error(f"[RunPod] 🔍 Traceback:\n{error_traceback}")
         return {
             "success": False,
             "error": str(e),
-            "error_type": type(e).__name__
+            "error_type": type(e).__name__,
+            "traceback": error_traceback[:1000]
         }
     finally:
         # Always cleanup GPU memory after request

@@ -403,12 +403,19 @@ async def prompt_endpoint(request: Request, data: PromptInput):
     await verify_api_key(request)
     
     try:
-        logger.info(f"[PROMPT] Sending to Mixtral: {data.prompt[:100]}...")
+        prompt_start = asyncio.get_event_loop().time()
+        logger.info(f"[PROMPT] 📨 Received classification request")
+        logger.info(f"[PROMPT] 📝 Prompt length: {len(data.prompt)} chars")
+        logger.info(f"[PROMPT] 🎯 Sending to Mixtral: {data.prompt[:100]}...")
         
         # Generate with Mixtral (runs in thread pool to avoid blocking)
+        logger.info(f"[PROMPT] 🔄 Running generation in thread pool...")
         output = await asyncio.get_event_loop().run_in_executor(
             None, generate_with_llama, data.prompt, data.context
         )
+        
+        prompt_time = asyncio.get_event_loop().time() - prompt_start
+        logger.info(f"[PROMPT] ⏱️  Total prompt processing time: {prompt_time:.1f}s")
         
         # Preserve output structure (dict or string)
         # generate_with_llama returns dict (journal entry), keep it as-is
@@ -420,11 +427,12 @@ async def prompt_endpoint(request: Request, data: PromptInput):
                 "prompt_length": len(data.prompt),
                 "context_provided": data.context is not None,
                 "model": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-                "output_type": type(output).__name__
+                "output_type": type(output).__name__,
+                "processing_time_seconds": round(prompt_time, 2)
             }
         }
         
-        logger.info(f"[PROMPT] Success, output type: {type(output).__name__}")
+        logger.info(f"[PROMPT] ✅ Success! Output type: {type(output).__name__}, response size: {len(str(output))} chars")
         
         # Return plain JSON (no Pydantic validation) to preserve dynamic structure
         return JSONResponse(content=response_data)
