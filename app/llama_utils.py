@@ -104,9 +104,9 @@ class LlamaProcessor:
                         0: memory_config["model"],
                         "cpu": "0GB"  # CRITICAL: Disable CPU offloading to avoid meta tensor errors
                     }
-                    
-                    logger.info(f"Attempt {i}/{len(memory_attempts)}: Loading with {memory_config['model']} for model ({memory_config['activations']} for activations)")
-                    
+
+                    logger.info(f"🔄 Attempt {i}/{len(memory_attempts)}: {memory_config['model']} for weights, {memory_config['activations']} for activations")
+
                     # Load model with standard attention (Flash Attention 2 disabled for faster builds)
                     # Flash Attention can be enabled by uncommenting attn_implementation parameter
                     self.model = AutoModelForCausalLM.from_pretrained(
@@ -157,8 +157,9 @@ class LlamaProcessor:
             # CRITICAL: Verify no CPU offloading (check for meta device)
             if hasattr(self.model, 'hf_device_map'):
                 device_map = self.model.hf_device_map
-                cpu_layers = [k for k, v in device_map.items() if 'cpu' in str(v).lower() or 'meta' in str(v).lower()]
-                
+                cpu_layers = [k for k, v in device_map.items() 
+                             if 'cpu' in str(v).lower() or 'meta' in str(v).lower()]
+
                 if cpu_layers:
                     logger.error(f"❌ CRITICAL: {len(cpu_layers)} layers on CPU/meta device!")
                     logger.error(f"   First few: {cpu_layers[:5]}")
@@ -176,7 +177,7 @@ class LlamaProcessor:
                 reserved = torch.cuda.memory_reserved(0) / (1024**3)
                 total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
                 free = total - reserved
-                logger.info(f"📊 GPU Memory: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved, {free:.2f}GB free")
+                logger.info(f"GPU Memory: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved, {free:.2f}GB free")
             
         except Exception as e:
             error_msg = str(e)
