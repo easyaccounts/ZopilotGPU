@@ -55,12 +55,12 @@ class LlamaProcessor:
             
             # Configure 8-bit quantization for best quality/VRAM balance
             # 8-bit provides 98-99% of FP16 quality while fitting in 24GB VRAM
-            # Enable CPU offload for layers that don't fit in VRAM
+            # CRITICAL: CPU offload DISABLED to prevent meta tensor errors and disk offloading
             quantization_config = BitsAndBytesConfig(
                 load_in_8bit=True,
                 llm_int8_threshold=6.0,  # Threshold for outlier detection
                 llm_int8_has_fp16_weight=False,  # Use 8-bit weights
-                llm_int8_enable_fp32_cpu_offload=True  # Allow CPU offload for tight VRAM
+                llm_int8_enable_fp32_cpu_offload=False  # ✅ DISABLED: Prevents CPU/disk offloading
             )
             
             # Load tokenizer
@@ -249,6 +249,19 @@ class LlamaProcessor:
             response = self.tokenizer.decode(outputs[0][len(inputs["input_ids"][0]):], skip_special_tokens=True)
             logger.info(f"   Response length: {len(response)} chars")
             
+            # CRITICAL: Clear KV cache after generation to prevent memory leak
+            # KV cache can grow to 4-8GB and stays in VRAM if not cleared
+            if hasattr(self.model, 'past_key_values'):
+                self.model.past_key_values = None
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()  # Ensure cleanup completes before continuing
+            
+            # Report memory after cleanup
+            if torch.cuda.is_available():
+                allocated = torch.cuda.memory_allocated(0) / (1024**3)
+                reserved = torch.cuda.memory_reserved(0) / (1024**3)
+                logger.info(f"🧹 KV cache cleared: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved")
+            
             # Parse JSON from response
             logger.info("🔍 Parsing JSON response...")
             result = self._parse_journal_response(response)
@@ -261,6 +274,12 @@ class LlamaProcessor:
             import traceback
             logger.error(f"❌ Generation failed: {str(e)}")
             logger.error(f"🔍 Traceback:\n{traceback.format_exc()}")
+            
+            # CRITICAL: Clean up KV cache even on error to prevent memory leaks
+            if hasattr(self.model, 'past_key_values'):
+                self.model.past_key_values = None
+            torch.cuda.empty_cache()
+            logger.info("🧹 KV cache cleared after error")
             
             # CRITICAL: Don't return fallback - raise exception so backend knows generation failed
             # Returning fallback causes silent failures where backend gets empty/incorrect data
