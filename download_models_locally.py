@@ -16,8 +16,10 @@ CACHE_DIR = Path("./model_cache")
 CACHE_DIR.mkdir(exist_ok=True)
 
 # Point all model caches to local directory
-os.environ["TRANSFORMERS_CACHE"] = str(CACHE_DIR / "huggingface")
+# IMPORTANT: Models stored directly in huggingface/ (legacy transformers structure, matches network volume)
 os.environ["HF_HOME"] = str(CACHE_DIR / "huggingface")
+os.environ["TRANSFORMERS_CACHE"] = str(CACHE_DIR / "huggingface")
+os.environ["HF_HUB_CACHE"] = str(CACHE_DIR / "huggingface")
 os.environ["TORCH_HOME"] = str(CACHE_DIR / "torch")
 os.environ["XDG_CACHE_HOME"] = str(CACHE_DIR)
 

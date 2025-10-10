@@ -29,7 +29,10 @@ except Exception as e:
 
 # Configure environment variables for model caching BEFORE any imports
 # This ensures all ML libraries use persistent storage on /runpod-volume
-os.environ['HF_HOME'] = str(workspace_path / "huggingface")  # HuggingFace (used by transformers)
+# IMPORTANT: Models are stored directly in /runpod-volume/huggingface (legacy transformers structure)
+os.environ['HF_HOME'] = str(workspace_path / "huggingface")  # HuggingFace home directory
+os.environ['TRANSFORMERS_CACHE'] = str(workspace_path / "huggingface")  # Transformers cache (models stored here)
+os.environ['HF_HUB_CACHE'] = str(workspace_path / "huggingface")  # Hub cache (same location)
 os.environ['TORCH_HOME'] = str(workspace_path / "torch")     # PyTorch models
 os.environ['XDG_CACHE_HOME'] = str(workspace_path)           # Generic cache (used by some libs)
 
@@ -43,15 +46,36 @@ print(f"📦 EasyOCR cache: {easyocr_cache}")
 
 # Verify model cache directories exist
 required_cache_dirs = [
-    workspace_path / "huggingface",  # HF models stored directly here
+    workspace_path / "huggingface",  # HF models stored directly here (legacy transformers structure)
     workspace_path / "docstrange" / "models",  # DocStrange models in /models subfolder
     workspace_path / "torch",  # PyTorch models
     easyocr_cache  # EasyOCR models
 ]
 
+# Track if we found the Mixtral model
+mixtral_model_found = False
+
 for cache_dir in required_cache_dirs:
     if cache_dir.exists():
         print(f"✅ Found cache: {cache_dir}")
+        # Check if it's the huggingface directory and list model contents
+        if cache_dir.name == "huggingface":
+            try:
+                # Check for models in the cache directory (models stored directly here)
+                models = list(cache_dir.glob("models--*"))
+                if models:
+                    print(f"   📦 Cached models: {len(models)} found")
+                    for model in models[:3]:  # Show first 3
+                        print(f"      - {model.name}")
+                        # Check if Mixtral model exists
+                        if "mistralai--Mixtral-8x7B-Instruct-v0.1" in model.name or "Mixtral" in model.name:
+                            mixtral_model_found = True
+                    if len(models) > 3:
+                        print(f"      ... and {len(models) - 3} more")
+                else:
+                    print(f"   ⚠️  Huggingface directory exists but no models cached yet")
+            except Exception as e:
+                print(f"   Could not list models: {e}")
     else:
         print(f"⚠️  Cache directory does not exist (will be created): {cache_dir}")
         try:
@@ -59,6 +83,84 @@ for cache_dir in required_cache_dirs:
             print(f"   Created: {cache_dir}")
         except Exception as e:
             print(f"   Warning: Could not create {cache_dir}: {e}")
+
+# CRITICAL: Stop execution if Mixtral model not found in cache
+if not mixtral_model_found:
+    print("\n" + "=" * 80)
+    print("❌ CRITICAL ERROR: Mixtral model not found in cache!")
+    print("=" * 80)
+    print(f"Expected location: /runpod-volume/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1/")
+    print("\nThis will cause the model to download (~93GB) on every cold start,")
+    print("wasting GPU credits and causing 15-30 minute delays.")
+    print("\n🛑 STOPPING EXECUTION to prevent unnecessary downloads and costs.")
+    
+    # Print detailed cache structure for debugging
+    print("\n" + "-" * 80)
+    print("📁 ACTUAL CACHE STRUCTURE (for debugging):")
+    print("-" * 80)
+    
+    try:
+        hf_cache = workspace_path / "huggingface"
+        if hf_cache.exists():
+            print(f"\n/runpod-volume/huggingface/ contents:")
+            for item in sorted(hf_cache.iterdir())[:20]:  # Show first 20 items
+                if item.is_dir():
+                    # Count files in subdirectory
+                    try:
+                        file_count = len(list(item.iterdir()))
+                        print(f"  📁 {item.name}/ ({file_count} items)")
+                        # If it looks like a model directory, show one level deeper
+                        if item.name.startswith("models--"):
+                            for subitem in sorted(item.iterdir())[:5]:
+                                if subitem.is_dir():
+                                    subfile_count = len(list(subitem.iterdir()))
+                                    print(f"     📁 {subitem.name}/ ({subfile_count} items)")
+                                else:
+                                    size_mb = subitem.stat().st_size / (1024**2)
+                                    print(f"     📄 {subitem.name} ({size_mb:.1f}MB)")
+                    except Exception as e:
+                        print(f"  📁 {item.name}/ (cannot read: {e})")
+                else:
+                    size_mb = item.stat().st_size / (1024**2)
+                    print(f"  📄 {item.name} ({size_mb:.1f}MB)")
+        else:
+            print(f"  ⚠️  Directory does not exist: {hf_cache}")
+        
+        # Check alternative locations
+        print(f"\nChecking alternative locations:")
+        alt_locations = [
+            workspace_path / "huggingface" / "hub",
+            workspace_path / "huggingface" / "models",
+            workspace_path / "model_cache" / "huggingface",
+        ]
+        for alt_path in alt_locations:
+            if alt_path.exists():
+                print(f"  ✅ Found: {alt_path}")
+                try:
+                    items = list(alt_path.iterdir())[:5]
+                    for item in items:
+                        print(f"     - {item.name}")
+                except Exception as e:
+                    print(f"     (cannot read: {e})")
+            else:
+                print(f"  ❌ Not found: {alt_path}")
+                
+    except Exception as e:
+        print(f"  ⚠️  Error reading cache structure: {e}")
+    
+    print("-" * 80)
+    print("\nTo fix:")
+    print("1. Copy the ACTUAL CACHE STRUCTURE output above")
+    print("2. Update handler.py cache paths to match your actual structure")
+    print("3. Or reorganize your network volume to match expected structure:")
+    print("   - Ensure models are in: /runpod-volume/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1/")
+    print("4. Download models locally: python download_models_locally.py")
+    print("5. Upload: tar -czf model_cache.tar.gz model_cache/")
+    print("6. Extract in volume: tar -xzf model_cache.tar.gz -C /runpod-volume/")
+    print("=" * 80)
+    sys.exit(1)
+
+print(f"✅ Mixtral model found in cache - will use cached version")
 
 # Create symlink for DocStrange (it ignores XDG_CACHE_HOME and uses ~/.cache)
 # This ensures DocStrange finds the cached models at /runpod-volume/docstrange
