@@ -161,7 +161,7 @@ logger = logging.getLogger(__name__)
 # GPU Memory management
 GPU_MEMORY_THRESHOLD_GB = 4.0  # Minimum free VRAM required to accept request
 EXTRACTION_MEMORY_ESTIMATE_GB = 2.5  # DocStrange + buffers (CPU mode)
-CLASSIFICATION_MEMORY_ESTIMATE_GB = 24.0  # Mixtral 8x7B 8-bit
+CLASSIFICATION_MEMORY_ESTIMATE_GB = 22.0  # Mixtral 8x7B 8-bit (reduced from 24.0 to account for system overhead)
 
 # Concurrency control
 # Since DocStrange uses CPU (cpu=True), we can have multiple extraction workers
