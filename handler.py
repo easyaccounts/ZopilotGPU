@@ -93,12 +93,12 @@ for cache_dir in required_cache_dirs:
 # CRITICAL: Stop execution if Mixtral model not found in cache
 if not mixtral_model_found:
     print("\n" + "=" * 80)
-    print("❌ CRITICAL ERROR: Mixtral model not found in cache!")
+    print("⚠️  WARNING: Mixtral model not found in cache!")
     print("=" * 80)
     print(f"Expected location: /runpod-volume/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1/")
-    print("\nThis will cause the model to download (~93GB) on every cold start,")
-    print("wasting GPU credits and causing 15-30 minute delays.")
-    print("\n🛑 STOPPING EXECUTION to prevent unnecessary downloads and costs.")
+    print("\nThis will cause the model to download (~93GB) on first use,")
+    print("which may take 15-30 minutes.")
+    print("\n⚠️  CONTINUING - Model will be downloaded on first /prompt request")
     
     # Print detailed cache structure for debugging
     print("\n" + "-" * 80)
@@ -155,7 +155,7 @@ if not mixtral_model_found:
         print(f"  ⚠️  Error reading cache structure: {e}")
     
     print("-" * 80)
-    print("\nTo fix:")
+    print("\nTo pre-cache for faster startup:")
     print("1. Copy the ACTUAL CACHE STRUCTURE output above")
     print("2. Update handler.py cache paths to match your actual structure")
     print("3. Or reorganize your network volume to match expected structure:")
@@ -164,9 +164,9 @@ if not mixtral_model_found:
     print("5. Upload: tar -czf model_cache.tar.gz model_cache/")
     print("6. Extract in volume: tar -xzf model_cache.tar.gz -C /runpod-volume/")
     print("=" * 80)
-    sys.exit(1)
-
-print(f"✅ Mixtral model found in cache - will use cached version")
+    # REMOVED: sys.exit(1) - Allow worker to continue and download model on first use
+else:
+    print(f"✅ Mixtral model found in cache - will use cached version")
 
 # Create symlink for DocStrange (it ignores XDG_CACHE_HOME and uses ~/.cache)
 # This ensures DocStrange finds the cached models at /runpod-volume/docstrange
@@ -223,11 +223,12 @@ for var, description in REQUIRED_ENV_VARS.items():
         missing_vars.append(f"{var} ({description})")
 
 if missing_vars:
-    print("\n⚠️  CRITICAL: Missing environment variables:")
+    print("\n⚠️  WARNING: Missing environment variables:")
     for var in missing_vars:
         print(f"   - {var}")
     print("\nPlease add these in RunPod endpoint settings under 'Environment Variables'")
-    sys.exit(1)
+    print("⚠️  CONTINUING - Some features may not work without these variables")
+    # REMOVED: sys.exit(1) - Allow worker to continue for debugging
 
 # Check GPU availability and memory
 try:
@@ -238,11 +239,11 @@ try:
     EXPECTED_PYTORCH_VERSION = "2.5.1"
     if not torch.__version__.startswith(EXPECTED_PYTORCH_VERSION):
         print("=" * 80)
-        print("❌ CRITICAL: PyTorch version mismatch!")
+        print("⚠️  WARNING: PyTorch version mismatch!")
         print("=" * 80)
         print(f"Expected: {EXPECTED_PYTORCH_VERSION}")
         print(f"Actual: {torch.__version__}")
-        print("\nThis will cause BitsAndBytes compatibility issues:")
+        print("\nThis may cause BitsAndBytes compatibility issues:")
         print("- PyTorch 2.5.1 is compatible with BitsAndBytes 0.45.0")
         print("- PyTorch 2.6+ requires NumPy 2.x (breaks docstrange)")
         print("- Using wrong PyTorch version may cause quantization failures")
@@ -252,7 +253,8 @@ try:
         print("3. pip resolver chose newer version")
         print("\nFix: Rebuild Docker image with correct constraints")
         print("=" * 80)
-        sys.exit(1)
+        print("⚠️  CONTINUING - Will attempt to use installed version")
+        # REMOVED: sys.exit(1) - Allow worker to continue for debugging
     
     print("\n" + "=" * 60)
     print("DIAGNOSTIC: PyTorch & CUDA Configuration")
