@@ -619,9 +619,6 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
                         logger.error("- Try reducing max_new_tokens in generation")
                         logger.error("- Check if other processes are using GPU memory")
                         logger.error("-"*70)
-                            logger.error(f"Compute Cap: {torch.cuda.get_device_capability(0)}")
-                        logger.error("💡 Suggestion: Verify BNB_CUDA_VERSION=121 is set")
-                        logger.error("-"*70)
                     
                     elif "out of memory" in error_msg.lower():
                         logger.error("-"*70)
