@@ -12,19 +12,17 @@ aiofiles>=23.0.0
 docstrange
 
 # ML/AI - Core
-# NOTE: torch, torchvision, torchaudio installed separately in Dockerfile with CUDA 12.4.1 support
-# Do not add them here to avoid dependency conflicts
-# Pin PyTorch 2.5.1 versions to prevent upgrades from transitive dependencies
-torch==2.5.1
-torchvision==0.20.1
-torchaudio==2.5.1
+# NOTE: torch, torchvision, torchaudio installed in Dockerfile ONLY from cu124 index
+# Do NOT add them here - they MUST be installed from cu124 index for native CUDA 12.4 support
+# Adding them here risks pip reinstalling from PyPI with wrong binaries (cpu-only or cu121)
+# See Dockerfile lines 61-63 for PyTorch installation
 # transformers 4.38.0+ fixes frozenset bug with BitsAndBytes on CPU fallback
 transformers>=4.38.0,<4.50.0
 # accelerate 1.0.0+ requires NumPy 2.x, stay on 0.x for NumPy 1.x compatibility
 accelerate>=0.28.0,<1.0.0
-# BitsAndBytes 0.45.0 with NATIVE CUDA 12.4 support (no override needed!)
-# Compatible with PyTorch 2.0-2.5.x and RTX 5090 Blackwell architecture
-# Improved quantization algorithms and 5-10% faster than 0.42.0
+# BitsAndBytes 0.45.0 has native CUDA 12.4 support (no BNB_CUDA_VERSION override needed!)
+# Compatible with PyTorch 2.0-2.5.x and native RTX 5090 Blackwell support
+# Improved quantization quality and better memory management vs 0.42.0
 bitsandbytes==0.45.0
 
 # ML/AI - Supporting
@@ -34,9 +32,9 @@ protobuf>=4.25.0,<6.0.0
 huggingface-hub>=0.23.0
 
 # Scientific Stack - NumPy 1.x compatible versions (required by docstrange)
-# scipy will be installed FIRST in Dockerfile to prevent ufunc errors
+# NOTE: scipy already installed in Dockerfile (line 55) to prevent ufunc errors with NumPy
 # scipy 1.11.x is NumPy 1.x compatible (1.13.0+ requires NumPy 2.x)
-scipy>=1.11.0,<1.13.0
+# scipy>=1.11.0,<1.13.0  # Already in Dockerfile - commented to avoid duplicate
 pandas>=2.0.0,<2.3.0
 
 # Image Processing - NumPy 1.x compatible versions
@@ -46,8 +44,9 @@ pillow>=10.1.0,<11.0.0
 
 # Utilities
 requests>=2.31.0
-# NumPy 1.26.4 - Latest 1.x with bug fixes (REQUIRED by docstrange: numpy<2.0)
+# NumPy 1.26.4 - Latest 1.x with bug fixes, REQUIRED by docstrange (numpy<2.0)
 # NOTE: Will be installed AFTER scipy in Dockerfile to prevent ufunc errors
+# PyTorch 2.5.1 supports both NumPy 1.x and 2.x, we use 1.x for docstrange compatibility
 numpy>=1.26.0,<2.0.0
 
 # Build dependencies (needed for compilation)

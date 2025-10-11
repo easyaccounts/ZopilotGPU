@@ -2,17 +2,9 @@
 RunPod Serverless Handler for ZopilotGPU
 Wraps FastAPI endpoints for RunPod serverless format
 """
-print("=" * 80)
-print("🚀 HANDLER.PY STARTING...")
-print("=" * 80)
-import sys
-print(f"✅ sys imported - Python {sys.version}")
-
 import os
-print(f"✅ os imported")
-
+import sys
 from pathlib import Path
-print(f"✅ pathlib imported")
 
 # Verify /runpod-volume exists (RunPod Serverless Network Volume mount point)
 workspace_path = Path("/runpod-volume")
@@ -44,10 +36,11 @@ os.environ['HF_HUB_CACHE'] = str(workspace_path / "huggingface")  # Hub cache (s
 os.environ['TORCH_HOME'] = str(workspace_path / "torch")     # PyTorch models
 os.environ['XDG_CACHE_HOME'] = str(workspace_path)           # Generic cache (used by some libs)
 
-# BitsAndBytes 0.45.0 has native CUDA 12.4 support - no override needed!
-# Previous versions (0.42.0) required BNB_CUDA_VERSION=121 workaround
-# Now BitsAndBytes auto-detects CUDA 12.4 correctly and uses native binaries
-print(f"🔧 BitsAndBytes 0.45.0: Native CUDA 12.4 support (no override needed)")
+# BitsAndBytes 0.45.0 native CUDA 12.4 support - no override needed at build time
+# However, we still set BNB_CUDA_VERSION=121 at runtime as a safety fallback
+# in case the auto-detection has issues (can be removed if 0.45.0 works perfectly)
+os.environ['BNB_CUDA_VERSION'] = '121'
+print(f"🔧 BitsAndBytes: Set BNB_CUDA_VERSION=121 fallback (0.45.0 should auto-detect CUDA 12.4)")
 
 # CRITICAL: EasyOCR cache configuration
 # EasyOCR downloads models to MODULE_PATH/model by default (ephemeral!)
@@ -98,18 +91,14 @@ for cache_dir in required_cache_dirs:
             print(f"   Warning: Could not create {cache_dir}: {e}")
 
 # CRITICAL: Stop execution if Mixtral model not found in cache
-# Models MUST be pre-cached to network volume - downloads not allowed in production
 if not mixtral_model_found:
     print("\n" + "=" * 80)
     print("❌ CRITICAL ERROR: Mixtral model not found in cache!")
     print("=" * 80)
     print(f"Expected location: /runpod-volume/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1/")
-    print("\n⚠️  Models MUST be pre-cached on network volume before deployment.")
-    print("⚠️  Automatic downloads are disabled to prevent wasting GPU credits.")
-    print("\n📋 To fix:")
-    print("   1. Run: python download_models_locally.py (on local machine)")
-    print("   2. Upload model_cache/ to RunPod network volume")
-    print("   3. Ensure models are at /runpod-volume/huggingface/")
+    print("\nThis will cause the model to download (~93GB) on every cold start,")
+    print("wasting GPU credits and causing 15-30 minute delays.")
+    print("\n🛑 STOPPING EXECUTION to prevent unnecessary downloads and costs.")
     
     # Print detailed cache structure for debugging
     print("\n" + "-" * 80)
@@ -166,11 +155,18 @@ if not mixtral_model_found:
         print(f"  ⚠️  Error reading cache structure: {e}")
     
     print("-" * 80)
-    print("\n❌ STOPPING: Models must be pre-cached, downloads not allowed in production")
+    print("\nTo fix:")
+    print("1. Copy the ACTUAL CACHE STRUCTURE output above")
+    print("2. Update handler.py cache paths to match your actual structure")
+    print("3. Or reorganize your network volume to match expected structure:")
+    print("   - Ensure models are in: /runpod-volume/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1/")
+    print("4. Download models locally: python download_models_locally.py")
+    print("5. Upload: tar -czf model_cache.tar.gz model_cache/")
+    print("6. Extract in volume: tar -xzf model_cache.tar.gz -C /runpod-volume/")
     print("=" * 80)
-    sys.exit(1)  # EXIT - do NOT allow download
-else:
-    print(f"✅ Mixtral model found in cache - will use cached version")
+    sys.exit(1)
+
+print(f"✅ Mixtral model found in cache - will use cached version")
 
 # Create symlink for DocStrange (it ignores XDG_CACHE_HOME and uses ~/.cache)
 # This ensures DocStrange finds the cached models at /runpod-volume/docstrange
@@ -234,10 +230,8 @@ if missing_vars:
     sys.exit(1)
 
 # Check GPU availability and memory
-print("🔄 Attempting to import torch...")
 try:
     import torch
-    print(f"✅ torch imported successfully: {torch.__version__}")
     
     # CRITICAL: Verify PyTorch version matches expected version
     # Prevents silent failures from PyTorch upgrades breaking BitsAndBytes compatibility
@@ -250,8 +244,8 @@ try:
         print(f"Actual: {torch.__version__}")
         print("\nThis will cause BitsAndBytes compatibility issues:")
         print("- PyTorch 2.5.1 is compatible with BitsAndBytes 0.45.0")
-        print("- PyTorch 2.6+ requires NumPy 2.x (incompatible with docstrange)")
-        print("- Version mismatch may cause quantization failures")
+        print("- PyTorch 2.6+ requires NumPy 2.x (breaks docstrange)")
+        print("- Using wrong PyTorch version may cause quantization failures")
         print("\nPossible causes:")
         print("1. requirements.txt dependencies upgraded PyTorch")
         print("2. constraints file not applied correctly")
@@ -264,7 +258,6 @@ try:
     print("DIAGNOSTIC: PyTorch & CUDA Configuration")
     print("=" * 60)
     print(f"✅ PyTorch Version: {torch.__version__} (matches expected {EXPECTED_PYTORCH_VERSION})")
-    print(f"✅ Native RTX 5090 Support: CUDA 12.4 cu124 binaries")
     print(f"PyTorch CUDA Compiled: {torch.version.cuda}")
     print(f"CUDA Available: {torch.cuda.is_available()}")
     
@@ -308,9 +301,8 @@ try:
         print(f"✅ BitsAndBytes version: {bnb.__version__}")
         print(f"📦 BitsAndBytes location: {bnb.__file__}")
         
-        # Check CUDA setup (BnB 0.45.0 auto-detects CUDA 12.4 correctly)
-        print(f"🔧 BNB_CUDA_VERSION env: {os.environ.get('BNB_CUDA_VERSION', 'NOT SET (auto-detect enabled)')}")
-        print(f"✅ BitsAndBytes 0.45.0: Native CUDA 12.4 support")
+        # Check CUDA setup
+        print(f"🔧 BNB_CUDA_VERSION env: {os.environ.get('BNB_CUDA_VERSION', 'NOT SET (will auto-detect)')}")
         
         # Try to get CUDA setup info
         try:
@@ -428,31 +420,18 @@ except ImportError as e:
 
 print("=" * 60)
 
-print("🔄 Attempting to import runpod...")
 try:
     import runpod  # type: ignore
-    print(f"✅ runpod imported")
 except ImportError:
     runpod = None  # Will be available in RunPod environment
-    print(f"⚠️  runpod not available (will be provided by RunPod runtime)")
 
-print("🔄 Importing Python standard libraries...")
 import asyncio
 import logging
 from typing import Any, Dict
-print("✅ Standard libraries imported")
 
 # Import FastAPI app and endpoints
-print("🔄 Attempting to import app.main (FastAPI endpoints)...")
-try:
-    from app.main import extract_endpoint, prompt_endpoint
-    from app.main import ExtractionInput, PromptInput
-    print("✅ FastAPI app imported successfully")
-except Exception as app_import_error:
-    print(f"❌ CRITICAL: Failed to import app.main: {app_import_error}")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+from app.main import extract_endpoint, prompt_endpoint
+from app.main import ExtractionInput, PromptInput
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -752,22 +731,9 @@ handler = async_handler
 
 # Start RunPod serverless worker
 if __name__ == "__main__":
-    print("\n" + "=" * 80)
-    print("🎯 STARTING RUNPOD SERVERLESS WORKER")
-    print("=" * 80)
-    
     if runpod is None:
         logger.error("runpod package not installed. Install with: pip install runpod")
-        print("❌ runpod package not available!")
         exit(1)
     
     logger.info("Starting RunPod serverless worker for ZopilotGPU...")
-    print("✅ Calling runpod.serverless.start()...")
-    try:
-        runpod.serverless.start({"handler": handler})
-        print("✅ RunPod serverless worker started successfully!")
-    except Exception as start_error:
-        print(f"❌ Failed to start RunPod worker: {start_error}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+    runpod.serverless.start({"handler": handler})

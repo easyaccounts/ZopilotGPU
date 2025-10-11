@@ -44,20 +44,21 @@ COPY requirements.txt .
 # Install build dependencies first (required for package compilation)
 RUN pip install --no-cache-dir packaging wheel setuptools
 
-# CRITICAL FIX: Install NumPy 1.x FIRST to prevent all compatibility issues
+# CRITICAL FIX: Install NumPy 1.26+ FIRST to prevent all compatibility issues
 # NumPy 2.x breaks scipy, docstrange, and many scientific libraries
 # Must be installed BEFORE torch/torchvision to avoid dependency conflicts
-RUN pip install --no-cache-dir "numpy>=1.24.0,<2.0.0"
+# Using 1.26+ to match requirements.txt (prevents upgrade during pip install -r)
+RUN pip install --no-cache-dir "numpy>=1.26.0,<2.0.0"
 
 # Install scipy with NumPy 1.x (required by docstrange)
 # scipy 1.11.x-1.12.x are NumPy 1.x compatible (1.13.0+ requires NumPy 2.x)
 # Must happen BEFORE docstrange is installed
 RUN pip install --no-cache-dir "scipy>=1.11.0,<1.13.0"
 
-# Install PyTorch 2.5.1 with NATIVE CUDA 12.4 support BEFORE requirements.txt
-# RTX 5090 Blackwell architecture with native optimizations (5-10% faster than 2.3.1)
-# PyTorch 2.5.1 has native CUDA 12.4 binaries and Blackwell-specific optimizations
-# Still compatible with NumPy 1.x (required by docstrange)
+# Install PyTorch 2.5.1 with CUDA 12.4 support BEFORE requirements.txt (RTX 5090 Blackwell native)
+# PyTorch 2.5.1 has native RTX 5090 Blackwell optimizations (5-10% faster inference)
+# Using cu124 wheel for native CUDA 12.4 support (no forward compatibility layer needed)
+# Still compatible with NumPy 1.x (docstrange requirement)
 RUN pip install --no-cache-dir \
     torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \
     --index-url https://download.pytorch.org/whl/cu124
@@ -71,10 +72,19 @@ RUN echo "torch==2.5.1" > /tmp/constraints.txt && \
 # accelerate is constrained to <1.0.0 in requirements.txt (NumPy 1.x compatible)
 # scipy and numpy already installed above, so they won't be upgraded
 # Use --constraint to prevent PyTorch upgrades from dependencies
-# BitsAndBytes 0.45.0 has NATIVE CUDA 12.4 support - no BNB_CUDA_VERSION override needed!
+# BitsAndBytes 0.45.0 has native CUDA 12.4 support - no BNB_CUDA_VERSION override needed!
 RUN pip install --no-cache-dir --ignore-installed blinker \
     --constraint /tmp/constraints.txt \
     -r requirements.txt
+
+# CRITICAL: Verify correct versions installed (fail fast if wrong binaries)
+RUN python -c "import torch; print(f'✅ PyTorch: {torch.__version__}'); assert '2.5.1' in torch.__version__, f'Wrong PyTorch: {torch.__version__}'"
+RUN python -c "import torch; print(f'✅ CUDA: {torch.version.cuda}'); assert torch.version.cuda == '12.4', f'Wrong CUDA: {torch.version.cuda}'"
+RUN python -c "import numpy as np; print(f'✅ NumPy: {np.__version__}'); assert np.__version__.startswith('1.26'), f'Wrong NumPy: {np.__version__}'"
+RUN python -c "import bitsandbytes as bnb; print(f'✅ BitsAndBytes: {bnb.__version__}'); assert bnb.__version__ == '0.45.0', f'Wrong BnB: {bnb.__version__}'"
+RUN python -c "import scipy; print(f'✅ SciPy: {scipy.__version__}')"
+RUN python -c "import transformers; print(f'✅ Transformers: {transformers.__version__}')"
+RUN python -c "print('✅ All dependency versions verified!')"
 
 # Copy application code
 COPY app/ ./app/
