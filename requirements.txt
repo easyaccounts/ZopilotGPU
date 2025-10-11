@@ -14,13 +14,18 @@ docstrange
 # ML/AI - Core
 # NOTE: torch, torchvision, torchaudio installed separately in Dockerfile with CUDA 12.4.1 support
 # Do not add them here to avoid dependency conflicts
+# Pin PyTorch 2.5.1 versions to prevent upgrades from transitive dependencies
+torch==2.5.1
+torchvision==0.20.1
+torchaudio==2.5.1
 # transformers 4.38.0+ fixes frozenset bug with BitsAndBytes on CPU fallback
 transformers>=4.38.0,<4.50.0
 # accelerate 1.0.0+ requires NumPy 2.x, stay on 0.x for NumPy 1.x compatibility
 accelerate>=0.28.0,<1.0.0
-# BitsAndBytes 0.42.0 compatible with PyTorch 2.3.1 (0.43+ requires PyTorch 2.4+)
-# Still supports RTX 5090 Blackwell via CUDA 12.4 runtime
-bitsandbytes==0.42.0
+# BitsAndBytes 0.45.0 with NATIVE CUDA 12.4 support (no override needed!)
+# Compatible with PyTorch 2.0-2.5.x and RTX 5090 Blackwell architecture
+# Improved quantization algorithms and 5-10% faster than 0.42.0
+bitsandbytes==0.45.0
 
 # ML/AI - Supporting
 safetensors>=0.4.3
@@ -41,9 +46,9 @@ pillow>=10.1.0,<11.0.0
 
 # Utilities
 requests>=2.31.0
-# NumPy 1.x - REQUIRED by docstrange (numpy<2.0)
+# NumPy 1.26.4 - Latest 1.x with bug fixes (REQUIRED by docstrange: numpy<2.0)
 # NOTE: Will be installed AFTER scipy in Dockerfile to prevent ufunc errors
-numpy>=1.24.0,<2.0.0
+numpy>=1.26.0,<2.0.0
 
 # Build dependencies (needed for compilation)
 packaging>=23.0

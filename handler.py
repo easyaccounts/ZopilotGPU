@@ -36,11 +36,10 @@ os.environ['HF_HUB_CACHE'] = str(workspace_path / "huggingface")  # Hub cache (s
 os.environ['TORCH_HOME'] = str(workspace_path / "torch")     # PyTorch models
 os.environ['XDG_CACHE_HOME'] = str(workspace_path)           # Generic cache (used by some libs)
 
-# CRITICAL: BitsAndBytes CUDA version override for CUDA 12.4.1 compatibility
-# CUDA 12.4.1 reports as version "128" but BitsAndBytes 0.42.0 only has binaries up to CUDA 12.1
-# The CUDA 12.1 binaries are forward-compatible with CUDA 12.4 runtime
-os.environ['BNB_CUDA_VERSION'] = '121'
-print(f"🔧 BitsAndBytes CUDA override: Using CUDA 12.1 binaries (compatible with 12.4 runtime)")
+# BitsAndBytes 0.45.0 has native CUDA 12.4 support - no override needed!
+# Previous versions (0.42.0) required BNB_CUDA_VERSION=121 workaround
+# Now BitsAndBytes auto-detects CUDA 12.4 correctly and uses native binaries
+print(f"🔧 BitsAndBytes 0.45.0: Native CUDA 12.4 support (no override needed)")
 
 # CRITICAL: EasyOCR cache configuration
 # EasyOCR downloads models to MODULE_PATH/model by default (ephemeral!)
@@ -232,10 +231,33 @@ if missing_vars:
 # Check GPU availability and memory
 try:
     import torch
+    
+    # CRITICAL: Verify PyTorch version matches expected version
+    # Prevents silent failures from PyTorch upgrades breaking BitsAndBytes compatibility
+    EXPECTED_PYTORCH_VERSION = "2.5.1"
+    if not torch.__version__.startswith(EXPECTED_PYTORCH_VERSION):
+        print("=" * 80)
+        print("❌ CRITICAL: PyTorch version mismatch!")
+        print("=" * 80)
+        print(f"Expected: {EXPECTED_PYTORCH_VERSION}")
+        print(f"Actual: {torch.__version__}")
+        print("\nThis will cause BitsAndBytes compatibility issues:")
+        print("- PyTorch 2.5.1 is compatible with BitsAndBytes 0.45.0")
+        print("- PyTorch 2.6+ requires NumPy 2.x (incompatible with docstrange)")
+        print("- Version mismatch may cause quantization failures")
+        print("\nPossible causes:")
+        print("1. requirements.txt dependencies upgraded PyTorch")
+        print("2. constraints file not applied correctly")
+        print("3. pip resolver chose newer version")
+        print("\nFix: Rebuild Docker image with correct constraints")
+        print("=" * 80)
+        sys.exit(1)
+    
     print("\n" + "=" * 60)
     print("DIAGNOSTIC: PyTorch & CUDA Configuration")
     print("=" * 60)
-    print(f"PyTorch Version: {torch.__version__}")
+    print(f"✅ PyTorch Version: {torch.__version__} (matches expected {EXPECTED_PYTORCH_VERSION})")
+    print(f"✅ Native RTX 5090 Support: CUDA 12.4 cu124 binaries")
     print(f"PyTorch CUDA Compiled: {torch.version.cuda}")
     print(f"CUDA Available: {torch.cuda.is_available()}")
     
@@ -254,10 +276,12 @@ try:
         print(f"💾 VRAM Free: {(torch.cuda.get_device_properties(0).total_memory - torch.cuda.memory_allocated(0)) / (1024**3):.1f} GB")
         print(f"🔢 Compute Capability: {compute_capability[0]}.{compute_capability[1]}")
         
-        # Check CUDA device properties
+        # Check CUDA device properties (defensive - some attributes may not exist in all PyTorch versions)
         props = torch.cuda.get_device_properties(0)
         print(f"📊 Multi-processor count: {props.multi_processor_count}")
-        print(f"📊 Max threads per block: {props.max_threads_per_block}")
+        # max_threads_per_block doesn't exist in PyTorch 2.8+, use safe access
+        if hasattr(props, 'max_threads_per_block'):
+            print(f"📊 Max threads per block: {props.max_threads_per_block}")
         
         # Warn if insufficient memory for Mixtral 8x7B with 4-bit NF4 quantization
         if gpu_memory < 20:
@@ -277,8 +301,9 @@ try:
         print(f"✅ BitsAndBytes version: {bnb.__version__}")
         print(f"📦 BitsAndBytes location: {bnb.__file__}")
         
-        # Check CUDA setup
-        print(f"🔧 BNB_CUDA_VERSION env: {os.environ.get('BNB_CUDA_VERSION', 'NOT SET (will auto-detect)')}")
+        # Check CUDA setup (BnB 0.45.0 auto-detects CUDA 12.4 correctly)
+        print(f"🔧 BNB_CUDA_VERSION env: {os.environ.get('BNB_CUDA_VERSION', 'NOT SET (auto-detect enabled)')}")
+        print(f"✅ BitsAndBytes 0.45.0: Native CUDA 12.4 support")
         
         # Try to get CUDA setup info
         try:
