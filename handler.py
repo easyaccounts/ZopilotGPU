@@ -36,6 +36,12 @@ os.environ['HF_HUB_CACHE'] = str(workspace_path / "huggingface")  # Hub cache (s
 os.environ['TORCH_HOME'] = str(workspace_path / "torch")     # PyTorch models
 os.environ['XDG_CACHE_HOME'] = str(workspace_path)           # Generic cache (used by some libs)
 
+# CRITICAL: BitsAndBytes CUDA version override for CUDA 12.4.1 compatibility
+# CUDA 12.4.1 reports as version "128" but BitsAndBytes 0.42.0 only has binaries up to CUDA 12.1
+# The CUDA 12.1 binaries are forward-compatible with CUDA 12.4 runtime
+os.environ['BNB_CUDA_VERSION'] = '121'
+print(f"🔧 BitsAndBytes CUDA override: Using CUDA 12.1 binaries (compatible with 12.4 runtime)")
+
 # CRITICAL: EasyOCR cache configuration
 # EasyOCR downloads models to MODULE_PATH/model by default (ephemeral!)
 # We need to redirect it to persistent storage using EASYOCR_MODULE_PATH
@@ -226,11 +232,32 @@ if missing_vars:
 # Check GPU availability and memory
 try:
     import torch
+    print("\n" + "=" * 60)
+    print("DIAGNOSTIC: PyTorch & CUDA Configuration")
+    print("=" * 60)
+    print(f"PyTorch Version: {torch.__version__}")
+    print(f"PyTorch CUDA Compiled: {torch.version.cuda}")
+    print(f"CUDA Available: {torch.cuda.is_available()}")
+    
     if torch.cuda.is_available():
+        print(f"CUDA Version (PyTorch): {torch.version.cuda}")
+        print(f"CUDA Runtime Version: {torch.version.cuda}")
+        print(f"cuDNN Version: {torch.backends.cudnn.version()}")
+        print(f"Number of GPUs: {torch.cuda.device_count()}")
+        
         gpu_name = torch.cuda.get_device_name(0)
         gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)  # GB
+        compute_capability = torch.cuda.get_device_capability(0)
+        
         print(f"🎮 GPU: {gpu_name}")
-        print(f"💾 VRAM: {gpu_memory:.1f} GB")
+        print(f"💾 VRAM Total: {gpu_memory:.1f} GB")
+        print(f"💾 VRAM Free: {(torch.cuda.get_device_properties(0).total_memory - torch.cuda.memory_allocated(0)) / (1024**3):.1f} GB")
+        print(f"🔢 Compute Capability: {compute_capability[0]}.{compute_capability[1]}")
+        
+        # Check CUDA device properties
+        props = torch.cuda.get_device_properties(0)
+        print(f"📊 Multi-processor count: {props.multi_processor_count}")
+        print(f"📊 Max threads per block: {props.max_threads_per_block}")
         
         # Warn if insufficient memory for Mixtral 8x7B with 4-bit NF4 quantization
         if gpu_memory < 20:
@@ -240,8 +267,132 @@ try:
             print(f"✅ Sufficient VRAM for Mixtral 8x7B 4-bit NF4 (~16-17GB required)")
     else:
         print("⚠️  No GPU detected - will fall back to CPU (very slow)")
-except ImportError:
-    print("⚠️  PyTorch not available for GPU check")
+    
+    # BitsAndBytes diagnostics
+    print("\n" + "=" * 60)
+    print("DIAGNOSTIC: BitsAndBytes Configuration")
+    print("=" * 60)
+    try:
+        import bitsandbytes as bnb
+        print(f"✅ BitsAndBytes version: {bnb.__version__}")
+        print(f"📦 BitsAndBytes location: {bnb.__file__}")
+        
+        # Check CUDA setup
+        print(f"🔧 BNB_CUDA_VERSION env: {os.environ.get('BNB_CUDA_VERSION', 'NOT SET (will auto-detect)')}")
+        
+        # Try to get CUDA setup info
+        try:
+            from bitsandbytes.cuda_setup.main import CUDASetup
+            setup = CUDASetup.get_instance()
+            if hasattr(setup, 'lib'):
+                print(f"✅ CUDA library loaded: {setup.lib}")
+            if hasattr(setup, 'binary_name'):
+                print(f"✅ Binary name: {setup.binary_name}")
+        except Exception as e:
+            print(f"⚠️  Could not get CUDA setup details: {e}")
+        
+        # Test import of critical BitsAndBytes functions
+        try:
+            from bitsandbytes.nn import Linear4bit
+            print(f"✅ Linear4bit import: OK")
+        except ImportError as e:
+            print(f"❌ Linear4bit import FAILED: {e}")
+        
+        try:
+            from bitsandbytes.functional import quantize_4bit
+            print(f"✅ quantize_4bit import: OK")
+        except ImportError as e:
+            print(f"❌ quantize_4bit import FAILED: {e}")
+            
+    except ImportError as e:
+        print(f"❌ BitsAndBytes import FAILED: {e}")
+        print("   This will cause model loading to fail!")
+    
+    # Transformers diagnostics
+    print("\n" + "=" * 60)
+    print("DIAGNOSTIC: Transformers Configuration")
+    print("=" * 60)
+    try:
+        import transformers
+        print(f"✅ Transformers version: {transformers.__version__}")
+        print(f"📦 Transformers location: {transformers.__file__}")
+        
+        # Test BitsAndBytes integration
+        try:
+            from transformers.integrations import validate_bnb_backend_availability
+            print(f"✅ BitsAndBytes integration import: OK")
+            # Try to validate (may fail, but we want to see the error)
+            try:
+                validate_bnb_backend_availability()
+                print(f"✅ BitsAndBytes backend validation: PASSED")
+            except Exception as e:
+                print(f"⚠️  BitsAndBytes backend validation: {e}")
+        except ImportError as e:
+            print(f"❌ BitsAndBytes integration import FAILED: {e}")
+            print("   This will cause quantized model loading to fail!")
+            
+        # Test BitsAndBytesConfig
+        try:
+            from transformers import BitsAndBytesConfig
+            print(f"✅ BitsAndBytesConfig import: OK")
+        except ImportError as e:
+            print(f"❌ BitsAndBytesConfig import FAILED: {e}")
+            
+    except ImportError as e:
+        print(f"❌ Transformers import FAILED: {e}")
+    
+    # System & Container diagnostics
+    print("\n" + "=" * 60)
+    print("DIAGNOSTIC: System & Container Info")
+    print("=" * 60)
+    import platform
+    import sys
+    print(f"🐍 Python version: {sys.version}")
+    print(f"🖥️  Platform: {platform.platform()}")
+    print(f"🖥️  Machine: {platform.machine()}")
+    print(f"🖥️  Processor: {platform.processor()}")
+    
+    # Check critical environment variables
+    print("\n📋 Critical Environment Variables:")
+    critical_envs = [
+        'CUDA_HOME', 'CUDA_PATH', 'LD_LIBRARY_PATH', 
+        'BNB_CUDA_VERSION', 'PYTORCH_CUDA_ALLOC_CONF',
+        'HF_HOME', 'TRANSFORMERS_CACHE'
+    ]
+    for env in critical_envs:
+        value = os.environ.get(env)
+        if value:
+            # Truncate long paths
+            display_value = value if len(value) < 80 else value[:77] + "..."
+            print(f"   {env}: {display_value}")
+        else:
+            print(f"   {env}: NOT SET")
+    
+    print("=" * 60)
+        
+    # Check BitsAndBytes configuration
+    print("\n" + "-" * 60)
+    print("DIAGNOSTIC: BitsAndBytes Configuration")
+    print("-" * 60)
+    print(f"BNB_CUDA_VERSION override: {os.environ.get('BNB_CUDA_VERSION', 'NOT SET')}")
+    
+    try:
+        import bitsandbytes as bnb
+        print(f"BitsAndBytes Version: {bnb.__version__}")
+        print(f"BitsAndBytes Location: {bnb.__file__}")
+        
+        # Try to check if CUDA is properly detected by BitsAndBytes
+        try:
+            from bitsandbytes.cuda_setup.main import get_cuda_lib_handle, get_compute_capabilities
+            print("✅ BitsAndBytes CUDA setup module accessible")
+        except ImportError as e:
+            print(f"⚠️  BitsAndBytes CUDA setup import failed: {e}")
+            
+    except ImportError as e:
+        print(f"⚠️  BitsAndBytes not yet imported: {e}")
+    
+except ImportError as e:
+    print(f"⚠️  PyTorch not available for GPU check: {e}")
 
 print("=" * 60)
 
@@ -406,20 +557,99 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
                         raise ValueError(f"Unexpected result type: {type(result)}")
                         
                 except Exception as prompt_error:
-                    logger.error(f"[RunPod] ❌ Classification failed: {str(prompt_error)}")
-                    logger.error(f"[RunPod] 📋 Error type: {type(prompt_error).__name__}")
-                    
-                    # Import traceback for detailed error info
                     import traceback
+                    error_msg = str(prompt_error)
+                    error_type = type(prompt_error).__name__
                     error_traceback = traceback.format_exc()
-                    logger.error(f"[RunPod] 🔍 Traceback:\n{error_traceback}")
+                    
+                    logger.error("="*70)
+                    logger.error("[RunPod] CLASSIFICATION REQUEST FAILED")
+                    logger.error("="*70)
+                    logger.error(f"❌ Error Type: {error_type}")
+                    logger.error(f"❌ Error Message: {error_msg}")
+                    logger.error(f"\n❌ Full Traceback:\n{error_traceback}")
+                    
+                    # Add context-specific diagnostics
+                    if "bitsandbytes" in error_msg.lower() or "cuda setup" in error_msg.lower():
+                        logger.error("-"*70)
+                        logger.error("BITSANDBYTES/CUDA DIAGNOSTICS")
+                        logger.error("-"*70)
+                        logger.error(f"BNB_CUDA_VERSION: {os.environ.get('BNB_CUDA_VERSION', 'NOT SET')}")
+                        logger.error(f"LD_LIBRARY_PATH: {os.environ.get('LD_LIBRARY_PATH', 'NOT SET')[:200]}")
+                        logger.error(f"CUDA_HOME: {os.environ.get('CUDA_HOME', 'NOT SET')}")
+                        logger.error(f"PyTorch version: {torch.__version__}")
+                        logger.error(f"PyTorch CUDA compiled: {torch.version.cuda if hasattr(torch.version, 'cuda') else 'N/A'}")
+                        logger.error(f"GPU Available: {torch.cuda.is_available()}")
+                        if torch.cuda.is_available():
+                            logger.error(f"GPU: {torch.cuda.get_device_name(0)}")
+                            logger.error(f"CUDA Runtime (detected): {torch.version.cuda}")
+                            logger.error(f"Compute Capability: {torch.cuda.get_device_capability(0)}")
+                        
+                        # Try to check BitsAndBytes state
+                        try:
+                            import bitsandbytes as bnb
+                            logger.error(f"BitsAndBytes version: {bnb.__version__}")
+                            logger.error(f"BitsAndBytes path: {bnb.__file__}")
+                        except Exception as bnb_err:
+                            logger.error(f"Cannot import BitsAndBytes: {bnb_err}")
+                        
+                        logger.error("-"*70)
+                        logger.error("SOLUTION HINTS:")
+                        logger.error("- If 'libbitsandbytes_cudaXXX.so not found': Set BNB_CUDA_VERSION env var")
+                        logger.error("- If 'CUDA libraries not in path': Check LD_LIBRARY_PATH")
+                        logger.error("- If 'PyTorch CUDA mismatch': Verify PyTorch CUDA version matches runtime")
+                        logger.error("-"*70)
+                    
+                    elif "out of memory" in error_msg.lower() or "oom" in error_msg.lower():
+                        logger.error("-"*70)
+                        logger.error("GPU MEMORY DIAGNOSTICS")
+                        logger.error("-"*70)
+                        if torch.cuda.is_available():
+                            total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+                            allocated = torch.cuda.memory_allocated(0) / (1024**3)
+                            reserved = torch.cuda.memory_reserved(0) / (1024**3)
+                            free = total - reserved
+                            logger.error(f"Total VRAM: {total:.2f} GB")
+                            logger.error(f"Allocated: {allocated:.2f} GB")
+                            logger.error(f"Reserved: {reserved:.2f} GB")
+                            logger.error(f"Free: {free:.2f} GB")
+                        logger.error("-"*70)
+                        logger.error("SOLUTION HINTS:")
+                        logger.error("- Model requires ~16-17GB for 4-bit quantization")
+                        logger.error("- Try reducing max_new_tokens in generation")
+                        logger.error("- Check if other processes are using GPU memory")
+                        logger.error("-"*70)
+                            logger.error(f"Compute Cap: {torch.cuda.get_device_capability(0)}")
+                        logger.error("💡 Suggestion: Verify BNB_CUDA_VERSION=121 is set")
+                        logger.error("-"*70)
+                    
+                    elif "out of memory" in error_msg.lower():
+                        logger.error("-"*70)
+                        logger.error("GPU MEMORY DIAGNOSTICS")
+                        logger.error("-"*70)
+                        if torch.cuda.is_available():
+                            total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+                            allocated = torch.cuda.memory_allocated(0) / (1024**3)
+                            reserved = torch.cuda.memory_reserved(0) / (1024**3)
+                            logger.error(f"Total: {total:.2f}GB | Allocated: {allocated:.2f}GB | Reserved: {reserved:.2f}GB")
+                        logger.error("💡 Suggestion: Reduce batch size or use smaller model")
+                        logger.error("-"*70)
+                    
+                    logger.error(f"\n🔍 Full Traceback:\n{error_traceback}")
+                    logger.error("="*70)
                     
                     # Return error response (don't raise - RunPod needs a response)
                     return {
                         "success": False,
-                        "error": str(prompt_error),
-                        "error_type": type(prompt_error).__name__,
-                        "traceback": error_traceback[:1000]  # Limit traceback size
+                        "error": error_msg,
+                        "error_type": error_type,
+                        "traceback": error_traceback[:2000],  # Increased limit for debugging
+                        "diagnostics": {
+                            "bnb_cuda_version": os.environ.get('BNB_CUDA_VERSION', 'NOT SET'),
+                            "pytorch_cuda": torch.version.cuda if torch.cuda.is_available() else None,
+                            "gpu_available": torch.cuda.is_available(),
+                            "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
+                        }
                     }
             
         elif endpoint == '/health':

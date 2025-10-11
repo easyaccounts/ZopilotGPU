@@ -69,6 +69,9 @@ RUN pip install --no-cache-dir --ignore-installed blinker -r requirements.txt
 # Install BitsAndBytes 0.42.0 with CUDA 12.4 support for RTX 5090
 # NOTE: 0.42.0 compatible with PyTorch 2.3.1 (0.43+ requires PyTorch 2.4+ internal APIs)
 # Blackwell support comes from CUDA 12.4 runtime, not bitsandbytes version
+# CRITICAL: Set BNB_CUDA_VERSION=121 to use CUDA 12.1 binaries (compatible with 12.4 runtime)
+# BitsAndBytes 0.42.0 doesn't have binaries for CUDA 12.8 (how 12.4.1 reports itself)
+ENV BNB_CUDA_VERSION=121
 RUN pip uninstall -y bitsandbytes && \
     pip install bitsandbytes==0.42.0 --no-cache-dir
 

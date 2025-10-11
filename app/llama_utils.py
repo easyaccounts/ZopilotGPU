@@ -31,18 +31,45 @@ class LlamaProcessor:
     def _initialize_model(self):
         """Initialize Mixtral 8x7B model with GPU optimization and quantization."""
         try:
+            logger.info("="*70)
+            logger.info(f"MODEL INITIALIZATION: {self.model_name}")
+            logger.info("="*70)
             logger.info(f"Loading {self.model_name} (MoE architecture)...")
             logger.info("Note: Mixtral 8x7B 4-bit NF4: ~12GB weights + 3-5GB activations = ~16-17GB total")
             logger.info("Compatible with: RTX 4090 (24GB), RTX 5090 (32GB), A40 (48GB)")
             
+            # Log diagnostic information
+            logger.info("-"*70)
+            logger.info("DIAGNOSTIC: Environment & Dependencies")
+            logger.info("-"*70)
+            logger.info(f"PyTorch version: {torch.__version__}")
+            logger.info(f"CUDA available: {torch.cuda.is_available()}")
+            if torch.cuda.is_available():
+                logger.info(f"CUDA version (PyTorch): {torch.version.cuda}")
+                logger.info(f"GPU: {torch.cuda.get_device_name(0)}")
+                logger.info(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+                logger.info(f"Compute capability: {torch.cuda.get_device_capability(0)}")
+            
+            # Log BitsAndBytes configuration
+            import bitsandbytes as bnb
+            logger.info(f"BitsAndBytes version: {bnb.__version__}")
+            logger.info(f"BNB_CUDA_VERSION env: {os.environ.get('BNB_CUDA_VERSION', 'NOT SET')}")
+            
+            # Log transformers version
+            import transformers
+            logger.info(f"Transformers version: {transformers.__version__}")
+            logger.info("-"*70)
+            
             # Enable PyTorch memory expansion to reduce fragmentation
             # Prevents "CUDA out of memory" errors during generation
             os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+            logger.info("PyTorch memory expansion enabled: expandable_segments=True")
             
             # Clear GPU cache before loading
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-                logger.info(f"GPU cache cleared before model loading")
+                free_memory = torch.cuda.get_device_properties(0).total_memory - torch.cuda.memory_allocated(0)
+                logger.info(f"GPU cache cleared. Free memory: {free_memory / (1024**3):.1f} GB")
             
             # Verify token exists
             hf_token = os.getenv("HUGGING_FACE_TOKEN")
@@ -128,6 +155,9 @@ class LlamaProcessor:
             
             # Report actual load time
             model_load_time = __import__('time').time() - model_load_start
+            logger.info("-"*70)
+            logger.info("MODEL LOADING SUMMARY")
+            logger.info("-"*70)
             if model_load_time < 30:
                 logger.info(f"✅ Model loaded from cache in {model_load_time:.1f} seconds")
             else:
@@ -136,6 +166,7 @@ class LlamaProcessor:
             # CRITICAL: Verify no CPU offloading (check for meta device)
             if hasattr(self.model, 'hf_device_map'):
                 device_map = self.model.hf_device_map
+                logger.info(f"Device map: {len(device_map)} layers mapped")
                 cpu_layers = [k for k, v in device_map.items() 
                              if 'cpu' in str(v).lower() or 'meta' in str(v).lower()]
 
@@ -149,6 +180,9 @@ class LlamaProcessor:
                     )
                 else:
                     logger.info(f"✅ All model layers on GPU (no CPU offloading)")
+                    # Show sample of device mapping
+                    sample_mapping = dict(list(device_map.items())[:3])
+                    logger.info(f"   Sample mapping: {sample_mapping}")
             
             # Report GPU memory usage after loading
             if torch.cuda.is_available():
@@ -159,18 +193,147 @@ class LlamaProcessor:
                 logger.info(f"GPU Memory: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved, {free:.2f}GB free")
             
         except Exception as e:
+            import traceback
             error_msg = str(e)
-            logger.error(f"❌ Failed to load model: {error_msg}")
+            error_traceback = traceback.format_exc()
             
-            # Provide helpful error messages
-            if "access" in error_msg.lower() or "permission" in error_msg.lower():
-                logger.error(
-                    "⚠️  Permission Error: Please ensure:\n"
-                    "1. You've accepted the Mixtral license at:\n"
-                    "   https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1\n"
-                    "2. Your token has read access\n"
-                    "3. You're using the correct token in HUGGING_FACE_TOKEN env var"
-                )
+            logger.error("="*70)
+            logger.error("MODEL INITIALIZATION FAILED")
+            logger.error("="*70)
+            logger.error(f"Error Type: {type(e).__name__}")
+            logger.error(f"Error Message: {error_msg}")
+            logger.error(f"\nFull Traceback:\n{error_traceback}")
+            
+            # Detailed BitsAndBytes diagnostics
+            if "bitsandbytes" in error_msg.lower() or "bnb" in error_msg.lower():
+                logger.error("-"*70)
+                logger.error("BITSANDBYTES FAILURE DIAGNOSTICS")
+                logger.error("-"*70)
+                
+                # Check BNB environment variable
+                bnb_cuda_ver = os.environ.get('BNB_CUDA_VERSION', 'NOT SET')
+                logger.error(f"BNB_CUDA_VERSION: {bnb_cuda_ver}")
+                
+                # Try to import and get version
+                try:
+                    import bitsandbytes as bnb
+                    logger.error(f"BitsAndBytes version: {bnb.__version__}")
+                    logger.error(f"BitsAndBytes location: {bnb.__file__}")
+                except ImportError as import_err:
+                    logger.error(f"Cannot import BitsAndBytes: {import_err}")
+                
+                # Check CUDA libraries
+                cuda_home = os.environ.get('CUDA_HOME', 'NOT SET')
+                cuda_path = os.environ.get('CUDA_PATH', 'NOT SET')
+                ld_library_path = os.environ.get('LD_LIBRARY_PATH', 'NOT SET')
+                
+                logger.error(f"CUDA_HOME: {cuda_home}")
+                logger.error(f"CUDA_PATH: {cuda_path}")
+                logger.error(f"LD_LIBRARY_PATH: {ld_library_path[:200] if ld_library_path != 'NOT SET' else 'NOT SET'}")
+                
+                # Check for CUDA libraries
+                import glob
+                logger.error("\nSearching for CUDA libraries:")
+                cuda_search_paths = [
+                    '/usr/local/cuda/lib64',
+                    '/usr/local/nvidia/lib64',
+                    '/usr/lib/x86_64-linux-gnu'
+                ]
+                for search_path in cuda_search_paths:
+                    try:
+                        libcudart = glob.glob(f"{search_path}/libcudart.so*")
+                        if libcudart:
+                            logger.error(f"  ✅ Found libcudart in {search_path}: {libcudart[:2]}")
+                        else:
+                            logger.error(f"  ❌ No libcudart found in {search_path}")
+                    except Exception:
+                        pass
+                
+                # Check for BitsAndBytes CUDA libraries
+                try:
+                    import bitsandbytes as bnb
+                    bnb_path = os.path.dirname(bnb.__file__)
+                    logger.error(f"\nSearching for BNB CUDA libraries in: {bnb_path}")
+                    bnb_libs = glob.glob(f"{bnb_path}/**/*.so", recursive=True)
+                    if bnb_libs:
+                        logger.error(f"  Found {len(bnb_libs)} .so files:")
+                        for lib in bnb_libs[:5]:  # Show first 5
+                            logger.error(f"    - {os.path.basename(lib)}")
+                    else:
+                        logger.error(f"  ❌ No .so files found in BNB directory")
+                except Exception as search_err:
+                    logger.error(f"  Error searching BNB libraries: {search_err}")
+                
+                logger.error("-"*70)
+                logger.error("RECOMMENDED FIXES:")
+                logger.error("1. Check BNB_CUDA_VERSION environment variable is set correctly")
+                logger.error("2. Ensure CUDA libraries are in LD_LIBRARY_PATH")
+                logger.error("3. Verify BitsAndBytes version compatibility with PyTorch")
+                logger.error("4. Check CUDA runtime version matches PyTorch compilation")
+                logger.error("-"*70)
+                logger.error(f"BNB_CUDA_VERSION env var: {os.environ.get('BNB_CUDA_VERSION', 'NOT SET')}")
+                
+                try:
+                    import bitsandbytes as bnb
+                    logger.error(f"BitsAndBytes version: {bnb.__version__}")
+                    logger.error(f"BitsAndBytes location: {bnb.__file__}")
+                except Exception as bnb_err:
+                    logger.error(f"Cannot import BitsAndBytes: {bnb_err}")
+                
+                try:
+                    logger.error(f"PyTorch CUDA version: {torch.version.cuda}")
+                    logger.error(f"CUDA available: {torch.cuda.is_available()}")
+                    if torch.cuda.is_available():
+                        logger.error(f"CUDA runtime version: {torch.version.cuda}")
+                        logger.error(f"Compute capability: {torch.cuda.get_device_capability(0)}")
+                except Exception as cuda_err:
+                    logger.error(f"Cannot check CUDA: {cuda_err}")
+                
+                logger.error("\n⚠️  BitsAndBytes CUDA Setup Failed!")
+                logger.error("Possible fixes:")
+                logger.error("1. Set BNB_CUDA_VERSION=121 environment variable")
+                logger.error("2. Verify CUDA runtime matches PyTorch (12.1)")
+                logger.error("3. Check LD_LIBRARY_PATH includes CUDA libraries")
+                logger.error("4. Run: python -m bitsandbytes (for detailed diagnostics)")
+                logger.error("-"*70)
+            
+            # CUDA OOM diagnostics
+            elif "out of memory" in error_msg.lower() or "oom" in error_msg.lower():
+                logger.error("-"*70)
+                logger.error("CUDA OUT OF MEMORY DIAGNOSTICS")
+                logger.error("-"*70)
+                if torch.cuda.is_available():
+                    total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+                    allocated = torch.cuda.memory_allocated(0) / (1024**3)
+                    reserved = torch.cuda.memory_reserved(0) / (1024**3)
+                    logger.error(f"Total VRAM: {total:.2f} GB")
+                    logger.error(f"Allocated: {allocated:.2f} GB")
+                    logger.error(f"Reserved: {reserved:.2f} GB")
+                    logger.error(f"Free: {total - reserved:.2f} GB")
+                logger.error("⚠️  Mixtral 8x7B 4-bit requires ~16-17GB VRAM")
+                logger.error("Possible fixes:")
+                logger.error("1. Use GPU with ≥20GB VRAM (RTX 4090, RTX 5090, A40)")
+                logger.error("2. Reduce max_length or batch_size")
+                logger.error("3. Use smaller model (Mistral 7B needs ~4-5GB)")
+                logger.error("-"*70)
+            
+            # Permission/access errors
+            elif "access" in error_msg.lower() or "permission" in error_msg.lower():
+                logger.error("-"*70)
+                logger.error("MODEL ACCESS / PERMISSION ERROR")
+                logger.error("-"*70)
+                logger.error("⚠️  Please ensure:")
+                logger.error("1. You've accepted the Mixtral license at:")
+                logger.error("   https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1")
+                logger.error("2. Your HF token has read access")
+                logger.error("3. HUGGING_FACE_TOKEN env var is set correctly")
+                logger.error(f"4. Current token (masked): {os.environ.get('HUGGING_FACE_TOKEN', 'NOT SET')[:10]}...")
+                logger.error("-"*70)
+            
+            # Log full traceback for unknown errors
+            logger.error("\nFull Traceback:")
+            logger.error(error_traceback)
+            logger.error("="*70)
             
             raise RuntimeError(
                 f"Unable to access model '{self.model_name}'. "
