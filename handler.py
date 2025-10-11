@@ -9,13 +9,15 @@ from pathlib import Path
 # Verify /runpod-volume exists (RunPod Serverless Network Volume mount point)
 workspace_path = Path("/runpod-volume")
 if not workspace_path.exists():
-    print("❌ CRITICAL: /runpod-volume directory does not exist!")
+    print("⚠️  WARNING: /runpod-volume directory does not exist!")
     print("   Please ensure RunPod Network Volume is properly attached to the endpoint")
-    sys.exit(1)
+    print("   ⚠️  CONTINUING - Worker will start but may fail to cache models")
+    # REMOVED sys.exit(1) for debugging
 
 if not workspace_path.is_dir():
-    print("❌ CRITICAL: /runpod-volume exists but is not a directory!")
-    sys.exit(1)
+    print("⚠️  WARNING: /runpod-volume exists but is not a directory!")
+    print("   ⚠️  CONTINUING - Worker will start but may have issues")
+    # REMOVED sys.exit(1) for debugging
 
 # Verify workspace is writable
 try:
@@ -24,8 +26,9 @@ try:
     test_file.unlink()
     print(f"✅ /runpod-volume verified and writable")
 except Exception as e:
-    print(f"❌ CRITICAL: /runpod-volume is not writable: {e}")
-    sys.exit(1)
+    print(f"⚠️  WARNING: /runpod-volume is not writable: {e}")
+    print("   ⚠️  CONTINUING - Worker will start but cannot cache models")
+    # REMOVED sys.exit(1) for debugging
 
 # Configure environment variables for model caching BEFORE any imports
 # This ensures all ML libraries use persistent storage on /runpod-volume
@@ -734,8 +737,20 @@ handler = async_handler
 # Start RunPod serverless worker
 if __name__ == "__main__":
     if runpod is None:
-        logger.error("runpod package not installed. Install with: pip install runpod")
-        exit(1)
+        logger.error("⚠️  WARNING: runpod package not installed. Install with: pip install runpod")
+        logger.error("   ⚠️  CONTINUING - Worker may not function properly")
+        # REMOVED exit(1) for debugging
     
     logger.info("Starting RunPod serverless worker for ZopilotGPU...")
-    runpod.serverless.start({"handler": handler})
+    
+    try:
+        if runpod is not None:
+            runpod.serverless.start({"handler": handler})
+        else:
+            logger.error("❌ Cannot start worker without runpod package")
+            # Don't exit, just log the error
+    except Exception as e:
+        logger.error(f"❌ Failed to start RunPod worker: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        # Don't exit, let the error be visible
