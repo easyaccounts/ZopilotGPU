@@ -18,8 +18,9 @@ docstrange
 transformers>=4.38.0,<4.50.0
 # accelerate 1.0.0+ requires NumPy 2.x, stay on 0.x for NumPy 1.x compatibility
 accelerate>=0.28.0,<1.0.0
-# BitsAndBytes 0.43.0+ supports Blackwell (RTX 5090) and Ada Lovelace (RTX 4090)
-bitsandbytes>=0.43.0
+# BitsAndBytes 0.42.0 compatible with PyTorch 2.3.1 (0.43+ requires PyTorch 2.4+)
+# Still supports RTX 5090 Blackwell via CUDA 12.4 runtime
+bitsandbytes==0.42.0
 
 # ML/AI - Supporting
 safetensors>=0.4.3

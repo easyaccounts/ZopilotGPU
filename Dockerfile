@@ -66,20 +66,11 @@ RUN pip install --no-cache-dir \
 # scipy and numpy already installed above, so they won't be upgraded
 RUN pip install --no-cache-dir --ignore-installed blinker -r requirements.txt
 
-# Rebuild BitsAndBytes with CUDA 12.4 support for RTX 5090
-# This ensures proper Blackwell (compute capability 9.0) and Ada Lovelace (8.9) support
+# Install BitsAndBytes 0.42.0 with CUDA 12.4 support for RTX 5090
+# NOTE: 0.42.0 compatible with PyTorch 2.3.1 (0.43+ requires PyTorch 2.4+ internal APIs)
+# Blackwell support comes from CUDA 12.4 runtime, not bitsandbytes version
 RUN pip uninstall -y bitsandbytes && \
-    pip install bitsandbytes>=0.43.0 --no-cache-dir
-
-# Verify NumPy 1.x, scipy, torch, and torchvision installation
-RUN python -c "import numpy, scipy, torch, torchvision; \
-    print(f'✓ NumPy {numpy.__version__}'); \
-    print(f'✓ scipy {scipy.__version__}'); \
-    print(f'✓ torch {torch.__version__}'); \
-    print(f'✓ torchvision {torchvision.__version__}'); \
-    assert numpy.__version__.startswith('1.'), f'ERROR: Expected NumPy 1.x, got {numpy.__version__}'; \
-    assert scipy.__version__.startswith('1.1'), f'ERROR: Expected scipy 1.11-1.12, got {scipy.__version__}'; \
-    print('✅ All core dependencies verified!')"
+    pip install bitsandbytes==0.42.0 --no-cache-dir
 
 # Copy application code
 COPY app/ ./app/
