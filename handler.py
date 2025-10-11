@@ -232,10 +232,12 @@ try:
         print(f"🎮 GPU: {gpu_name}")
         print(f"💾 VRAM: {gpu_memory:.1f} GB")
         
-        # Warn if insufficient memory for Mixtral 8x7B
-        if gpu_memory < 22:
-            print(f"⚠️  WARNING: Mixtral 8x7B requires ~24GB VRAM, you have {gpu_memory:.1f}GB")
+        # Warn if insufficient memory for Mixtral 8x7B with 4-bit NF4 quantization
+        if gpu_memory < 20:
+            print(f"⚠️  WARNING: Mixtral 8x7B 4-bit requires ~16-17GB VRAM, you have {gpu_memory:.1f}GB")
             print("   Model loading may fail or run very slowly")
+        else:
+            print(f"✅ Sufficient VRAM for Mixtral 8x7B 4-bit NF4 (~16-17GB required)")
     else:
         print("⚠️  No GPU detected - will fall back to CPU (very slow)")
 except ImportError:

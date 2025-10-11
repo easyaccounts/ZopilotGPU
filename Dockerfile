@@ -1,6 +1,7 @@
 # Production Dockerfile for ZopilotGPU with Mixtral 8x7B
 # Optimized for Cloud GPU deployment (RunPod, Vast.ai, Lambda Labs)
-FROM nvidia/cuda:12.1.0-devel-ubuntu22.04 AS base
+# CUDA 12.4.1 required for RTX 5090 (Blackwell) support
+FROM nvidia/cuda:12.4.1-devel-ubuntu22.04 AS base
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -53,12 +54,11 @@ RUN pip install --no-cache-dir "numpy>=1.24.0,<2.0.0"
 # Must happen BEFORE docstrange is installed
 RUN pip install --no-cache-dir "scipy>=1.11.0,<1.13.0"
 
-# Install PyTorch with CUDA 12.1 support BEFORE requirements.txt
-# CRITICAL: Using --no-deps to prevent reinstalling/upgrading NumPy
-# torch 2.1.2 has loose numpy>=1.21.2 requirement that triggers NumPy 2.x upgrade with --force-reinstall
-# PyTorch 2.1.2 is last version compatible with NumPy 1.x (2.2.0+ requires NumPy 2.x)
-RUN pip install --no-cache-dir --no-deps \
-    torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 \
+# Install PyTorch with CUDA 12.4 support BEFORE requirements.txt (RTX 5090 Blackwell compatibility)
+# PyTorch 2.3.0+ adds Blackwell support and works with NumPy 1.x
+# Using cu121 wheel which is forward-compatible with CUDA 12.4 runtime via host driver
+RUN pip install --no-cache-dir \
+    torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 \
     --index-url https://download.pytorch.org/whl/cu121
 
 # Install remaining Python dependencies AFTER PyTorch
@@ -66,10 +66,10 @@ RUN pip install --no-cache-dir --no-deps \
 # scipy and numpy already installed above, so they won't be upgraded
 RUN pip install --no-cache-dir --ignore-installed blinker -r requirements.txt
 
-# Rebuild BitsAndBytes with CUDA 12.1 support for RTX 4090
-# This ensures proper Ada Lovelace (compute capability 8.9) support
+# Rebuild BitsAndBytes with CUDA 12.4 support for RTX 5090
+# This ensures proper Blackwell (compute capability 9.0) and Ada Lovelace (8.9) support
 RUN pip uninstall -y bitsandbytes && \
-    pip install bitsandbytes>=0.42.0 --no-cache-dir
+    pip install bitsandbytes>=0.43.0 --no-cache-dir
 
 # Verify NumPy 1.x, scipy, torch, and torchvision installation
 RUN python -c "import numpy, scipy, torch, torchvision; \
@@ -150,9 +150,10 @@ ENV TORCH_HOME=/runpod-volume/torch
 ENV XDG_CACHE_HOME=/runpod-volume
 
 # GPU-specific environment variables for Mixtral 8x7B
-# Mixtral 8x7B requires ~24GB VRAM with 8-bit quantization
+# Mixtral 8x7B: 4-bit NF4 ~12GB weights + 3-5GB activations = ~16-17GB total
+# Compatible with RTX 4090 (24GB), RTX 5090 (32GB), A40 (48GB)
 ENV CUDA_VISIBLE_DEVICES=0
-# GPU memory allocation settings optimized for 8-bit quantization
+# GPU memory allocation settings optimized for 4-bit quantization with expandable segments
 ENV PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512,expandable_segments:True
 ENV CUDA_LAUNCH_BLOCKING=0
 

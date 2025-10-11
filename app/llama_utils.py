@@ -32,13 +32,14 @@ class LlamaProcessor:
         """Initialize Mixtral 8x7B model with GPU optimization and quantization."""
         try:
             logger.info(f"Loading {self.model_name} (MoE architecture)...")
-            logger.info("Note: Mixtral 8x7B requires ~24GB VRAM with 8-bit quantization")
+            logger.info("Note: Mixtral 8x7B 4-bit NF4: ~12GB weights + 3-5GB activations = ~16-17GB total")
+            logger.info("Compatible with: RTX 4090 (24GB), RTX 5090 (32GB), A40 (48GB)")
             
             # Enable PyTorch memory expansion to reduce fragmentation
             # Prevents "CUDA out of memory" errors during generation
             os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
             
-            # Clear GPU cache before loading (critical for 24GB VRAM)
+            # Clear GPU cache before loading
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 logger.info(f"GPU cache cleared before model loading")
@@ -87,25 +88,30 @@ class LlamaProcessor:
             model_load_start = __import__('time').time()
             
             # Load model with 4-bit NF4 quantization
-            # RTX 4090 has 24GB VRAM total (23.5GB available after overhead)
-            # Mixtral 8x7B 4-bit NF4 will use ~10-12GB for weights
+            # Memory breakdown:
+            #   - 4-bit NF4 weights: ~12GB
+            #   - Activations during inference: ~3-5GB
+            #   - Total peak usage: ~16-17GB
             # 
+            # GPU Compatibility:
+            #   - RTX 4090 (24GB): 7-8GB free headroom ✅
+            #   - RTX 5090 (32GB): 15-16GB free headroom ✅
+            #   - A40 (48GB): 31-32GB free headroom ✅
+            #
             # Benefits of 4-bit NF4:
-            # 1. Fits comfortably (10-12GB used, 12GB+ free)
-            # 2. No OOM during loading (plenty of headroom)
-            # 3. Faster inference (less memory bandwidth needed)
-            # 4. Quality: 95-97% (excellent for classification tasks)
-            # 5. No need for max_memory limits
+            # 1. Fits on 24GB+ GPUs with plenty of headroom
+            # 2. 2x faster than 8-bit (less memory bandwidth)
+            # 3. Quality: 95-97% of FP16 (excellent for classification)
+            # 4. No CPU offloading needed
             #
             # Strategy:
             # - Use device_map={"": 0} to place all layers on GPU 0
-            # - No max_memory constraint needed (fits easily)
+            # - No max_memory constraint needed
             # - Model loads in 1-2 minutes from cache
-            # - Plenty of VRAM left for KV cache, activations, future features
             
             logger.info("Loading Mixtral 8x7B with 4-bit NF4 quantization...")
-            logger.info("Expected memory: ~10-12GB for weights, 12GB+ free for operations")
-            logger.info("Quality: 95-97% (optimal for classification/instruction-following)")
+            logger.info("Expected memory: ~12GB weights + ~3-5GB activations = ~16-17GB total")
+            logger.info("Quality: 95-97% of FP16 (optimal for classification/instruction-following)")
             
             # Load model with simple GPU placement (no memory constraints needed!)
             # 4-bit quantization fits comfortably in available VRAM

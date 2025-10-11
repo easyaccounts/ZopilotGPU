@@ -1,0 +1,986 @@
+root@b08f1ae04833:/workspace/ZopilotGPU# echo "=== NETWORK VOLUME STRUCTURE ===" && \
+> echo "Date: $(date)" && \
+> echo "" && \
+> echo "=== DISK USAGE ===" && \
+> du -h --max-depth=3 /workspace && \
+> echo "" && \
+> echo "=== DIRECTORY TREE ===" && \
+> find /workspace -maxdepth 5 -type d | sort && \
+> echo "" && \
+> echo "=== MIXTRAL MODEL FILES ===" && \
+> ls -lh /workspace/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1/snapshots/*/ && \
+> echo "" && \
+> echo "=== DOCSTRANGE MODEL FILES ===" && \
+> ls -lRh /workspace/docstrange/models/ | head -100
+=== NETWORK VOLUME STRUCTURE ===
+Date: Sat Oct 11 08:53:12 UTC 2025
+
+=== DISK USAGE ===
+9.9G    /workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h
+9.9G    /workspace/huggingface/xet
+512     /workspace/huggingface/.locks/models--mistralai--Mixtral-8x7B-Instruct-v0.1
+1.0K    /workspace/huggingface/.locks
+1.0K    /workspace/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1/.no_exist
+4.5K    /workspace/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1/refs
+2.0M    /workspace/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1/snapshots
+87G     /workspace/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1/blobs
+88G     /workspace/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1
+97G     /workspace/huggingface
+9.8M    /workspace/torch_extensions/py310_cu128/MultiScaleDeformableAttention
+12M     /workspace/torch_extensions/py310_cu128
+14M     /workspace/torch_extensions
+352M    /workspace/docstrange/models/tableformer
+7.1G    /workspace/docstrange/models/nanonets-ocr
+166M    /workspace/docstrange/models/layout
+7.6G    /workspace/docstrange/models
+7.6G    /workspace/docstrange
+9.0K    /workspace/pip/selfcheck
+1.1G    /workspace/pip/http-v2/2
+802M    /workspace/pip/http-v2/6
+373M    /workspace/pip/http-v2/5
+191M    /workspace/pip/http-v2/1
+90M     /workspace/pip/http-v2/4
+1.1G    /workspace/pip/http-v2/d
+400M    /workspace/pip/http-v2/3
+105M    /workspace/pip/http-v2/f
+128M    /workspace/pip/http-v2/c
+138M    /workspace/pip/http-v2/e
+109M    /workspace/pip/http-v2/9
+607M    /workspace/pip/http-v2/7
+290M    /workspace/pip/http-v2/b
+119M    /workspace/pip/http-v2/a
+101M    /workspace/pip/http-v2/8
+136M    /workspace/pip/http-v2/0
+5.6G    /workspace/pip/http-v2
+5.6G    /workspace/pip
+999K    /workspace/ZopilotGPU/app/__pycache__
+2.0M    /workspace/ZopilotGPU/app
+152K    /workspace/ZopilotGPU/.git/logs
+2.3M    /workspace/ZopilotGPU/.git/objects
+19K     /workspace/ZopilotGPU/.git/refs
+24K     /workspace/ZopilotGPU/.git/info
+1005K   /workspace/ZopilotGPU/.git/hooks
+512     /workspace/ZopilotGPU/.git/branches
+4.5M    /workspace/ZopilotGPU/.git
+8.0M    /workspace/ZopilotGPU
+110G    /workspace
+
+=== DIRECTORY TREE ===
+/workspace
+/workspace/ZopilotGPU
+/workspace/ZopilotGPU/.git
+/workspace/ZopilotGPU/.git/branches
+/workspace/ZopilotGPU/.git/hooks
+/workspace/ZopilotGPU/.git/info
+/workspace/ZopilotGPU/.git/logs
+/workspace/ZopilotGPU/.git/logs/refs
+/workspace/ZopilotGPU/.git/logs/refs/heads
+/workspace/ZopilotGPU/.git/logs/refs/remotes
+/workspace/ZopilotGPU/.git/objects
+/workspace/ZopilotGPU/.git/objects/info
+/workspace/ZopilotGPU/.git/objects/pack
+/workspace/ZopilotGPU/.git/refs
+/workspace/ZopilotGPU/.git/refs/heads
+/workspace/ZopilotGPU/.git/refs/remotes
+/workspace/ZopilotGPU/.git/refs/remotes/origin
+/workspace/ZopilotGPU/.git/refs/tags
+/workspace/ZopilotGPU/app
+/workspace/ZopilotGPU/app/__pycache__
+/workspace/docstrange
+/workspace/docstrange/models
+/workspace/docstrange/models/layout
+/workspace/docstrange/models/nanonets-ocr
+/workspace/docstrange/models/nanonets-ocr/Nanonets-OCR-ss
+/workspace/docstrange/models/nanonets-ocr/Nanonets-OCR-ss/.cache
+/workspace/docstrange/models/tableformer
+/workspace/docstrange/models/tableformer/.cache
+/workspace/docstrange/models/tableformer/.cache/huggingface
+/workspace/docstrange/models/tableformer/model_artifacts
+/workspace/docstrange/models/tableformer/model_artifacts/tableformer
+/workspace/huggingface
+/workspace/huggingface/.locks
+/workspace/huggingface/.locks/models--mistralai--Mixtral-8x7B-Instruct-v0.1
+/workspace/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1
+/workspace/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1/.no_exist
+/workspace/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1/.no_exist/eba92302a2861cdc0098cc54bc9f17cb2c47eb61
+/workspace/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1/blobs
+/workspace/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1/refs
+/workspace/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1/snapshots
+/workspace/huggingface/models--mistralai--Mixtral-8x7B-Instruct-v0.1/snapshots/eba92302a2861cdc0098cc54bc9f17cb2c47eb61
+/workspace/huggingface/xet
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/-0
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/-C
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/0G
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/0Q
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/0i
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/1-
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/19
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/1D
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/1H
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/1a
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/1b
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/1x
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/22
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/2D
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/2a
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/32
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/37
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/3V
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/3Z
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/4Y
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/4f
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/5M
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/6P
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/7v
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/7x
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/8a
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/8d
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/8j
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/8q
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/9R
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/9z
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/AF
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/AK
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/BU
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Bb
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/CJ
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Ct
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/D7
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/DK
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/E3
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Fa
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/G-
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/GS
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Gd
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Gm
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Hc
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/IR
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Iu
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/JB
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/JM
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/KM
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/KR
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/KV
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/K_
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Kd
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/LH
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/M7
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/MQ
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/MS
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/MZ
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Me
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Mt
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/N5
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/NU
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Oh
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/P8
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/PI
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Pt
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Pv
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Q_
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Qf
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Qw
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Re
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Rk
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Rq
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/SK
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/TD
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/TL
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Tj
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Tx
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/VG
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Vc
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Wz
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/XH
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Xu
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Y5
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Yk
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Yz
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Z5
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/ZS
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Z_
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Zj
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/Zo
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/a8
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/aG
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/aP
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/am
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/bt
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/d4
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/dT
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/de
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/e7
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/eB
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/f0
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/fJ
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/fr
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/g4
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/gz
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/h6
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/hV
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/hs
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/jD
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/jI
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/jJ
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/jZ
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/jt
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/k4
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/kS
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/kn
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/li
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/nJ
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/oC
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/oH
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/op
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/os
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/p9
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/q9
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/qF
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/qY
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/r2
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/rC
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/rV
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/rc
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/sP
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/sR
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/tB
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/tT
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/t_
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/tw
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/u-
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/u5
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/u9
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/ud
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/v2
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/vi
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/vy
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/wU
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/x3
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/xJ
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/xW
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/y8
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/yh
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/chunk-cache/zT
+/workspace/huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/staging
+/workspace/pip
+/workspace/pip/http-v2
+/workspace/pip/http-v2/0
+/workspace/pip/http-v2/0/0
+/workspace/pip/http-v2/0/0/8
+/workspace/pip/http-v2/0/1
+/workspace/pip/http-v2/0/1/a
+/workspace/pip/http-v2/0/2
+/workspace/pip/http-v2/0/2/8
+/workspace/pip/http-v2/0/2/f
+/workspace/pip/http-v2/0/3
+/workspace/pip/http-v2/0/3/4
+/workspace/pip/http-v2/0/3/5
+/workspace/pip/http-v2/0/3/b
+/workspace/pip/http-v2/0/3/d
+/workspace/pip/http-v2/0/4
+/workspace/pip/http-v2/0/4/4
+/workspace/pip/http-v2/0/4/6
+/workspace/pip/http-v2/0/4/8
+/workspace/pip/http-v2/0/4/e
+/workspace/pip/http-v2/0/5
+/workspace/pip/http-v2/0/5/a
+/workspace/pip/http-v2/0/6
+/workspace/pip/http-v2/0/6/f
+/workspace/pip/http-v2/0/8
+/workspace/pip/http-v2/0/8/9
+/workspace/pip/http-v2/0/8/d
+/workspace/pip/http-v2/0/8/f
+/workspace/pip/http-v2/0/9
+/workspace/pip/http-v2/0/9/c
+/workspace/pip/http-v2/0/9/f
+/workspace/pip/http-v2/0/a
+/workspace/pip/http-v2/0/a/8
+/workspace/pip/http-v2/0/a/9
+/workspace/pip/http-v2/0/a/e
+/workspace/pip/http-v2/0/b
+/workspace/pip/http-v2/0/b/6
+/workspace/pip/http-v2/0/b/c
+/workspace/pip/http-v2/0/c
+/workspace/pip/http-v2/0/c/0
+/workspace/pip/http-v2/0/c/9
+/workspace/pip/http-v2/0/c/f
+/workspace/pip/http-v2/0/d
+/workspace/pip/http-v2/0/d/1
+/workspace/pip/http-v2/0/d/c
+/workspace/pip/http-v2/0/d/d
+/workspace/pip/http-v2/0/e
+/workspace/pip/http-v2/0/e/0
+/workspace/pip/http-v2/0/e/3
+/workspace/pip/http-v2/0/e/8
+/workspace/pip/http-v2/0/e/a
+/workspace/pip/http-v2/1
+/workspace/pip/http-v2/1/0
+/workspace/pip/http-v2/1/0/e
+/workspace/pip/http-v2/1/1
+/workspace/pip/http-v2/1/1/4
+/workspace/pip/http-v2/1/1/d
+/workspace/pip/http-v2/1/3
+/workspace/pip/http-v2/1/3/2
+/workspace/pip/http-v2/1/3/3
+/workspace/pip/http-v2/1/4
+/workspace/pip/http-v2/1/4/a
+/workspace/pip/http-v2/1/5
+/workspace/pip/http-v2/1/5/6
+/workspace/pip/http-v2/1/5/d
+/workspace/pip/http-v2/1/6
+/workspace/pip/http-v2/1/6/0
+/workspace/pip/http-v2/1/6/9
+/workspace/pip/http-v2/1/7
+/workspace/pip/http-v2/1/7/b
+/workspace/pip/http-v2/1/8
+/workspace/pip/http-v2/1/8/e
+/workspace/pip/http-v2/1/9
+/workspace/pip/http-v2/1/9/6
+/workspace/pip/http-v2/1/9/8
+/workspace/pip/http-v2/1/9/d
+/workspace/pip/http-v2/1/a
+/workspace/pip/http-v2/1/a/5
+/workspace/pip/http-v2/1/a/9
+/workspace/pip/http-v2/1/c
+/workspace/pip/http-v2/1/c/f
+/workspace/pip/http-v2/1/d
+/workspace/pip/http-v2/1/d/4
+/workspace/pip/http-v2/1/d/c
+/workspace/pip/http-v2/1/e
+/workspace/pip/http-v2/1/e/4
+/workspace/pip/http-v2/1/e/5
+/workspace/pip/http-v2/1/e/6
+/workspace/pip/http-v2/1/f
+/workspace/pip/http-v2/1/f/5
+/workspace/pip/http-v2/2
+/workspace/pip/http-v2/2/1
+/workspace/pip/http-v2/2/1/1
+/workspace/pip/http-v2/2/1/9
+/workspace/pip/http-v2/2/2
+/workspace/pip/http-v2/2/2/6
+/workspace/pip/http-v2/2/3
+/workspace/pip/http-v2/2/3/0
+/workspace/pip/http-v2/2/3/4
+/workspace/pip/http-v2/2/3/a
+/workspace/pip/http-v2/2/4
+/workspace/pip/http-v2/2/4/6
+/workspace/pip/http-v2/2/5
+/workspace/pip/http-v2/2/5/6
+/workspace/pip/http-v2/2/6
+/workspace/pip/http-v2/2/6/4
+/workspace/pip/http-v2/2/7
+/workspace/pip/http-v2/2/7/6
+/workspace/pip/http-v2/2/9
+/workspace/pip/http-v2/2/9/4
+/workspace/pip/http-v2/2/a
+/workspace/pip/http-v2/2/a/5
+/workspace/pip/http-v2/2/b
+/workspace/pip/http-v2/2/b/0
+/workspace/pip/http-v2/2/b/5
+/workspace/pip/http-v2/2/b/7
+/workspace/pip/http-v2/2/d
+/workspace/pip/http-v2/2/d/4
+/workspace/pip/http-v2/2/e
+/workspace/pip/http-v2/2/e/0
+/workspace/pip/http-v2/2/e/6
+/workspace/pip/http-v2/2/e/a
+/workspace/pip/http-v2/3
+/workspace/pip/http-v2/3/0
+/workspace/pip/http-v2/3/0/5
+/workspace/pip/http-v2/3/0/c
+/workspace/pip/http-v2/3/0/d
+/workspace/pip/http-v2/3/0/e
+/workspace/pip/http-v2/3/1
+/workspace/pip/http-v2/3/1/5
+/workspace/pip/http-v2/3/1/8
+/workspace/pip/http-v2/3/2
+/workspace/pip/http-v2/3/2/4
+/workspace/pip/http-v2/3/2/8
+/workspace/pip/http-v2/3/4
+/workspace/pip/http-v2/3/4/5
+/workspace/pip/http-v2/3/4/e
+/workspace/pip/http-v2/3/5
+/workspace/pip/http-v2/3/5/9
+/workspace/pip/http-v2/3/6
+/workspace/pip/http-v2/3/6/2
+/workspace/pip/http-v2/3/6/7
+/workspace/pip/http-v2/3/6/d
+/workspace/pip/http-v2/3/7
+/workspace/pip/http-v2/3/7/7
+/workspace/pip/http-v2/3/7/8
+/workspace/pip/http-v2/3/8
+/workspace/pip/http-v2/3/8/5
+/workspace/pip/http-v2/3/8/6
+/workspace/pip/http-v2/3/9
+/workspace/pip/http-v2/3/9/e
+/workspace/pip/http-v2/3/a
+/workspace/pip/http-v2/3/a/1
+/workspace/pip/http-v2/3/a/6
+/workspace/pip/http-v2/3/b
+/workspace/pip/http-v2/3/b/2
+/workspace/pip/http-v2/3/b/5
+/workspace/pip/http-v2/3/b/9
+/workspace/pip/http-v2/3/c
+/workspace/pip/http-v2/3/c/9
+/workspace/pip/http-v2/3/c/a
+/workspace/pip/http-v2/3/d
+/workspace/pip/http-v2/3/d/b
+/workspace/pip/http-v2/3/e
+/workspace/pip/http-v2/3/e/3
+/workspace/pip/http-v2/3/f
+/workspace/pip/http-v2/3/f/5
+/workspace/pip/http-v2/3/f/7
+/workspace/pip/http-v2/4
+/workspace/pip/http-v2/4/2
+/workspace/pip/http-v2/4/2/a
+/workspace/pip/http-v2/4/3
+/workspace/pip/http-v2/4/3/2
+/workspace/pip/http-v2/4/3/8
+/workspace/pip/http-v2/4/4
+/workspace/pip/http-v2/4/4/0
+/workspace/pip/http-v2/4/5
+/workspace/pip/http-v2/4/5/6
+/workspace/pip/http-v2/4/5/8
+/workspace/pip/http-v2/4/6
+/workspace/pip/http-v2/4/6/e
+/workspace/pip/http-v2/4/6/f
+/workspace/pip/http-v2/4/9
+/workspace/pip/http-v2/4/9/1
+/workspace/pip/http-v2/4/a
+/workspace/pip/http-v2/4/a/1
+/workspace/pip/http-v2/4/a/3
+/workspace/pip/http-v2/4/a/5
+/workspace/pip/http-v2/4/b
+/workspace/pip/http-v2/4/b/a
+/workspace/pip/http-v2/4/c
+/workspace/pip/http-v2/4/c/8
+/workspace/pip/http-v2/4/d
+/workspace/pip/http-v2/4/d/2
+/workspace/pip/http-v2/4/d/3
+/workspace/pip/http-v2/4/d/c
+/workspace/pip/http-v2/4/e
+/workspace/pip/http-v2/4/e/2
+/workspace/pip/http-v2/4/e/a
+/workspace/pip/http-v2/4/e/e
+/workspace/pip/http-v2/4/f
+/workspace/pip/http-v2/4/f/2
+/workspace/pip/http-v2/5
+/workspace/pip/http-v2/5/0
+/workspace/pip/http-v2/5/0/5
+/workspace/pip/http-v2/5/0/6
+/workspace/pip/http-v2/5/0/8
+/workspace/pip/http-v2/5/1
+/workspace/pip/http-v2/5/1/9
+/workspace/pip/http-v2/5/2
+/workspace/pip/http-v2/5/2/1
+/workspace/pip/http-v2/5/2/9
+/workspace/pip/http-v2/5/4
+/workspace/pip/http-v2/5/4/b
+/workspace/pip/http-v2/5/5
+/workspace/pip/http-v2/5/5/5
+/workspace/pip/http-v2/5/5/d
+/workspace/pip/http-v2/5/5/e
+/workspace/pip/http-v2/5/6
+/workspace/pip/http-v2/5/6/9
+/workspace/pip/http-v2/5/7
+/workspace/pip/http-v2/5/7/8
+/workspace/pip/http-v2/5/8
+/workspace/pip/http-v2/5/8/0
+/workspace/pip/http-v2/5/8/7
+/workspace/pip/http-v2/5/8/f
+/workspace/pip/http-v2/5/9
+/workspace/pip/http-v2/5/9/1
+/workspace/pip/http-v2/5/a
+/workspace/pip/http-v2/5/a/a
+/workspace/pip/http-v2/5/c
+/workspace/pip/http-v2/5/c/4
+/workspace/pip/http-v2/5/c/7
+/workspace/pip/http-v2/5/f
+/workspace/pip/http-v2/5/f/5
+/workspace/pip/http-v2/5/f/c
+/workspace/pip/http-v2/6
+/workspace/pip/http-v2/6/0
+/workspace/pip/http-v2/6/0/d
+/workspace/pip/http-v2/6/0/f
+/workspace/pip/http-v2/6/1
+/workspace/pip/http-v2/6/1/6
+/workspace/pip/http-v2/6/2
+/workspace/pip/http-v2/6/2/d
+/workspace/pip/http-v2/6/3
+/workspace/pip/http-v2/6/3/0
+/workspace/pip/http-v2/6/3/2
+/workspace/pip/http-v2/6/4
+/workspace/pip/http-v2/6/4/d
+/workspace/pip/http-v2/6/4/f
+/workspace/pip/http-v2/6/6
+/workspace/pip/http-v2/6/6/e
+/workspace/pip/http-v2/6/8
+/workspace/pip/http-v2/6/8/4
+/workspace/pip/http-v2/6/8/f
+/workspace/pip/http-v2/6/9
+/workspace/pip/http-v2/6/9/3
+/workspace/pip/http-v2/6/9/4
+/workspace/pip/http-v2/6/a
+/workspace/pip/http-v2/6/a/b
+/workspace/pip/http-v2/6/b
+/workspace/pip/http-v2/6/b/1
+/workspace/pip/http-v2/6/b/5
+/workspace/pip/http-v2/6/b/c
+/workspace/pip/http-v2/6/c
+/workspace/pip/http-v2/6/c/6
+/workspace/pip/http-v2/6/c/8
+/workspace/pip/http-v2/6/f
+/workspace/pip/http-v2/6/f/8
+/workspace/pip/http-v2/6/f/b
+/workspace/pip/http-v2/6/f/f
+/workspace/pip/http-v2/7
+/workspace/pip/http-v2/7/0
+/workspace/pip/http-v2/7/0/8
+/workspace/pip/http-v2/7/0/a
+/workspace/pip/http-v2/7/0/e
+/workspace/pip/http-v2/7/1
+/workspace/pip/http-v2/7/1/4
+/workspace/pip/http-v2/7/2
+/workspace/pip/http-v2/7/2/2
+/workspace/pip/http-v2/7/2/7
+/workspace/pip/http-v2/7/2/8
+/workspace/pip/http-v2/7/2/c
+/workspace/pip/http-v2/7/3
+/workspace/pip/http-v2/7/3/2
+/workspace/pip/http-v2/7/5
+/workspace/pip/http-v2/7/5/2
+/workspace/pip/http-v2/7/5/f
+/workspace/pip/http-v2/7/6
+/workspace/pip/http-v2/7/6/1
+/workspace/pip/http-v2/7/8
+/workspace/pip/http-v2/7/8/c
+/workspace/pip/http-v2/7/8/f
+/workspace/pip/http-v2/7/9
+/workspace/pip/http-v2/7/9/2
+/workspace/pip/http-v2/7/a
+/workspace/pip/http-v2/7/a/9
+/workspace/pip/http-v2/7/a/b
+/workspace/pip/http-v2/7/a/d
+/workspace/pip/http-v2/7/b
+/workspace/pip/http-v2/7/b/1
+/workspace/pip/http-v2/7/c
+/workspace/pip/http-v2/7/c/8
+/workspace/pip/http-v2/7/d
+/workspace/pip/http-v2/7/d/f
+/workspace/pip/http-v2/7/e
+/workspace/pip/http-v2/7/e/9
+/workspace/pip/http-v2/7/e/c
+/workspace/pip/http-v2/7/f
+/workspace/pip/http-v2/7/f/4
+/workspace/pip/http-v2/8
+/workspace/pip/http-v2/8/0
+/workspace/pip/http-v2/8/0/3
+/workspace/pip/http-v2/8/0/f
+/workspace/pip/http-v2/8/1
+/workspace/pip/http-v2/8/1/3
+/workspace/pip/http-v2/8/2
+/workspace/pip/http-v2/8/2/c
+/workspace/pip/http-v2/8/4
+/workspace/pip/http-v2/8/4/f
+/workspace/pip/http-v2/8/5
+/workspace/pip/http-v2/8/5/3
+/workspace/pip/http-v2/8/6
+/workspace/pip/http-v2/8/6/f
+/workspace/pip/http-v2/8/7
+/workspace/pip/http-v2/8/7/4
+/workspace/pip/http-v2/8/8
+/workspace/pip/http-v2/8/8/3
+/workspace/pip/http-v2/8/8/4
+/workspace/pip/http-v2/8/8/f
+/workspace/pip/http-v2/8/9
+/workspace/pip/http-v2/8/9/3
+/workspace/pip/http-v2/8/a
+/workspace/pip/http-v2/8/a/c
+/workspace/pip/http-v2/8/b
+/workspace/pip/http-v2/8/b/9
+/workspace/pip/http-v2/8/c
+/workspace/pip/http-v2/8/c/a
+/workspace/pip/http-v2/8/c/d
+/workspace/pip/http-v2/8/c/e
+/workspace/pip/http-v2/8/d
+/workspace/pip/http-v2/8/d/5
+/workspace/pip/http-v2/8/e
+/workspace/pip/http-v2/8/e/9
+/workspace/pip/http-v2/8/e/c
+/workspace/pip/http-v2/8/e/e
+/workspace/pip/http-v2/8/f
+/workspace/pip/http-v2/8/f/9
+/workspace/pip/http-v2/9
+/workspace/pip/http-v2/9/0
+/workspace/pip/http-v2/9/0/0
+/workspace/pip/http-v2/9/0/6
+/workspace/pip/http-v2/9/0/7
+/workspace/pip/http-v2/9/0/b
+/workspace/pip/http-v2/9/1
+/workspace/pip/http-v2/9/1/a
+/workspace/pip/http-v2/9/1/c
+/workspace/pip/http-v2/9/2
+/workspace/pip/http-v2/9/2/6
+/workspace/pip/http-v2/9/2/a
+/workspace/pip/http-v2/9/3
+/workspace/pip/http-v2/9/3/0
+/workspace/pip/http-v2/9/3/6
+/workspace/pip/http-v2/9/3/d
+/workspace/pip/http-v2/9/5
+/workspace/pip/http-v2/9/5/4
+/workspace/pip/http-v2/9/5/e
+/workspace/pip/http-v2/9/6
+/workspace/pip/http-v2/9/6/1
+/workspace/pip/http-v2/9/6/7
+/workspace/pip/http-v2/9/7
+/workspace/pip/http-v2/9/7/0
+/workspace/pip/http-v2/9/7/2
+/workspace/pip/http-v2/9/7/c
+/workspace/pip/http-v2/9/7/f
+/workspace/pip/http-v2/9/8
+/workspace/pip/http-v2/9/8/f
+/workspace/pip/http-v2/9/9
+/workspace/pip/http-v2/9/9/1
+/workspace/pip/http-v2/9/b
+/workspace/pip/http-v2/9/b/6
+/workspace/pip/http-v2/9/b/8
+/workspace/pip/http-v2/9/c
+/workspace/pip/http-v2/9/c/2
+/workspace/pip/http-v2/9/c/c
+/workspace/pip/http-v2/9/d
+/workspace/pip/http-v2/9/d/6
+/workspace/pip/http-v2/9/d/8
+/workspace/pip/http-v2/9/e
+/workspace/pip/http-v2/9/e/2
+/workspace/pip/http-v2/9/e/3
+/workspace/pip/http-v2/9/f
+/workspace/pip/http-v2/9/f/1
+/workspace/pip/http-v2/a
+/workspace/pip/http-v2/a/0
+/workspace/pip/http-v2/a/0/3
+/workspace/pip/http-v2/a/0/a
+/workspace/pip/http-v2/a/1
+/workspace/pip/http-v2/a/1/2
+/workspace/pip/http-v2/a/1/9
+/workspace/pip/http-v2/a/2
+/workspace/pip/http-v2/a/2/5
+/workspace/pip/http-v2/a/2/9
+/workspace/pip/http-v2/a/3
+/workspace/pip/http-v2/a/3/7
+/workspace/pip/http-v2/a/4
+/workspace/pip/http-v2/a/4/6
+/workspace/pip/http-v2/a/4/9
+/workspace/pip/http-v2/a/5
+/workspace/pip/http-v2/a/5/9
+/workspace/pip/http-v2/a/6
+/workspace/pip/http-v2/a/6/9
+/workspace/pip/http-v2/a/7
+/workspace/pip/http-v2/a/7/0
+/workspace/pip/http-v2/a/7/8
+/workspace/pip/http-v2/a/8
+/workspace/pip/http-v2/a/8/1
+/workspace/pip/http-v2/a/9
+/workspace/pip/http-v2/a/9/f
+/workspace/pip/http-v2/a/a
+/workspace/pip/http-v2/a/a/3
+/workspace/pip/http-v2/a/b
+/workspace/pip/http-v2/a/b/b
+/workspace/pip/http-v2/a/b/d
+/workspace/pip/http-v2/a/c
+/workspace/pip/http-v2/a/c/1
+/workspace/pip/http-v2/a/c/5
+/workspace/pip/http-v2/a/c/6
+/workspace/pip/http-v2/a/d
+/workspace/pip/http-v2/a/d/a
+/workspace/pip/http-v2/a/d/e
+/workspace/pip/http-v2/b
+/workspace/pip/http-v2/b/0
+/workspace/pip/http-v2/b/0/c
+/workspace/pip/http-v2/b/2
+/workspace/pip/http-v2/b/2/0
+/workspace/pip/http-v2/b/2/5
+/workspace/pip/http-v2/b/4
+/workspace/pip/http-v2/b/4/0
+/workspace/pip/http-v2/b/4/2
+/workspace/pip/http-v2/b/4/6
+/workspace/pip/http-v2/b/6
+/workspace/pip/http-v2/b/6/4
+/workspace/pip/http-v2/b/7
+/workspace/pip/http-v2/b/7/3
+/workspace/pip/http-v2/b/8
+/workspace/pip/http-v2/b/8/c
+/workspace/pip/http-v2/b/8/e
+/workspace/pip/http-v2/b/9
+/workspace/pip/http-v2/b/9/a
+/workspace/pip/http-v2/b/b
+/workspace/pip/http-v2/b/b/6
+/workspace/pip/http-v2/b/b/a
+/workspace/pip/http-v2/b/b/f
+/workspace/pip/http-v2/b/d
+/workspace/pip/http-v2/b/d/e
+/workspace/pip/http-v2/b/e
+/workspace/pip/http-v2/b/e/d
+/workspace/pip/http-v2/b/f
+/workspace/pip/http-v2/b/f/0
+/workspace/pip/http-v2/b/f/2
+/workspace/pip/http-v2/b/f/a
+/workspace/pip/http-v2/b/f/d
+/workspace/pip/http-v2/c
+/workspace/pip/http-v2/c/0
+/workspace/pip/http-v2/c/0/5
+/workspace/pip/http-v2/c/0/b
+/workspace/pip/http-v2/c/1
+/workspace/pip/http-v2/c/1/0
+/workspace/pip/http-v2/c/1/7
+/workspace/pip/http-v2/c/1/f
+/workspace/pip/http-v2/c/2
+/workspace/pip/http-v2/c/2/0
+/workspace/pip/http-v2/c/2/3
+/workspace/pip/http-v2/c/3
+/workspace/pip/http-v2/c/3/2
+/workspace/pip/http-v2/c/3/f
+/workspace/pip/http-v2/c/4
+/workspace/pip/http-v2/c/4/2
+/workspace/pip/http-v2/c/4/7
+/workspace/pip/http-v2/c/5
+/workspace/pip/http-v2/c/5/3
+/workspace/pip/http-v2/c/5/a
+/workspace/pip/http-v2/c/6
+/workspace/pip/http-v2/c/6/3
+/workspace/pip/http-v2/c/6/a
+/workspace/pip/http-v2/c/8
+/workspace/pip/http-v2/c/8/c
+/workspace/pip/http-v2/c/9
+/workspace/pip/http-v2/c/9/6
+/workspace/pip/http-v2/c/9/8
+/workspace/pip/http-v2/c/9/d
+/workspace/pip/http-v2/c/9/f
+/workspace/pip/http-v2/c/a
+/workspace/pip/http-v2/c/a/b
+/workspace/pip/http-v2/c/a/e
+/workspace/pip/http-v2/c/c
+/workspace/pip/http-v2/c/c/1
+/workspace/pip/http-v2/c/c/c
+/workspace/pip/http-v2/c/d
+/workspace/pip/http-v2/c/d/0
+/workspace/pip/http-v2/c/d/5
+/workspace/pip/http-v2/c/f
+/workspace/pip/http-v2/c/f/0
+/workspace/pip/http-v2/c/f/4
+/workspace/pip/http-v2/d
+/workspace/pip/http-v2/d/0
+/workspace/pip/http-v2/d/0/1
+/workspace/pip/http-v2/d/0/5
+/workspace/pip/http-v2/d/0/7
+/workspace/pip/http-v2/d/0/f
+/workspace/pip/http-v2/d/2
+/workspace/pip/http-v2/d/2/2
+/workspace/pip/http-v2/d/2/6
+/workspace/pip/http-v2/d/2/7
+/workspace/pip/http-v2/d/2/e
+/workspace/pip/http-v2/d/3
+/workspace/pip/http-v2/d/3/2
+/workspace/pip/http-v2/d/3/d
+/workspace/pip/http-v2/d/4
+/workspace/pip/http-v2/d/4/c
+/workspace/pip/http-v2/d/4/e
+/workspace/pip/http-v2/d/6
+/workspace/pip/http-v2/d/6/a
+/workspace/pip/http-v2/d/7
+/workspace/pip/http-v2/d/7/0
+/workspace/pip/http-v2/d/7/b
+/workspace/pip/http-v2/d/8
+/workspace/pip/http-v2/d/8/7
+/workspace/pip/http-v2/d/9
+/workspace/pip/http-v2/d/9/3
+/workspace/pip/http-v2/d/9/c
+/workspace/pip/http-v2/d/9/e
+/workspace/pip/http-v2/d/a
+/workspace/pip/http-v2/d/a/c
+/workspace/pip/http-v2/d/a/e
+/workspace/pip/http-v2/d/b
+/workspace/pip/http-v2/d/b/8
+/workspace/pip/http-v2/d/c
+/workspace/pip/http-v2/d/c/9
+/workspace/pip/http-v2/d/d
+/workspace/pip/http-v2/d/d/2
+/workspace/pip/http-v2/d/e
+/workspace/pip/http-v2/d/e/4
+/workspace/pip/http-v2/d/f
+/workspace/pip/http-v2/d/f/8
+/workspace/pip/http-v2/d/f/a
+/workspace/pip/http-v2/d/f/f
+/workspace/pip/http-v2/e
+/workspace/pip/http-v2/e/0
+/workspace/pip/http-v2/e/0/2
+/workspace/pip/http-v2/e/0/b
+/workspace/pip/http-v2/e/1
+/workspace/pip/http-v2/e/1/7
+/workspace/pip/http-v2/e/1/9
+/workspace/pip/http-v2/e/2
+/workspace/pip/http-v2/e/2/0
+/workspace/pip/http-v2/e/2/9
+/workspace/pip/http-v2/e/3
+/workspace/pip/http-v2/e/3/0
+/workspace/pip/http-v2/e/4
+/workspace/pip/http-v2/e/4/2
+/workspace/pip/http-v2/e/4/3
+/workspace/pip/http-v2/e/4/c
+/workspace/pip/http-v2/e/5
+/workspace/pip/http-v2/e/5/1
+/workspace/pip/http-v2/e/5/5
+/workspace/pip/http-v2/e/5/9
+/workspace/pip/http-v2/e/6
+/workspace/pip/http-v2/e/6/3
+/workspace/pip/http-v2/e/6/5
+/workspace/pip/http-v2/e/6/8
+/workspace/pip/http-v2/e/6/f
+/workspace/pip/http-v2/e/7
+/workspace/pip/http-v2/e/7/5
+/workspace/pip/http-v2/e/9
+/workspace/pip/http-v2/e/9/5
+/workspace/pip/http-v2/e/a
+/workspace/pip/http-v2/e/a/2
+/workspace/pip/http-v2/e/a/5
+/workspace/pip/http-v2/e/b
+/workspace/pip/http-v2/e/b/2
+/workspace/pip/http-v2/e/c
+/workspace/pip/http-v2/e/c/1
+/workspace/pip/http-v2/e/c/d
+/workspace/pip/http-v2/e/d
+/workspace/pip/http-v2/e/d/4
+/workspace/pip/http-v2/e/d/8
+/workspace/pip/http-v2/e/d/b
+/workspace/pip/http-v2/e/e
+/workspace/pip/http-v2/e/e/2
+/workspace/pip/http-v2/e/e/6
+/workspace/pip/http-v2/e/e/f
+/workspace/pip/http-v2/e/f
+/workspace/pip/http-v2/e/f/4
+/workspace/pip/http-v2/e/f/9
+/workspace/pip/http-v2/f
+/workspace/pip/http-v2/f/0
+/workspace/pip/http-v2/f/0/c
+/workspace/pip/http-v2/f/2
+/workspace/pip/http-v2/f/2/1
+/workspace/pip/http-v2/f/2/d
+/workspace/pip/http-v2/f/3
+/workspace/pip/http-v2/f/3/3
+/workspace/pip/http-v2/f/3/8
+/workspace/pip/http-v2/f/4
+/workspace/pip/http-v2/f/4/3
+/workspace/pip/http-v2/f/4/6
+/workspace/pip/http-v2/f/5
+/workspace/pip/http-v2/f/5/0
+/workspace/pip/http-v2/f/5/1
+/workspace/pip/http-v2/f/5/2
+/workspace/pip/http-v2/f/5/4
+/workspace/pip/http-v2/f/6
+/workspace/pip/http-v2/f/6/7
+/workspace/pip/http-v2/f/8
+/workspace/pip/http-v2/f/8/a
+/workspace/pip/http-v2/f/a
+/workspace/pip/http-v2/f/a/8
+/workspace/pip/http-v2/f/a/a
+/workspace/pip/http-v2/f/a/b
+/workspace/pip/http-v2/f/b
+/workspace/pip/http-v2/f/b/d
+/workspace/pip/http-v2/f/c
+/workspace/pip/http-v2/f/c/0
+/workspace/pip/http-v2/f/c/a
+/workspace/pip/http-v2/f/f
+/workspace/pip/http-v2/f/f/6
+/workspace/pip/http-v2/f/f/7
+/workspace/pip/selfcheck
+/workspace/torch_extensions
+/workspace/torch_extensions/py310_cu128
+/workspace/torch_extensions/py310_cu128/MultiScaleDeformableAttention
+
+=== MIXTRAL MODEL FILES ===
+total 13K
+lrwxrwxrwx 1 root root 52 Oct 11 08:28 config.json -> ../../blobs/de132a80b25c9d12c674dbd84cedc1d6f35fb756
+lrwxrwxrwx 1 root root 76 Oct 11 08:28 model-00001-of-00019.safetensors -> ../../blobs/54669c5aec29fe5e4edd8098f7b564a137ba36be22ad25a194cd93f2bb54c940
+lrwxrwxrwx 1 root root 76 Oct 11 08:29 model-00002-of-00019.safetensors -> ../../blobs/29e15364d8ab1d6ee229233381f295e9ff96237efed04750591f7da52ab6cc0e
+lrwxrwxrwx 1 root root 76 Oct 11 08:29 model-00003-of-00019.safetensors -> ../../blobs/d0b63fca793cc29421cc5a46851992975cbe083aaded1b2f31113a45a0c90954
+lrwxrwxrwx 1 root root 76 Oct 11 08:29 model-00004-of-00019.safetensors -> ../../blobs/67e0596920fe543415c0191e867a9a7de942a2924d6277cd98c8c5b34e11e436
+lrwxrwxrwx 1 root root 76 Oct 11 08:30 model-00005-of-00019.safetensors -> ../../blobs/e330eabd70b467ddcbd8d3d6b2b9c3eba66655b0ed9f84e19f270da3623dc455
+lrwxrwxrwx 1 root root 76 Oct 11 08:30 model-00006-of-00019.safetensors -> ../../blobs/048fa5347877b6d04eccf69765d23e5561cc9820dd4d0e5ba2df0100204dfb04
+lrwxrwxrwx 1 root root 76 Oct 11 08:30 model-00007-of-00019.safetensors -> ../../blobs/83bfed6169c1f5b0ae854fb3311b576d06209ee5af45d7d46bcbc25098a4d02b
+lrwxrwxrwx 1 root root 76 Oct 11 08:31 model-00008-of-00019.safetensors -> ../../blobs/af316ad784027edba47bf0959c821682c931c9c901d3d755038b358d9c7a28c0
+lrwxrwxrwx 1 root root 76 Oct 11 08:31 model-00009-of-00019.safetensors -> ../../blobs/5882e4366c63048a0ad36ef6d90194a2fabdb42a2140be79c8e0ec2e8ac2ccc5
+lrwxrwxrwx 1 root root 76 Oct 11 08:31 model-00010-of-00019.safetensors -> ../../blobs/77813d1dbee63419226ac15e4b8f28d075c3f7921cc664090236c491667eaf29
+lrwxrwxrwx 1 root root 76 Oct 11 08:32 model-00011-of-00019.safetensors -> ../../blobs/ff24540d9967fe43c0c17cadaea7f2a34d080a2f9e58b913038b9bfd0bf8ca49
+lrwxrwxrwx 1 root root 76 Oct 11 08:32 model-00012-of-00019.safetensors -> ../../blobs/48bc12845676eab1adb3cfce7037a7ecd664a0d5f5deaf93c7362a5bb5173298
+lrwxrwxrwx 1 root root 76 Oct 11 08:32 model-00013-of-00019.safetensors -> ../../blobs/e56a2e7eda699bf4ec1433bd07d7cb86488420813e66463d2e2296d7accebc5c
+lrwxrwxrwx 1 root root 76 Oct 11 08:33 model-00014-of-00019.safetensors -> ../../blobs/da627f6a3c8fdc6e35b9918d2aa53704d4044191fcc86c7c0b1ac57f00e707f7
+lrwxrwxrwx 1 root root 76 Oct 11 08:33 model-00015-of-00019.safetensors -> ../../blobs/61e0f22bff93a68e114dbc3d75c1dd1e6687d554dba0cfdf1743950aa04ff1cf
+lrwxrwxrwx 1 root root 76 Oct 11 08:33 model-00016-of-00019.safetensors -> ../../blobs/76466bfc2312f11559480981f212e4cca6e98096bf8df0fd90cce1f0f4709a9c
+lrwxrwxrwx 1 root root 76 Oct 11 08:34 model-00017-of-00019.safetensors -> ../../blobs/570af3b802bedc0d54d0481d124f63d449dda40a4294a82a39f8dc3704057a5c
+lrwxrwxrwx 1 root root 76 Oct 11 08:34 model-00018-of-00019.safetensors -> ../../blobs/4c603b65cbd5ddadcd5ece8add68b9d47f98f7264dbb0a5313172c78491e0329
+lrwxrwxrwx 1 root root 76 Oct 11 08:34 model-00019-of-00019.safetensors -> ../../blobs/272f33c76bcacf6cfced497dc0579e107de3874b9f93126f5e69b5b1ae7e72a0
+lrwxrwxrwx 1 root root 52 Oct 11 08:28 model.safetensors.index.json -> ../../blobs/fc6de58e070254aaf6fe4a23c825f87fd16aa816
+lrwxrwxrwx 1 root root 52 Oct 11 08:28 special_tokens_map.json -> ../../blobs/451134b2ddc2e78555d1e857518c54b4bdc2e87d
+lrwxrwxrwx 1 root root 52 Oct 11 08:28 tokenizer.json -> ../../blobs/1e9f59c515a01088e1f7f72b68ab99f92d15fb96
+lrwxrwxrwx 1 root root 76 Oct 11 08:28 tokenizer.model -> ../../blobs/dadfd56d766715c61d2ef780a525ab43b8e6da4de6865bda3d95fdef5e134055
+lrwxrwxrwx 1 root root 52 Oct 11 08:28 tokenizer_config.json -> ../../blobs/f63c0374bad221568938f908e397a38d9f0dfac0
+
+=== DOCSTRANGE MODEL FILES ===
+/workspace/docstrange/models/:
+total 6.8M
+drwxrwxrwx 2 root root 2.0M Oct 11 08:20 layout
+drwxrwxrwx 3 root root 2.9M Oct 11 08:27 nanonets-ocr
+drwxrwxrwx 4 root root 2.0M Oct 11 08:21 tableformer
+
+/workspace/docstrange/models/layout:
+total 164M
+-rw-rw-rw- 1 root root 2.8K Jul 17 13:39 config.json
+-rw-rw-rw- 1 root root 164M Jul 17 13:39 model.safetensors
+-rw-rw-rw- 1 root root  444 Jul 17 13:39 preprocessor_config.json
+
+/workspace/docstrange/models/nanonets-ocr:
+total 2.9M
+drwxrwxrwx 3 root root 2.9M Jul 23 15:46 Nanonets-OCR-ss
+
+/workspace/docstrange/models/nanonets-ocr/Nanonets-OCR-ss:
+total 7.1G
+-rw-rw-rw- 1 root root  424 Jul 23 15:46 Modelfile
+-rw-rw-rw- 1 root root 6.2K Jul 23 15:46 README.md
+-rw-rw-rw- 1 root root  605 Jul 23 15:46 added_tokens.json
+-rw-rw-rw- 1 root root 1017 Jul 23 15:46 chat_template.jinja
+-rw-rw-rw- 1 root root 2.5K Jul 23 15:46 config.json
+-rw-rw-rw- 1 root root  214 Jul 23 15:46 generation_config.json
+-rw-rw-rw- 1 root root 1.6M Jul 23 15:46 merges.txt
+-rw-rw-rw- 1 root root 4.7G Jul 23 15:46 model-00001-of-00002.safetensors
+-rw-rw-rw- 1 root root 2.4G Jul 23 15:46 model-00002-of-00002.safetensors
+-rw-rw-rw- 1 root root  64K Jul 23 15:46 model.safetensors.index.json
+-rw-rw-rw- 1 root root  575 Jul 23 15:46 preprocessor_config.json
+-rw-rw-rw- 1 root root  613 Jul 23 15:46 special_tokens_map.json
+-rw-rw-rw- 1 root root  11M Jul 23 15:46 tokenizer.json
+-rw-rw-rw- 1 root root 4.7K Jul 23 15:46 tokenizer_config.json
+-rw-rw-rw- 1 root root 1.7K Jul 23 15:46 video_preprocessor_config.json
+-rw-rw-rw- 1 root root 2.7M Jul 23 15:46 vocab.json
+
+/workspace/docstrange/models/tableformer:
+total 2.0M
+drwxrwxrwx 3 root root 2.0M Oct 11 08:21 model_artifacts
+
+/workspace/docstrange/models/tableformer/model_artifacts:
+total 2.0M
+drwxrwxrwx 4 root root 2.0M Oct 11 08:21 tableformer
+
+/workspace/docstrange/models/tableformer/model_artifacts/tableformer:
+total 3.9M
+drwxrwxrwx 2 root root 2.0M Oct 11 08:21 accurate
+drwxrwxrwx 2 root root 2.0M Oct 11 08:21 fast
+
+/workspace/docstrange/models/tableformer/model_artifacts/tableformer/accurate:
+total 203M
+-rw-rw-rw- 1 root root 203M Jul 17 13:37 tableformer_accurate.safetensors
+-rw-rw-rw- 1 root root 6.9K Jul 17 13:37 tm_config.json
+
+/workspace/docstrange/models/tableformer/model_artifacts/tableformer/fast:
+total 139M
+-rw-rw-rw- 1 root root 139M Jul 17 13:37 tableformer_fast.safetensors
+-rw-rw-rw- 1 root root 6.9K Jul 17 13:37 tm_config.json
