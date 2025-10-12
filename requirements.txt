@@ -10,18 +10,18 @@ aiofiles>=23.0.0
 # Document Processing
 
 # ML/AI - Core
-# NOTE: PyTorch 2.6+ with CUDA 12.4 installed in Dockerfile for RTX 5090 sm_120 support
-# Do NOT add PyTorch here - it MUST be installed from cu124 index for native CUDA 12.4 support
-# Adding it here risks pip reinstalling from PyPI with wrong binaries (cpu-only or cu121)
-# See Dockerfile lines 47-53 for PyTorch installation
+# NOTE: PyTorch 2.8.0 with CUDA 12.9 installed in Dockerfile for RTX 5090 sm_120 support
+# Do NOT add PyTorch here - it MUST be installed from cu129 index for sm_120 support
+# Adding it here risks pip reinstalling from PyPI with wrong binaries (cpu-only or wrong CUDA)
+# See Dockerfile for PyTorch 2.8.0 installation
 # transformers 4.38.0+ fixes frozenset bug with BitsAndBytes on CPU fallback
 transformers>=4.38.0,<4.50.0
-# accelerate 1.0.0+ requires NumPy 2.x - we're using NumPy 2.x for PyTorch 2.6+
+# accelerate 1.0.0+ requires NumPy 2.x - we're using NumPy 2.x for PyTorch 2.8+
 accelerate>=1.0.0,<2.0.0
-# BitsAndBytes 0.45.0 has native CUDA 12.4 support (no BNB_CUDA_VERSION override needed!)
-# Compatible with PyTorch 2.0-2.5.x and native RTX 5090 Blackwell support
-# Improved quantization quality and better memory management vs 0.42.0
-bitsandbytes==0.45.0
+# BitsAndBytes 0.48.0 for PyTorch 2.8.0 compatibility (released 2 weeks ago)
+# Compatible with PyTorch 2.3-2.8+, CUDA 13.0 support, no BNB_CUDA_VERSION override needed
+# Intel GPU/Gaudi support, improved 4bit dequantization performance
+bitsandbytes==0.48.0
 
 # ML/AI - Supporting
 safetensors>=0.4.3

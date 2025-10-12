@@ -24,10 +24,10 @@ os.environ['TRANSFORMERS_CACHE'] = str(VOLUME_PATH / "huggingface")
 os.environ['HF_HUB_CACHE'] = str(VOLUME_PATH / "huggingface")
 os.environ['TORCH_HOME'] = str(VOLUME_PATH / "torch")
 os.environ['XDG_CACHE_HOME'] = str(VOLUME_PATH)
-os.environ['BNB_CUDA_VERSION'] = '126'  # CUDA 12.6 for PyTorch 2.6.x
+os.environ['BNB_CUDA_VERSION'] = '129'  # CUDA 12.9 for PyTorch 2.8.0
 
 print(f"✅ Model cache: {VOLUME_PATH / 'huggingface'}", flush=True)
-print(f"✅ BNB_CUDA_VERSION: 126", flush=True)
+print(f"✅ BNB_CUDA_VERSION: 129 (CUDA 12.9 for sm_120 support)", flush=True)
 
 # Verify volume exists and is writable
 if VOLUME_PATH.exists() and VOLUME_PATH.is_dir():

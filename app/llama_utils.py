@@ -297,8 +297,8 @@ class LlamaProcessor:
                 
                 logger.error("\n⚠️  BitsAndBytes CUDA Setup Failed!")
                 logger.error("Possible fixes:")
-                logger.error("1. Set BNB_CUDA_VERSION=121 environment variable")
-                logger.error("2. Verify CUDA runtime matches PyTorch (12.1)")
+                logger.error("1. Set BNB_CUDA_VERSION=129 environment variable (CUDA 12.9)")
+                logger.error("2. Verify CUDA runtime matches PyTorch 2.8.0 (12.9)")
                 logger.error("3. Check LD_LIBRARY_PATH includes CUDA libraries")
                 logger.error("4. Run: python -m bitsandbytes (for detailed diagnostics)")
                 logger.error("-"*70)

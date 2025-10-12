@@ -1,7 +1,7 @@
 # Production Dockerfile for ZopilotGPU with Mixtral 8x7B
 # Optimized for Cloud GPU deployment (RunPod, Vast.ai, Lambda Labs)
-# CUDA 12.4.1 required for RTX 5090 (Blackwell) support
-FROM nvidia/cuda:12.4.1-devel-ubuntu22.04 AS base
+# CUDA 12.9.0 required for RTX 5090 Blackwell (sm_120) support
+FROM nvidia/cuda:12.9.0-devel-ubuntu22.04 AS base
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -44,56 +44,52 @@ COPY requirements.txt constraints.txt ./
 # Install build dependencies first (required for package compilation)
 RUN pip install --no-cache-dir packaging wheel setuptools
 
-# CRITICAL: Install PyTorch 2.6.x ONLY (NOT 2.7.x!) with CUDA 12.4 for RTX 5090 (sm_120) support
-# PyTorch 2.6.0-2.6.2 has native Blackwell architecture support (sm_120 compute capability)
-# PyTorch 2.7.x REMOVED sm_120 support (only supports up to sm_90)
-# PyTorch 2.5.1 only supports up to sm_90 (Hopper) - will crash on RTX 5090
-# PyTorch 2.6+ requires NumPy 2.x (will be constrained by constraints.txt)
-# Using cu124 wheel for native CUDA 12.4 support
-# MUST stay on 2.6.x for RTX 5090 compatibility
+# CRITICAL: Install PyTorch 2.8.0 STABLE with CUDA 12.9 for RTX 5090 (sm_120) support
+# RTX 5090 has compute capability sm_120 (Blackwell architecture)
+# PyTorch 2.8.0 CUDA 12.9 build includes sm_120 + sm_100 support (Blackwell)
+# PyTorch 2.8.0 CUDA 12.6 does NOT have sm_120 (only up to sm_90)
+# Must use cu129 index for sm_120 support (released Aug 2025)
+# Compatible with BitsAndBytes 0.48.0 (verified stable release)
 RUN pip install --no-cache-dir \
-    "torch>=2.6.0,<2.7.0" "torchvision>=0.21.0,<0.22.0" \
-    --index-url https://download.pytorch.org/whl/cu124
-
-# NOTE: PyTorch 2.6.0 installs Triton 3.2.0 as a dependency (which doesn't have triton.ops)
-# We'll downgrade Triton AFTER installing requirements.txt
+    "torch==2.8.0" "torchvision==0.23.0" \
+    --index-url https://download.pytorch.org/whl/cu129
 
 # Install remaining Python dependencies from requirements.txt with constraints
-# constraints.txt prevents pip from upgrading PyTorch, NumPy, and other critical packages
-# NumPy 2.x enforced by constraints (required by PyTorch 2.6+)
-# BitsAndBytes 0.45.0 locked to prevent version drift
+# constraints.txt locks PyTorch 2.8.0, BitsAndBytes 0.48.0, and other critical packages
+# NumPy 2.x enforced by constraints (required by PyTorch 2.8+)
+# BitsAndBytes 0.48.0 is compatible with PyTorch 2.8.0 stable (verified)
 RUN pip install --no-cache-dir --ignore-installed blinker \
     --constraint constraints.txt \
     -r requirements.txt
 
-# CRITICAL: Downgrade Triton to 2.x AFTER all other packages
-# BitsAndBytes 0.45.0 requires triton.ops module which was removed in Triton 3.x
-# PyTorch 2.6.0 pins triton==3.2.0, but we need 2.x for BitsAndBytes
-# This downgrade won't break PyTorch (Triton is only used for kernel optimizations)
-RUN pip install --no-cache-dir --force-reinstall "triton==2.3.1"
+# NOTE: Triton downgrade NO LONGER NEEDED
+# PyTorch 2.8.0 + BitsAndBytes 0.48.0 use compatible Triton versions
+# BitsAndBytes 0.48.0 works with modern Triton (no triton.ops dependency)
 
 # CRITICAL: Verify correct versions installed (fail fast if wrong binaries)
 RUN echo "============================================================" && \
-    echo "VERIFICATION: Checking PyTorch Installation" && \
+    echo "VERIFICATION: Checking PyTorch 2.8.0 + CUDA 12.9 Installation" && \
     echo "============================================================" && \
     python -c "import torch; \
         print(f'✅ PyTorch Version: {torch.__version__}'); \
         print(f'   CUDA Runtime: {torch.version.cuda}'); \
         print(f'   cuDNN Version: {torch.backends.cudnn.version()}'); \
-        print(f'   Build: {torch.__config__.show()}' if hasattr(torch.__config__, 'show') else ''); \
+        print(f'   Note: PyTorch 2.8.0 stable with sm_120 support for RTX 5090'); \
         major_minor = '.'.join(torch.__version__.split('.')[:2]); \
-        assert major_minor == '2.6', \
-        f'🔴 WRONG PyTorch version {torch.__version__}! MUST be 2.6.x for RTX 5090 sm_120 support. PyTorch 2.7+ removed sm_120!'" && \
+        assert major_minor == '2.8', \
+        f'🔴 WRONG PyTorch version {torch.__version__}! Need 2.8.0 for RTX 5090 sm_120 support'" && \
     echo "============================================================"
 
-# FIXED: PyTorch 2.6.x comes with CUDA 12.6, not 12.4! Accept 12.4, 12.5, or 12.6
-RUN echo "VERIFICATION: Checking CUDA Version" && \
+# CRITICAL: Verify CUDA 12.9 for sm_120 support
+# PyTorch 2.8.0 with CUDA 12.9 includes sm_120 (RTX 5090 Blackwell)
+# PyTorch 2.8.0 with CUDA 12.6 does NOT include sm_120
+RUN echo "VERIFICATION: Checking CUDA 12.9 Version (Required for sm_120)" && \
     python -c "import torch; \
         print(f'✅ CUDA Version: {torch.version.cuda}'); \
         cuda_major_minor = '.'.join(torch.version.cuda.split('.')[:2]); \
         print(f'   CUDA Major.Minor: {cuda_major_minor}'); \
-        assert cuda_major_minor in ['12.4', '12.5', '12.6'], \
-        f'Wrong CUDA version: {torch.version.cuda} (need 12.4-12.6)'" && \
+        assert cuda_major_minor in ['12.8', '12.9'], \
+        f'🔴 WRONG CUDA version: {torch.version.cuda} (need 12.8 or 12.9 for sm_120 support)'" && \
     echo "============================================================"
 
 RUN echo "VERIFICATION: Checking NumPy Version" && \
@@ -110,27 +106,26 @@ RUN echo "VERIFICATION: Checking Transformers Version" && \
         print(f'✅ Transformers Version: {transformers.__version__}')" && \
     echo "============================================================"
 
-RUN echo "VERIFICATION: Checking Triton Version (Required by BitsAndBytes)" && \
+RUN echo "VERIFICATION: Checking Triton Version (PyTorch Dependency)" && \
     python -c "import triton; \
         print(f'✅ Triton Version: {triton.__version__}'); \
-        major_minor = '.'.join(triton.__version__.split('.')[:2]); \
-        assert major_minor.startswith('2.'), \
-        f'🔴 WRONG Triton version {triton.__version__}! MUST be 2.x for BitsAndBytes 0.45.0 (triton.ops removed in 3.x)'; \
-        import triton.ops; \
-        print(f'✅ triton.ops module available (required by BitsAndBytes 0.45.0)')" && \
+        print(f'   Note: BitsAndBytes 0.48.0 compatible with modern Triton')" && \
     echo "============================================================"
 
-RUN echo "VERIFICATION: Checking BitsAndBytes Package (NOT importing - requires GPU)" && \
+RUN echo "VERIFICATION: Checking BitsAndBytes 0.48.0 Package (NOT importing - requires GPU)" && \
     python -c "import pkg_resources; \
         bnb_version = pkg_resources.get_distribution('bitsandbytes').version; \
         print(f'✅ BitsAndBytes Package Installed: {bnb_version}'); \
+        assert bnb_version == '0.48.0', \
+        f'🔴 WRONG BitsAndBytes version {bnb_version}! Need 0.48.0 for PyTorch 2.8 compatibility'; \
         print(f'   Note: Import verification will happen at runtime when GPU is available')" && \
     echo "============================================================"
 
 RUN echo "✅ All dependency versions verified!" && \
-    echo "   PyTorch: 2.6.x (RTX 5090 sm_120 support)" && \
-    echo "   Triton: 2.x (triton.ops available for BitsAndBytes)" && \
-    echo "   BitsAndBytes: 0.45.0 (import will be verified at runtime)" && \
+    echo "   PyTorch: 2.8.0 stable (RTX 5090 sm_120 support via CUDA 12.9)" && \
+    echo "   CUDA: 12.9 (sm_120 + sm_100 Blackwell support)" && \
+    echo "   BitsAndBytes: 0.48.0 (verified compatible with PyTorch 2.8.0)" && \
+    echo "   Triton: Compatible version (no manual downgrade needed)" && \
     echo "============================================================"
 
 # Copy application code
