@@ -64,7 +64,8 @@ RUN pip install --no-cache-dir --ignore-installed blinker \
 
 # CRITICAL: Verify correct versions installed (fail fast if wrong binaries)
 RUN python -c "import torch; print(f'✅ PyTorch: {torch.__version__}'); major_minor = '.'.join(torch.__version__.split('.')[:2]); assert major_minor in ['2.6', '2.7'], f'Wrong PyTorch version {torch.__version__} (need 2.6.x or 2.7.x for RTX 5090)'"
-RUN python -c "import torch; print(f'✅ CUDA: {torch.version.cuda}'); assert torch.version.cuda == '12.4', f'Wrong CUDA: {torch.version.cuda}'"
+# FIXED: PyTorch 2.6.x comes with CUDA 12.6, not 12.4! Accept 12.4, 12.5, or 12.6
+RUN python -c "import torch; print(f'✅ CUDA: {torch.version.cuda}'); cuda_major_minor = '.'.join(torch.version.cuda.split('.')[:2]); assert cuda_major_minor in ['12.4', '12.5', '12.6'], f'Wrong CUDA version: {torch.version.cuda} (need 12.4-12.6)'"
 RUN python -c "import numpy as np; print(f'✅ NumPy: {np.__version__}'); assert np.__version__.startswith('2.'), f'Wrong NumPy (need 2.x for PyTorch 2.6+): {np.__version__}'"
 RUN python -c "import bitsandbytes as bnb; print(f'✅ BitsAndBytes: {bnb.__version__}'); assert bnb.__version__ == '0.45.0', f'Wrong BnB: {bnb.__version__}'"
 RUN python -c "import transformers; print(f'✅ Transformers: {transformers.__version__}')"

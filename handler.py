@@ -39,11 +39,11 @@ os.environ['HF_HUB_CACHE'] = str(workspace_path / "huggingface")  # Hub cache (s
 os.environ['TORCH_HOME'] = str(workspace_path / "torch")     # PyTorch models
 os.environ['XDG_CACHE_HOME'] = str(workspace_path)           # Generic cache (used by some libs)
 
-# BitsAndBytes 0.45.0 has native CUDA 12.4 support with auto-detection
-# Set BNB_CUDA_VERSION=124 explicitly to ensure correct library is used
-# 0.45.0 should auto-detect, but explicit setting prevents fallback issues
-os.environ['BNB_CUDA_VERSION'] = '124'
-print(f"🔧 BitsAndBytes: Set BNB_CUDA_VERSION=124 for CUDA 12.4 (0.45.0 native support)")
+# BitsAndBytes 0.45.0 has native CUDA 12.4+ support with auto-detection
+# PyTorch 2.6.x comes with CUDA 12.6, which is compatible with BitsAndBytes 0.45.0
+# Set BNB_CUDA_VERSION=126 for CUDA 12.6 (PyTorch 2.6.x default)
+os.environ['BNB_CUDA_VERSION'] = '126'
+print(f"🔧 BitsAndBytes: Set BNB_CUDA_VERSION=126 for CUDA 12.6 (PyTorch 2.6.x, BnB 0.45.0 native support)")
 
 # Verify model cache directories exist
 required_cache_dirs = [
