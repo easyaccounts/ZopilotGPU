@@ -45,20 +45,11 @@ os.environ['XDG_CACHE_HOME'] = str(workspace_path)           # Generic cache (us
 os.environ['BNB_CUDA_VERSION'] = '121'
 print(f"🔧 BitsAndBytes: Set BNB_CUDA_VERSION=121 fallback (0.45.0 should auto-detect CUDA 12.4)")
 
-# CRITICAL: EasyOCR cache configuration
-# EasyOCR downloads models to MODULE_PATH/model by default (ephemeral!)
-# We need to redirect it to persistent storage using EASYOCR_MODULE_PATH
-easyocr_cache = workspace_path / "easyocr"
-easyocr_cache.mkdir(parents=True, exist_ok=True)
-os.environ['EASYOCR_MODULE_PATH'] = str(easyocr_cache)
-print(f"📦 EasyOCR cache: {easyocr_cache}")
-
 # Verify model cache directories exist
 required_cache_dirs = [
     workspace_path / "huggingface",  # HF models stored directly here (legacy transformers structure)
-    workspace_path / "docstrange" / "models",  # DocStrange models in /models subfolder
     workspace_path / "torch",  # PyTorch models
-    easyocr_cache  # EasyOCR models
+
 ]
 
 # Track if we found the Mixtral model
@@ -171,39 +162,6 @@ if not mixtral_model_found:
 else:
     print(f"✅ Mixtral model found in cache - will use cached version")
 
-# Create symlink for DocStrange (it ignores XDG_CACHE_HOME and uses ~/.cache)
-# This ensures DocStrange finds the cached models at /runpod-volume/docstrange
-root_cache = Path("/root/.cache")
-root_cache.mkdir(parents=True, exist_ok=True)
-
-docstrange_symlink = root_cache / "docstrange"
-docstrange_cache = workspace_path / "docstrange"
-
-if not docstrange_symlink.exists():
-    try:
-        docstrange_symlink.symlink_to(docstrange_cache)
-        print(f"✅ Created symlink: {docstrange_symlink} -> {docstrange_cache}")
-    except Exception as e:
-        print(f"⚠️  Could not create DocStrange symlink: {e}")
-elif docstrange_symlink.is_symlink():
-    print(f"✅ DocStrange symlink exists: {docstrange_symlink} -> {docstrange_symlink.readlink()}")
-else:
-    print(f"⚠️  {docstrange_symlink} exists but is not a symlink")
-
-# CRITICAL: Create symlink for EasyOCR too (it uses ~/.EasyOCR/ by default)
-# This is a backup in case EASYOCR_MODULE_PATH doesn't work
-easyocr_symlink = Path("/root/.EasyOCR")
-if not easyocr_symlink.exists():
-    try:
-        easyocr_symlink.symlink_to(easyocr_cache)
-        print(f"✅ Created symlink: {easyocr_symlink} -> {easyocr_cache}")
-    except Exception as e:
-        print(f"⚠️  Could not create EasyOCR symlink: {e}")
-elif easyocr_symlink.is_symlink():
-    print(f"✅ EasyOCR symlink exists: {easyocr_symlink} -> {easyocr_symlink.readlink()}")
-else:
-    print(f"⚠️  {easyocr_symlink} exists but is not a symlink")
-
 # Verify critical environment variables BEFORE any imports
 REQUIRED_ENV_VARS = {
     'HUGGING_FACE_TOKEN': 'Hugging Face API token',
@@ -247,8 +205,8 @@ try:
         print(f"Expected: {EXPECTED_PYTORCH_VERSION}")
         print(f"Actual: {torch.__version__}")
         print("\nThis may cause BitsAndBytes compatibility issues:")
-        print("- PyTorch 2.5.1 is compatible with BitsAndBytes 0.45.0")
-        print("- PyTorch 2.6+ requires NumPy 2.x (breaks docstrange)")
+        print("- PyTorch 2.6+ is required for RTX 5090 (sm_120) support")
+        print("- BitsAndBytes 0.45.0 is compatible with PyTorch 2.6+")
         print("- Using wrong PyTorch version may cause quantization failures")
         print("\nPossible causes:")
         print("1. requirements.txt dependencies upgraded PyTorch")
@@ -435,8 +393,8 @@ import logging
 from typing import Any, Dict
 
 # Import FastAPI app and endpoints
-from app.main import extract_endpoint, prompt_endpoint
-from app.main import ExtractionInput, PromptInput
+from app.main import prompt_endpoint
+from app.main import PromptInput
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -444,16 +402,14 @@ logger = logging.getLogger(__name__)
 
 # GPU Memory management
 GPU_MEMORY_THRESHOLD_GB = 4.0  # Minimum free VRAM required to accept request
-EXTRACTION_MEMORY_ESTIMATE_GB = 2.5  # DocStrange + buffers (CPU mode)
+# LLM-only endpoint - no extraction memory requirements
 CLASSIFICATION_MEMORY_ESTIMATE_GB = 22.0  # Mixtral 8x7B 8-bit (reduced from 24.0 to account for system overhead)
 
 # Concurrency control
-# Since DocStrange uses CPU (cpu=True), we can have multiple extraction workers
-# But Mixtral uses GPU, so only 1 classification at a time
+# LLM-only service: classification endpoint runs on GPU
+# Keep concurrency limited to prevent CUDA OOM errors
 import asyncio
-extraction_semaphore = asyncio.Semaphore(4)  # Max 4 concurrent extractions (CPU-bound)
 classification_semaphore = asyncio.Semaphore(1)  # Max 1 classification (GPU-bound)
-
 
 def check_gpu_memory_available(required_gb: float = GPU_MEMORY_THRESHOLD_GB) -> bool:
     """
@@ -483,14 +439,12 @@ def check_gpu_memory_available(required_gb: float = GPU_MEMORY_THRESHOLD_GB) -> 
         logger.warning(f"Could not check GPU memory: {e}, assuming available")
         return True  # Fail open (allow request)
 
-
 class MockRequest:
     """Mock Request object for API key verification"""
     def __init__(self, api_key: str = None):
         self.headers = {}
         if api_key:
             self.headers['Authorization'] = f'Bearer {api_key}'
-
 
 async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -515,51 +469,12 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
         logger.info(f"[RunPod] 📨 Processing endpoint: {endpoint}")
         logger.info(f"[RunPod] 📦 Payload size: {len(str(data))} bytes")
         
-        # Check GPU memory before processing (for GPU endpoints)
-        if endpoint in ['/extract', '/prompt']:
-            # Determine memory requirement based on endpoint
-            if endpoint == '/extract':
-                required_memory = EXTRACTION_MEMORY_ESTIMATE_GB
-                operation = "extraction"
-            else:  # /prompt
-                required_memory = CLASSIFICATION_MEMORY_ESTIMATE_GB
-                operation = "classification"
-            
-            # Check if enough memory available
-            if not check_gpu_memory_available(required_memory):
-                logger.warning(f"[RunPod] Insufficient GPU memory for {operation}, returning retry signal")
-                return {
-                    "success": False,
-                    "error": "GPU memory exhausted, retry shortly",
-                    "error_type": "InsufficientGPUMemory",
-                    "retry_after": 10  # Suggest retry after 10 seconds
-                }
         
-        # Create mock request with API key
+        # Create mock request object for API verification
         mock_request = MockRequest(api_key=api_key)
         
-        if endpoint == '/extract':
-            # Handle extraction with semaphore (limit concurrent extractions)
-            async with extraction_semaphore:
-                logger.info(f"[RunPod] Extraction started (concurrent: {4 - extraction_semaphore._value}/{4})")
-                input_data = ExtractionInput(**data)
-                result = await extract_endpoint(mock_request, input_data)
-                
-                # Handle JSONResponse (extract content from response body)
-                if hasattr(result, 'body'):
-                    import json
-                    # JSONResponse stores content as bytes in body attribute
-                    return json.loads(result.body.decode('utf-8'))
-                # Handle dict response (backward compatibility)
-                elif isinstance(result, dict):
-                    return result
-                # Handle Pydantic model response
-                elif hasattr(result, 'dict'):
-                    return result.dict()
-                else:
-                    raise ValueError(f"Unexpected result type: {type(result)}")
-            
-        elif endpoint == '/prompt':
+        # Handle /prompt endpoint
+        if endpoint == '/prompt':
             # Handle prompting with semaphore (limit to 1 concurrent classification)
             async with classification_semaphore:
                 logger.info(f"[RunPod] 🎯 Classification started (GPU locked)")
@@ -649,19 +564,6 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
                         logger.error("- Check if other processes are using GPU memory")
                         logger.error("-"*70)
                     
-                    elif "out of memory" in error_msg.lower():
-                        logger.error("-"*70)
-                        logger.error("GPU MEMORY DIAGNOSTICS")
-                        logger.error("-"*70)
-                        if torch.cuda.is_available():
-                            total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
-                            allocated = torch.cuda.memory_allocated(0) / (1024**3)
-                            reserved = torch.cuda.memory_reserved(0) / (1024**3)
-                            logger.error(f"Total: {total:.2f}GB | Allocated: {allocated:.2f}GB | Reserved: {reserved:.2f}GB")
-                        logger.error("💡 Suggestion: Reduce batch size or use smaller model")
-                        logger.error("-"*70)
-                    
-                    logger.error(f"\n🔍 Full Traceback:\n{error_traceback}")
                     logger.error("="*70)
                     
                     # Return error response (don't raise - RunPod needs a response)
@@ -669,7 +571,7 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
                         "success": False,
                         "error": error_msg,
                         "error_type": error_type,
-                        "traceback": error_traceback[:2000],  # Increased limit for debugging
+                        "traceback": error_traceback[:2000],
                         "diagnostics": {
                             "bnb_cuda_version": os.environ.get('BNB_CUDA_VERSION', 'NOT SET'),
                             "pytorch_cuda": torch.version.cuda if torch.cuda.is_available() else None,
@@ -677,80 +579,33 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
                             "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
                         }
                     }
-            
-        elif endpoint == '/health':
-            # Health check with GPU memory info
-            gpu_info = {}
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-                total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
-                reserved = torch.cuda.memory_reserved(0) / (1024**3)
-                allocated = torch.cuda.memory_allocated(0) / (1024**3)
-                free = total - reserved
-                gpu_info = {
-                    "gpu_available": True,
-                    "gpu_name": torch.cuda.get_device_name(0),
-                    "total_vram_gb": round(total, 2),
-                    "free_vram_gb": round(free, 2),
-                    "allocated_vram_gb": round(allocated, 2),
-                    "reserved_vram_gb": round(reserved, 2)
-                }
-            
-            return {
-                "status": "healthy",
-                "service": "ZopilotGPU",
-                "model": "Mixtral-8x7B-Instruct-v0.1",
-                **gpu_info
-            }
-            
+        
         else:
+            # Unknown endpoint
+            logger.error(f"[RunPod] ❌ Unknown endpoint: {endpoint}")
             return {
                 "success": False,
-                "error": f"Unknown endpoint: {endpoint}. Valid: /extract, /prompt, /health"
+                "error": f"Unknown endpoint: {endpoint}. Supported: /prompt, /health"
             }
-            
+    
     except Exception as e:
         import traceback
-        error_traceback = traceback.format_exc()
-        logger.error(f"[RunPod] ❌ Handler error: {str(e)}")
-        logger.error(f"[RunPod] 🔍 Traceback:\n{error_traceback}")
+        logger.error("="*70)
+        logger.error("[RunPod] FATAL ERROR IN HANDLER")
+        logger.error("="*70)
+        logger.error(f"Error: {e}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
         return {
             "success": False,
             "error": str(e),
-            "error_type": type(e).__name__,
-            "traceback": error_traceback[:1000]
+            "traceback": traceback.format_exc()[:2000]
         }
-    finally:
-        # Always cleanup GPU memory after request
-        try:
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-                torch.cuda.synchronize()
-        except Exception as cleanup_error:
-            logger.warning(f"GPU cleanup error: {cleanup_error}")
 
 
-# Rename async_handler to handler (RunPod supports async handlers directly)
-handler = async_handler
-
-
-# Start RunPod serverless worker
+# Initialize FastAPI app (outside handler for proper lifecycle management)
+# RunPod will call handler() for each request
 if __name__ == "__main__":
-    if runpod is None:
-        logger.error("⚠️  WARNING: runpod package not installed. Install with: pip install runpod")
-        logger.error("   ⚠️  CONTINUING - Worker may not function properly")
-        # REMOVED exit(1) for debugging
-    
-    logger.info("Starting RunPod serverless worker for ZopilotGPU...")
-    
-    try:
-        if runpod is not None:
-            runpod.serverless.start({"handler": handler})
-        else:
-            logger.error("❌ Cannot start worker without runpod package")
-            # Don't exit, just log the error
-    except Exception as e:
-        logger.error(f"❌ Failed to start RunPod worker: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
-        # Don't exit, let the error be visible
+    # This section won't run in RunPod serverless (uses handler() directly)
+    # But useful for local testing
+    print("ZopilotGPU Handler initialized")
+    print("Waiting for RunPod requests...")

@@ -83,24 +83,13 @@ def download_mixtral():
         print(f"❌ Failed to download Mixtral: {e}")
         return False
 
-def download_docstrange():
-    """Download Docstrange models."""
-    print("\n📦 Downloading Docstrange models (~6GB)...")
-    
-    # Note: This requires the docstrange package which may not be pip-installable
-    # You may need to download these manually from the source
-    print("⚠️  Docstrange models must be downloaded via the actual package")
-    print("   Skipping for now - these will download on first GPU worker run (only 5 min)")
-    return True
-
 if __name__ == "__main__":
-    print("\n🚀 Starting local model download...")
+    print("\n🚀 Starting local model download (LLM-only service)...")
     
-    # Download models
+    # Download Mixtral model only (LLM-only service)
     mixtral_ok = download_mixtral()
-    docstrange_ok = download_docstrange()
     
-    if mixtral_ok and docstrange_ok:
+    if mixtral_ok:
         print("\n" + "=" * 80)
         print("✅ Models downloaded successfully!")
         print("=" * 80)

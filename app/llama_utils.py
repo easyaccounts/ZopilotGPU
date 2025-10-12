@@ -98,16 +98,22 @@ class LlamaProcessor:
             
             # Load tokenizer
             logger.info("Loading tokenizer...")
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                self.model_name,
-                token=hf_token,
-                trust_remote_code=True
-            )
-            
-            if self.tokenizer.pad_token is None:
-                self.tokenizer.pad_token = self.tokenizer.eos_token
-            
-            logger.info("Tokenizer loaded successfully")
+            try:
+                self.tokenizer = AutoTokenizer.from_pretrained(
+                    self.model_name,
+                    token=hf_token,
+                    trust_remote_code=True
+                )
+                
+                if self.tokenizer.pad_token is None:
+                    self.tokenizer.pad_token = self.tokenizer.eos_token
+                
+                logger.info("Tokenizer loaded successfully")
+            except Exception as tokenizer_error:
+                logger.error(f"❌ Failed to load tokenizer: {tokenizer_error}")
+                import traceback
+                logger.error(f"Tokenizer traceback:\n{traceback.format_exc()}")
+                raise
             
             # Load model with quantization
             logger.info("Loading model from cache...")

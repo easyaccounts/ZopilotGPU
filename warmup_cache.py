@@ -31,21 +31,9 @@ def warmup_models():
     start_time = time.time()
     
     try:
-        # 1. Download Docstrange models
+        # Download Mixtral model (LLM-only service)
         print("\n" + "=" * 80)
-        print("📦 Step 1/2: Downloading Docstrange models (~6GB)")
-        print("=" * 80)
-        
-        from app.docstrange_utils import get_docstrange_processor
-        docstrange_start = time.time()
-        processor = get_docstrange_processor()
-        docstrange_time = time.time() - docstrange_start
-        
-        print(f"✅ Docstrange models cached in {docstrange_time:.1f}s")
-        
-        # 2. Download Mixtral model
-        print("\n" + "=" * 80)
-        print("📦 Step 2/2: Downloading Mixtral 8x7B FP16 model (~93GB)")
+        print("📦 Downloading Mixtral 8x7B FP16 model (~93GB)")
         print("   Model will be quantized to 8-bit at load time (~24GB VRAM)")
         print("⏱️  This will take 30-45 minutes depending on network speed...")
         print("=" * 80)
@@ -63,7 +51,6 @@ def warmup_models():
         print("🎉 WARMUP COMPLETE!")
         print("=" * 80)
         print(f"Total time: {total_time/60:.1f} minutes")
-        print(f"  - Docstrange: {docstrange_time:.1f}s")
         print(f"  - Mixtral: {mixtral_time/60:.1f} min")
         print("\n✅ All models cached successfully!")
         print("🚀 Workers can now start instantly using cached models")

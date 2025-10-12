@@ -8,11 +8,9 @@ httpx>=0.25.0
 aiofiles>=23.0.0
 
 # Document Processing
-# NOTE: docstrange requires numpy<2.0, so entire stack must stay on NumPy 1.x
-docstrange
 
 # ML/AI - Core
-# NOTE: torch, torchvision, torchaudio installed in Dockerfile ONLY from cu124 index
+# NOTE: PyTorch 2.6+ with CUDA 12.4 installed in Dockerfile for RTX 5090 sm_120 support
 # Do NOT add them here - they MUST be installed from cu124 index for native CUDA 12.4 support
 # Adding them here risks pip reinstalling from PyPI with wrong binaries (cpu-only or cu121)
 # See Dockerfile lines 61-63 for PyTorch installation
@@ -31,23 +29,18 @@ sentencepiece>=0.1.99
 protobuf>=4.25.0,<6.0.0
 huggingface-hub>=0.23.0
 
-# Scientific Stack - NumPy 1.x compatible versions (required by docstrange)
 # NOTE: scipy already installed in Dockerfile (line 55) to prevent ufunc errors with NumPy
 # scipy 1.11.x is NumPy 1.x compatible (1.13.0+ requires NumPy 2.x)
 # scipy>=1.11.0,<1.13.0  # Already in Dockerfile - commented to avoid duplicate
-pandas>=2.0.0,<2.3.0
 
 # Image Processing - NumPy 1.x compatible versions
 opencv-python>=4.8.0,<4.11.0
 scikit-image>=0.22.0,<0.25.0
-pillow>=10.1.0,<11.0.0
 
 # Utilities
 requests>=2.31.0
-# NumPy 1.26.4 - Latest 1.x with bug fixes, REQUIRED by docstrange (numpy<2.0)
 # NOTE: Will be installed AFTER scipy in Dockerfile to prevent ufunc errors
-# PyTorch 2.5.1 supports both NumPy 1.x and 2.x, we use 1.x for docstrange compatibility
-numpy>=1.26.0,<2.0.0
+numpy>=2.0.0,<3.0.0  # NumPy 2.x required for PyTorch 2.6+
 
 # Build dependencies (needed for compilation)
 packaging>=23.0

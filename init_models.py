@@ -8,43 +8,35 @@ import sys
 from pathlib import Path
 
 def check_and_download_models():
-    """Check if models exist, download if needed."""
+    """Check if models exist, download if needed (LLM-only service)."""
     
-    # Check if models already exist in volume
-    volume_path = Path("/workspace")
-    docstrange_path = volume_path / "docstrange" / "models"
-    mixtral_path = volume_path / "huggingface" / "hub"
+    # Check if Mixtral model already exists in volume
+    volume_path = Path("/runpod-volume")
+    mixtral_path = volume_path / "huggingface"
     
-    models_exist = (
-        docstrange_path.exists() and 
-        any(docstrange_path.iterdir()) and
-        mixtral_path.exists() and 
-        any(mixtral_path.iterdir())
-    )
+    # Check for Mixtral model cache
+    models_exist = False
+    if mixtral_path.exists():
+        mixtral_models = list(mixtral_path.glob("models--mistralai--Mixtral*"))
+        models_exist = len(mixtral_models) > 0
     
     if models_exist:
-        print("✅ Models already cached in network volume - skipping download")
+        print("✅ Mixtral model already cached in network volume - skipping download")
         return True
     
-    print("📦 Models not found in cache - downloading now...")
-    print("⏱️  This will take 20-30 minutes (one-time only)")
+    print("📦 Mixtral model not found in cache - downloading now...")
+    print("⏱️  This will take 30-45 minutes (one-time only)")
     
     try:
-        # Download Docstrange models
-        print("\n1️⃣ Downloading Docstrange models (~6GB)...")
-        from app.docstrange_utils import get_docstrange_processor
-        get_docstrange_processor()
-        print("✅ Docstrange models downloaded")
-        
-        # Download Mixtral model
-        print("\n2️⃣ Downloading Mixtral 8x7B FP16 model (~93GB)...")
+        # Download Mixtral model (LLM-only service)
+        print("\n📦 Downloading Mixtral 8x7B FP16 model (~93GB)...")
         print("   Model will be quantized to 8-bit at load time (~24GB VRAM)")
         from app.llama_utils import get_llama_processor
         get_llama_processor()
         print("✅ Mixtral model downloaded")
         
-        print("\n✅ All models cached successfully!")
-        print("🚀 Future workers will use cached models (instant startup)")
+        print("\n✅ Model cached successfully!")
+        print("🚀 Future workers will use cached model (instant startup)")
         return True
         
     except Exception as e:
