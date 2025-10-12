@@ -23,7 +23,7 @@ scipy>=1.13.0,<1.15.0
 # Transformers version lock
 transformers>=4.38.0,<4.50.0
 
-# CRITICAL: Triton must be compatible with BitsAndBytes 0.45.0
-# Triton 3.x removed triton.ops module which BitsAndBytes 0.45.0 requires
-# Lock to Triton 2.x for compatibility
-triton>=2.1.0,<3.0.0
+# NOTE: Triton constraint REMOVED from here
+# PyTorch 2.6.0 pins triton==3.2.0 as a dependency
+# We install Triton 2.x AFTER PyTorch installation (see Dockerfile)
+# This downgrades Triton while keeping PyTorch 2.6.x intact

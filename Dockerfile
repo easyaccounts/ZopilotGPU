@@ -55,8 +55,8 @@ RUN pip install --no-cache-dir \
     "torch>=2.6.0,<2.7.0" "torchvision>=0.21.0,<0.22.0" \
     --index-url https://download.pytorch.org/whl/cu124
 
-# CRITICAL: Install Triton 2.x (BitsAndBytes 0.45.0 requires triton.ops which was removed in Triton 3.x)
-RUN pip install --no-cache-dir "triton>=2.1.0,<3.0.0"
+# NOTE: PyTorch 2.6.0 installs Triton 3.2.0 as a dependency (which doesn't have triton.ops)
+# We'll downgrade Triton AFTER installing requirements.txt
 
 # Install remaining Python dependencies from requirements.txt with constraints
 # constraints.txt prevents pip from upgrading PyTorch, NumPy, and other critical packages
@@ -65,6 +65,12 @@ RUN pip install --no-cache-dir "triton>=2.1.0,<3.0.0"
 RUN pip install --no-cache-dir --ignore-installed blinker \
     --constraint constraints.txt \
     -r requirements.txt
+
+# CRITICAL: Downgrade Triton to 2.x AFTER all other packages
+# BitsAndBytes 0.45.0 requires triton.ops module which was removed in Triton 3.x
+# PyTorch 2.6.0 pins triton==3.2.0, but we need 2.x for BitsAndBytes
+# This downgrade won't break PyTorch (Triton is only used for kernel optimizations)
+RUN pip install --no-cache-dir --force-reinstall "triton==2.3.1"
 
 # CRITICAL: Verify correct versions installed (fail fast if wrong binaries)
 RUN echo "============================================================" && \
