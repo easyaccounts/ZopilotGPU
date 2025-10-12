@@ -221,27 +221,31 @@ try:
     
     # CRITICAL: Verify PyTorch version matches expected version
     # Prevents silent failures from PyTorch upgrades breaking compatibility
-    EXPECTED_PYTORCH_MAJOR_MINOR = "2.6"  # 2.6.x required for RTX 5090 sm_120 support
+    EXPECTED_PYTORCH_MAJOR_MINOR = "2.6"  # ONLY 2.6.x supports RTX 5090 sm_120! (2.7.x removed support)
     actual_major_minor = '.'.join(torch.__version__.split('.')[:2])
     
-    if actual_major_minor not in ["2.6", "2.7"]:
+    if actual_major_minor != "2.6":
         print("=" * 80)
-        print("⚠️  WARNING: PyTorch version mismatch!")
+        print("🔴 CRITICAL: PyTorch version mismatch!")
         print("=" * 80)
-        print(f"Expected: {EXPECTED_PYTORCH_MAJOR_MINOR}.x")
+        print(f"Expected: ONLY {EXPECTED_PYTORCH_MAJOR_MINOR}.x")
         print(f"Actual: {torch.__version__}")
-        print("\nThis may cause compatibility issues:")
-        print("- PyTorch 2.6+ is REQUIRED for RTX 5090 (sm_120) support")
-        print("- PyTorch 2.5.1 only supports up to sm_90 (Hopper)")
-        print("- BitsAndBytes 0.45.0 is compatible with PyTorch 2.6+")
-        print("- Using wrong PyTorch version will cause model loading to fail")
+        print("\n🔴 CRITICAL COMPATIBILITY ISSUE:")
+        print("- PyTorch 2.6.0-2.6.2: HAS RTX 5090 (sm_120) support ✅")
+        print("- PyTorch 2.7.x: REMOVED sm_120 support (only up to sm_90) ❌")
+        print("- PyTorch 2.5.1: Only supports up to sm_90 (Hopper) ❌")
+        print("\nYour RTX 5090 has sm_120 compute capability!")
+        print("Using PyTorch 2.7+ will cause:")
+        print("  - WARNING: 'sm_120 is not compatible with current PyTorch'")
+        print("  - Model loading will fail or use fallback mode")
+        print("  - Severely degraded performance or crashes")
         print("\nPossible causes:")
-        print("1. requirements.txt dependencies upgraded PyTorch")
-        print("2. constraints file not applied correctly")
-        print("3. pip resolver chose newer version")
-        print("\nFix: Rebuild Docker image with correct constraints")
+        print("1. constraints.txt allowed 2.7.x (should be <2.7.0)")
+        print("2. pip resolver upgraded to 2.7.x despite constraints")
+        print("3. PyTorch index had 2.7.x as default")
+        print("\n🔧 FIX: Rebuild Docker image with torch>=2.6.0,<2.7.0")
         print("=" * 80)
-        print("⚠️  CONTINUING - Will attempt to use installed version")
+        print("⚠️  CONTINUING - But expect GPU compatibility warnings and failures")
         # REMOVED: sys.exit(1) - Allow worker to continue for debugging
     
     print("\n" + "=" * 60)

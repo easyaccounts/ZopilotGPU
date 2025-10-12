@@ -1,11 +1,12 @@
 # Constraints file to prevent pip from upgrading critical dependencies
 # Used with: pip install --constraint constraints.txt -r requirements.txt
 
-# CRITICAL: Lock PyTorch to 2.6.x or 2.7.x (prevent upgrade to 2.8.0+)
-# PyTorch 2.6+ supports RTX 5090 Blackwell (sm_120)
-# PyTorch 2.8.0 has compatibility issues with some dependencies
-torch>=2.6.0,<2.8.0
-torchvision>=0.21.0,<0.23.0
+# CRITICAL: Lock PyTorch to ONLY 2.6.x (NOT 2.7.x!)
+# PyTorch 2.6.0-2.6.2 has RTX 5090 Blackwell (sm_120) support
+# PyTorch 2.7.x REMOVED sm_120 support (only supports up to sm_90)
+# PyTorch 2.8.0+ has compatibility issues
+torch>=2.6.0,<2.7.0
+torchvision>=0.21.0,<0.22.0
 
 # CRITICAL: NumPy 2.x required for PyTorch 2.6+
 numpy>=2.0.0,<3.0.0
@@ -21,3 +22,8 @@ scipy>=1.13.0,<1.15.0
 
 # Transformers version lock
 transformers>=4.38.0,<4.50.0
+
+# CRITICAL: Triton must be compatible with BitsAndBytes 0.45.0
+# Triton 3.x removed triton.ops module which BitsAndBytes 0.45.0 requires
+# Lock to Triton 2.x for compatibility
+triton>=2.1.0,<3.0.0
