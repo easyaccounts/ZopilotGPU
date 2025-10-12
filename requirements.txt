@@ -1,4 +1,4 @@
-# Core FastA# Core FastAPI
+# Core FastAPI
 fastapi>=0.104.0,<0.115.0
 uvicorn[standard]>=0.24.0,<0.32.0
 pydantic>=2.5.0,<3.0.0
@@ -11,13 +11,13 @@ aiofiles>=23.0.0
 
 # ML/AI - Core
 # NOTE: PyTorch 2.6+ with CUDA 12.4 installed in Dockerfile for RTX 5090 sm_120 support
-# Do NOT add them here - they MUST be installed from cu124 index for native CUDA 12.4 support
-# Adding them here risks pip reinstalling from PyPI with wrong binaries (cpu-only or cu121)
-# See Dockerfile lines 61-63 for PyTorch installation
+# Do NOT add PyTorch here - it MUST be installed from cu124 index for native CUDA 12.4 support
+# Adding it here risks pip reinstalling from PyPI with wrong binaries (cpu-only or cu121)
+# See Dockerfile lines 47-53 for PyTorch installation
 # transformers 4.38.0+ fixes frozenset bug with BitsAndBytes on CPU fallback
 transformers>=4.38.0,<4.50.0
-# accelerate 1.0.0+ requires NumPy 2.x, stay on 0.x for NumPy 1.x compatibility
-accelerate>=0.28.0,<1.0.0
+# accelerate 1.0.0+ requires NumPy 2.x - we're using NumPy 2.x for PyTorch 2.6+
+accelerate>=1.0.0,<2.0.0
 # BitsAndBytes 0.45.0 has native CUDA 12.4 support (no BNB_CUDA_VERSION override needed!)
 # Compatible with PyTorch 2.0-2.5.x and native RTX 5090 Blackwell support
 # Improved quantization quality and better memory management vs 0.42.0
@@ -29,13 +29,12 @@ sentencepiece>=0.1.99
 protobuf>=4.25.0,<6.0.0
 huggingface-hub>=0.23.0
 
-# NOTE: scipy already installed in Dockerfile (line 55) to prevent ufunc errors with NumPy
-# scipy 1.11.x is NumPy 1.x compatible (1.13.0+ requires NumPy 2.x)
-# scipy>=1.11.0,<1.13.0  # Already in Dockerfile - commented to avoid duplicate
+# scipy 1.13.0+ requires NumPy 2.x (which we use for PyTorch 2.6+)
+scipy>=1.13.0,<1.15.0
 
-# Image Processing - NumPy 1.x compatible versions
-opencv-python>=4.8.0,<4.11.0
-scikit-image>=0.22.0,<0.25.0
+# Image Processing - NumPy 2.x compatible versions
+# opencv-python and scikit-image not needed for LLM-only endpoint
+# Removed to reduce dependencies and avoid potential NumPy conflicts
 
 # Utilities
 requests>=2.31.0

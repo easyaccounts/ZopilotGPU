@@ -79,7 +79,7 @@ async def initialize_models():
 # Create FastAPI app
 app = FastAPI(
     title="ZopilotGPU API",
-    description="Document extraction with Docstrange and AI prompting with Mixtral 8x7B",
+    description="LLM prompting with Mixtral 8x7B on RTX 5090",
     version="2.0.0",
     lifespan=lifespan
 )

@@ -44,13 +44,14 @@ COPY requirements.txt .
 # Install build dependencies first (required for package compilation)
 RUN pip install --no-cache-dir packaging wheel setuptools
 
-# CRITICAL: Install PyTorch 2.6+ with CUDA 12.4 for RTX 5090 (sm_120) support
+# CRITICAL: Install PyTorch 2.6.x with CUDA 12.4 for RTX 5090 (sm_120) support
 # PyTorch 2.6+ has native Blackwell architecture support (sm_120 compute capability)
 # PyTorch 2.5.1 only supports up to sm_90 (Hopper) - will crash on RTX 5090
 # PyTorch 2.6+ requires NumPy 2.x (installed via requirements.txt)
 # Using cu124 wheel for native CUDA 12.4 support
+# Pinned to 2.6.x to avoid 2.8.0+ which may have compatibility issues
 RUN pip install --no-cache-dir \
-    torch>=2.6.0 torchvision>=0.21.0 \
+    "torch>=2.6.0,<2.8.0" "torchvision>=0.21.0,<0.23.0" \
     --index-url https://download.pytorch.org/whl/cu124
 
 # Install remaining Python dependencies from requirements.txt
@@ -60,7 +61,7 @@ RUN pip install --no-cache-dir --ignore-installed blinker \
     -r requirements.txt
 
 # CRITICAL: Verify correct versions installed (fail fast if wrong binaries)
-RUN python -c "import torch; print(f'✅ PyTorch: {torch.__version__}'); assert torch.__version__.startswith('2.6') or torch.__version__.startswith('2.7'), f'Wrong PyTorch: {torch.__version__}'"
+RUN python -c "import torch; print(f'✅ PyTorch: {torch.__version__}'); major_minor = '.'.join(torch.__version__.split('.')[:2]); assert major_minor in ['2.6', '2.7'], f'Wrong PyTorch version {torch.__version__} (need 2.6.x or 2.7.x for RTX 5090)'"
 RUN python -c "import torch; print(f'✅ CUDA: {torch.version.cuda}'); assert torch.version.cuda == '12.4', f'Wrong CUDA: {torch.version.cuda}'"
 RUN python -c "import numpy as np; print(f'✅ NumPy: {np.__version__}'); assert np.__version__.startswith('2.'), f'Wrong NumPy (need 2.x for PyTorch 2.6+): {np.__version__}'"
 RUN python -c "import bitsandbytes as bnb; print(f'✅ BitsAndBytes: {bnb.__version__}'); assert bnb.__version__ == '0.45.0', f'Wrong BnB: {bnb.__version__}'"
@@ -79,34 +80,29 @@ RUN mkdir -p /app/models /app/temp /app/logs
 # Instead, use one of these approaches:
 #
 # APPROACH 1 (RECOMMENDED): Persistent Network Volume
-#   - Mount a persistent volume to /workspace (where models download)
-#   - First worker downloads models once (~123GB: 93GB Mixtral FP16 + 30GB Docstrange, 30-45 min)
-#   - Models are quantized to 8-bit at load time (~24GB VRAM)
+#   - Mount a persistent volume to /runpod-volume (where models download)
+#   - First worker downloads Mixtral once (~93GB FP16, quantized to 4-bit at load time)
+#   - Model download takes 15-30 min depending on network speed
 #   - All subsequent workers share the same volume (instant startup)
-#   - RunPod: Create Network Volume (120GB+), mount to /workspace
-#   - Cost: ~$0.15/GB/month = ~$18/month for 120GB
+#   - RunPod: Create Network Volume (100GB+), mount to /runpod-volume
+#   - Cost: ~$0.15/GB/month = ~$15/month for 100GB
 #
 # APPROACH 2: Bake into Image (for reference, not recommended)
 #   - Uncomment the RUN commands below to pre-download during build
-#   - Makes image ~123GB (very slow push/pull, expensive storage)
+#   - Makes image ~93GB (very slow push/pull, expensive storage)
 #   - Any code change requires rebuilding entire image
 #
 # APPROACH 3: MIN_WORKERS=1
 #   - Keep 1 worker always warm with models in memory
 #   - First download happens once on deployment
 #   - Models stay in container filesystem until restart
-#   - Cost: ~$7-12/day GPU cost
+#   - Cost: ~$0.70-1.20/hr for RTX 5090
 
-# Uncomment to bake models into image (NOT RECOMMENDED):
-# RUN python -c "from app.docstrange_utils import get_docstrange_processor; \
-#     print('📦 Downloading Docstrange (~30GB)...'); \
-#     get_docstrange_processor(); \
-#     print('✅ Docstrange ready!')"
-#
+# Uncomment to bake Mixtral into image (NOT RECOMMENDED):
 # ARG HUGGING_FACE_TOKEN
 # RUN if [ -n "$HUGGING_FACE_TOKEN" ]; then \
 #         python -c "from app.llama_utils import get_llama_processor; \
-#         print('📦 Downloading Mixtral FP16 (~93GB, will be 8-bit quantized at load)...'); \
+#         print('📦 Downloading Mixtral FP16 (~93GB, will be 4-bit quantized at load)...'); \
 #         get_llama_processor(); \
 #         print('✅ Mixtral ready!')"; \
 #     fi
@@ -135,8 +131,8 @@ ENV TORCH_HOME=/runpod-volume/torch
 ENV XDG_CACHE_HOME=/runpod-volume
 
 # GPU-specific environment variables for Mixtral 8x7B
-# Mixtral 8x7B: 4-bit NF4 ~12GB weights + 3-5GB activations = ~16-17GB total
-# Compatible with RTX 4090 (24GB), RTX 5090 (32GB), A40 (48GB)
+# Mixtral 8x7B: 4-bit NF4 ~12GB weights + 4-6GB activations = ~16-18GB total VRAM
+# RTX 5090 (32GB) has plenty of headroom for generation
 ENV CUDA_VISIBLE_DEVICES=0
 # GPU memory allocation settings optimized for 4-bit quantization with expandable segments
 ENV PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512,expandable_segments:True

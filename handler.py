@@ -39,11 +39,11 @@ os.environ['HF_HUB_CACHE'] = str(workspace_path / "huggingface")  # Hub cache (s
 os.environ['TORCH_HOME'] = str(workspace_path / "torch")     # PyTorch models
 os.environ['XDG_CACHE_HOME'] = str(workspace_path)           # Generic cache (used by some libs)
 
-# BitsAndBytes 0.45.0 native CUDA 12.4 support - no override needed at build time
-# However, we still set BNB_CUDA_VERSION=121 at runtime as a safety fallback
-# in case the auto-detection has issues (can be removed if 0.45.0 works perfectly)
-os.environ['BNB_CUDA_VERSION'] = '121'
-print(f"🔧 BitsAndBytes: Set BNB_CUDA_VERSION=121 fallback (0.45.0 should auto-detect CUDA 12.4)")
+# BitsAndBytes 0.45.0 has native CUDA 12.4 support with auto-detection
+# Set BNB_CUDA_VERSION=124 explicitly to ensure correct library is used
+# 0.45.0 should auto-detect, but explicit setting prevents fallback issues
+os.environ['BNB_CUDA_VERSION'] = '124'
+print(f"🔧 BitsAndBytes: Set BNB_CUDA_VERSION=124 for CUDA 12.4 (0.45.0 native support)")
 
 # Verify model cache directories exist
 required_cache_dirs = [
@@ -196,18 +196,21 @@ try:
     import torch
     
     # CRITICAL: Verify PyTorch version matches expected version
-    # Prevents silent failures from PyTorch upgrades breaking BitsAndBytes compatibility
-    EXPECTED_PYTORCH_VERSION = "2.5.1"
-    if not torch.__version__.startswith(EXPECTED_PYTORCH_VERSION):
+    # Prevents silent failures from PyTorch upgrades breaking compatibility
+    EXPECTED_PYTORCH_MAJOR_MINOR = "2.6"  # 2.6.x required for RTX 5090 sm_120 support
+    actual_major_minor = '.'.join(torch.__version__.split('.')[:2])
+    
+    if actual_major_minor not in ["2.6", "2.7"]:
         print("=" * 80)
         print("⚠️  WARNING: PyTorch version mismatch!")
         print("=" * 80)
-        print(f"Expected: {EXPECTED_PYTORCH_VERSION}")
+        print(f"Expected: {EXPECTED_PYTORCH_MAJOR_MINOR}.x")
         print(f"Actual: {torch.__version__}")
-        print("\nThis may cause BitsAndBytes compatibility issues:")
-        print("- PyTorch 2.6+ is required for RTX 5090 (sm_120) support")
+        print("\nThis may cause compatibility issues:")
+        print("- PyTorch 2.6+ is REQUIRED for RTX 5090 (sm_120) support")
+        print("- PyTorch 2.5.1 only supports up to sm_90 (Hopper)")
         print("- BitsAndBytes 0.45.0 is compatible with PyTorch 2.6+")
-        print("- Using wrong PyTorch version may cause quantization failures")
+        print("- Using wrong PyTorch version will cause model loading to fail")
         print("\nPossible causes:")
         print("1. requirements.txt dependencies upgraded PyTorch")
         print("2. constraints file not applied correctly")
@@ -220,7 +223,7 @@ try:
     print("\n" + "=" * 60)
     print("DIAGNOSTIC: PyTorch & CUDA Configuration")
     print("=" * 60)
-    print(f"✅ PyTorch Version: {torch.__version__} (matches expected {EXPECTED_PYTORCH_VERSION})")
+    print(f"✅ PyTorch Version: {torch.__version__}")
     print(f"PyTorch CUDA Compiled: {torch.version.cuda}")
     print(f"CUDA Available: {torch.cuda.is_available()}")
     
@@ -247,11 +250,11 @@ try:
             print(f"📊 Max threads per block: {props.max_threads_per_block}")
         
         # Warn if insufficient memory for Mixtral 8x7B with 4-bit NF4 quantization
-        if gpu_memory < 20:
-            print(f"⚠️  WARNING: Mixtral 8x7B 4-bit requires ~16-17GB VRAM, you have {gpu_memory:.1f}GB")
+        if gpu_memory < 16:
+            print(f"⚠️  WARNING: Mixtral 8x7B 4-bit requires ~16-18GB VRAM, you have {gpu_memory:.1f}GB")
             print("   Model loading may fail or run very slowly")
         else:
-            print(f"✅ Sufficient VRAM for Mixtral 8x7B 4-bit NF4 (~16-17GB required)")
+            print(f"✅ Sufficient VRAM for Mixtral 8x7B 4-bit NF4 (~16-18GB required, {gpu_memory:.1f}GB available)")
     else:
         print("⚠️  No GPU detected - will fall back to CPU (very slow)")
     
