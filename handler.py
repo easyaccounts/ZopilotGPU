@@ -57,13 +57,117 @@ print("\n📦 Importing dependencies...", flush=True)
 
 try:
     import torch
+    import subprocess
+    import platform
     print(f"  ✅ PyTorch {torch.__version__}", flush=True)
+    
+    # ============================================
+    # 🔍 DETAILED MACHINE DIAGNOSTICS
+    # ============================================
+    print("\n" + "="*70, flush=True)
+    print("🔍 MACHINE & GPU DIAGNOSTICS", flush=True)
+    print("="*70, flush=True)
+    
+    # System info
+    print(f"OS: {platform.system()} {platform.release()}", flush=True)
+    print(f"Architecture: {platform.machine()}", flush=True)
+    print(f"Python: {platform.python_version()}", flush=True)
+    
+    # CPU info
+    try:
+        cpu_info = subprocess.run(['lscpu'], capture_output=True, text=True, timeout=5)
+        if cpu_info.returncode == 0:
+            for line in cpu_info.stdout.split('\n'):
+                if 'Model name' in line or 'CPU(s):' in line and 'NUMA' not in line:
+                    print(f"CPU: {line.strip()}", flush=True)
+    except:
+        pass
+    
+    # Memory info
+    try:
+        mem_info = subprocess.run(['free', '-h'], capture_output=True, text=True, timeout=5)
+        if mem_info.returncode == 0:
+            lines = mem_info.stdout.split('\n')
+            if len(lines) > 1:
+                print(f"RAM: {lines[1].split()[1]} total", flush=True)
+    except:
+        pass
+    
+    # NVIDIA driver info
+    print("\n--- NVIDIA Driver Info ---", flush=True)
+    try:
+        nvidia_smi = subprocess.run(['nvidia-smi', '--query-gpu=driver_version,name,memory.total,compute_cap', 
+                                    '--format=csv,noheader'], 
+                                   capture_output=True, text=True, timeout=10)
+        if nvidia_smi.returncode == 0:
+            print(f"✅ nvidia-smi output:\n{nvidia_smi.stdout.strip()}", flush=True)
+        else:
+            print(f"❌ nvidia-smi failed with exit code: {nvidia_smi.returncode}", flush=True)
+            print(f"   stderr: {nvidia_smi.stderr.strip()}", flush=True)
+    except FileNotFoundError:
+        print("❌ nvidia-smi not found in PATH", flush=True)
+    except subprocess.TimeoutExpired:
+        print("❌ nvidia-smi timeout", flush=True)
+    except Exception as e:
+        print(f"❌ nvidia-smi error: {e}", flush=True)
+    
+    # Check for GPU device files
+    print("\n--- GPU Device Files ---", flush=True)
+    try:
+        import glob
+        nvidia_devices = glob.glob('/dev/nvidia*')
+        if nvidia_devices:
+            print(f"✅ Found {len(nvidia_devices)} NVIDIA device(s):", flush=True)
+            for dev in sorted(nvidia_devices)[:5]:  # Show first 5
+                print(f"   - {dev}", flush=True)
+        else:
+            print("❌ No /dev/nvidia* devices found", flush=True)
+            print("   This means GPU is NOT mounted into the container!", flush=True)
+    except Exception as e:
+        print(f"Error checking devices: {e}", flush=True)
+    
+    # PyTorch CUDA info
+    print("\n--- PyTorch CUDA Info ---", flush=True)
+    print(f"CUDA available: {torch.cuda.is_available()}", flush=True)
+    print(f"CUDA version (compiled): {torch.version.cuda}", flush=True)
+    print(f"cuDNN version: {torch.backends.cudnn.version()}", flush=True)
+    print(f"Number of GPUs: {torch.cuda.device_count()}", flush=True)
+    
+    if torch.cuda.is_available():
+        for i in range(torch.cuda.device_count()):
+            props = torch.cuda.get_device_properties(i)
+            print(f"\n✅ GPU {i}: {torch.cuda.get_device_name(i)}", flush=True)
+            print(f"   Memory: {props.total_memory / (1024**3):.2f} GB", flush=True)
+            print(f"   Compute Capability: {props.major}.{props.minor}", flush=True)
+            print(f"   Multi-processors: {props.multi_processor_count}", flush=True)
+    else:
+        print("⚠️  torch.cuda.is_available() = False", flush=True)
+        print("   Possible reasons:", flush=True)
+        print("   1. GPU not mounted to container (no /dev/nvidia* devices)", flush=True)
+        print("   2. NVIDIA driver mismatch", flush=True)
+        print("   3. Container runtime not using --gpus flag", flush=True)
+    
+    # Environment variables
+    print("\n--- CUDA Environment Variables ---", flush=True)
+    cuda_vars = ['CUDA_VISIBLE_DEVICES', 'CUDA_HOME', 'LD_LIBRARY_PATH', 
+                 'NVIDIA_VISIBLE_DEVICES', 'NVIDIA_DRIVER_CAPABILITIES']
+    for var in cuda_vars:
+        value = os.getenv(var, 'NOT SET')
+        if len(value) > 100:
+            value = value[:100] + '...'
+        print(f"{var}: {value}", flush=True)
+    
+    print("="*70, flush=True)
+    print("\n", flush=True)
+    
+    # Original GPU detection (keep for compatibility)
     if torch.cuda.is_available():
         gpu_name = torch.cuda.get_device_name(0)
         gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)
         print(f"  ✅ GPU: {gpu_name} ({gpu_memory:.0f}GB)", flush=True)
     else:
         print(f"  ⚠️  No GPU detected", flush=True)
+        
 except ImportError as e:
     print(f"  ❌ PyTorch import failed: {e}", flush=True)
     sys.exit(1)
