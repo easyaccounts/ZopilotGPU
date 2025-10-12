@@ -44,15 +44,15 @@ COPY requirements.txt constraints.txt ./
 # Install build dependencies first (required for package compilation)
 RUN pip install --no-cache-dir packaging wheel setuptools
 
-# CRITICAL: Install PyTorch 2.8.0 STABLE with CUDA 12.9 for RTX 5090 (sm_120) support
+# CRITICAL: Install PyTorch 2.8.0 STABLE with CUDA 12.8 for RTX 5090 (sm_120) support
 # RTX 5090 has compute capability sm_120 (Blackwell architecture)
-# PyTorch 2.8.0 CUDA 12.9 build includes sm_120 + sm_100 support (Blackwell)
+# PyTorch 2.8.0 CUDA 12.8 build includes sm_120 + sm_100 support (Blackwell)
 # PyTorch 2.8.0 CUDA 12.6 does NOT have sm_120 (only up to sm_90)
-# Must use cu129 index for sm_120 support (released Aug 2025)
+# Using cu128 index (cu129 wheels not available, cu128 has sm_120 support)
 # Compatible with BitsAndBytes 0.48.0 (verified stable release)
 RUN pip install --no-cache-dir \
     "torch==2.8.0" "torchvision==0.23.0" \
-    --index-url https://download.pytorch.org/whl/cu129
+    --index-url https://download.pytorch.org/whl/cu128
 
 # Install remaining Python dependencies from requirements.txt with constraints
 # constraints.txt locks PyTorch 2.8.0, BitsAndBytes 0.48.0, and other critical packages
@@ -80,10 +80,10 @@ RUN echo "============================================================" && \
         f'🔴 WRONG PyTorch version {torch.__version__}! Need 2.8.0 for RTX 5090 sm_120 support'" && \
     echo "============================================================"
 
-# CRITICAL: Verify CUDA 12.9 for sm_120 support
-# PyTorch 2.8.0 with CUDA 12.9 includes sm_120 (RTX 5090 Blackwell)
+# CRITICAL: Verify CUDA 12.8+ for sm_120 support
+# PyTorch 2.8.0 with CUDA 12.8 or 12.9 includes sm_120 (RTX 5090 Blackwell)
 # PyTorch 2.8.0 with CUDA 12.6 does NOT include sm_120
-RUN echo "VERIFICATION: Checking CUDA 12.9 Version (Required for sm_120)" && \
+RUN echo "VERIFICATION: Checking CUDA 12.8+ Version (Required for sm_120)" && \
     python -c "import torch; \
         print(f'✅ CUDA Version: {torch.version.cuda}'); \
         cuda_major_minor = '.'.join(torch.version.cuda.split('.')[:2]); \
@@ -122,8 +122,8 @@ RUN echo "VERIFICATION: Checking BitsAndBytes 0.48.0 Package (NOT importing - re
     echo "============================================================"
 
 RUN echo "✅ All dependency versions verified!" && \
-    echo "   PyTorch: 2.8.0 stable (RTX 5090 sm_120 support via CUDA 12.9)" && \
-    echo "   CUDA: 12.9 (sm_120 + sm_100 Blackwell support)" && \
+    echo "   PyTorch: 2.8.0 stable (RTX 5090 sm_120 support via CUDA 12.8)" && \
+    echo "   CUDA: 12.8 (sm_120 + sm_100 Blackwell support)" && \
     echo "   BitsAndBytes: 0.48.0 (verified compatible with PyTorch 2.8.0)" && \
     echo "   Triton: Compatible version (no manual downgrade needed)" && \
     echo "============================================================"

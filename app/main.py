@@ -26,6 +26,26 @@ class PromptInput(BaseModel):
     prompt: str = Field(..., description="Natural language instruction for Mixtral")
     context: Optional[Dict[str, Any]] = Field(None, description="Optional context data")
     
+    # Generation parameters (configurable, with defaults)
+    max_tokens: Optional[int] = Field(4096, description="Maximum tokens to generate (default 4096, max 32768)")
+    temperature: Optional[float] = Field(0.1, description="Sampling temperature (0.0-2.0)")
+    top_p: Optional[float] = Field(0.95, description="Nucleus sampling threshold")
+    top_k: Optional[int] = Field(50, description="Top-k sampling limit")
+    repetition_penalty: Optional[float] = Field(1.1, description="Repetition penalty (1.0 = no penalty)")
+    
+    # Token limits for input
+    max_input_length: Optional[int] = Field(None, description="Max input tokens (default: 90% of 32k = 29491)")
+    
+    class Config:
+        # Pydantic v1 config
+        validate_assignment = True
+        
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Set default for max_input_length if not provided
+        if self.max_input_length is None:
+            self.max_input_length = 29491  # 90% of 32768 (reserve 10% for generation)
+    
 class PromptResponse(BaseModel):
     success: bool
     output: str
@@ -253,8 +273,10 @@ async def prompt_endpoint(request: Request, data: PromptInput):
     """
     Send prompt to Mixtral 8x7B and get AI-generated output.
     
-    Takes natural language prompt (with optional context data) and returns
-    Mixtral's structured response (typically a journal entry dict).
+    Supports:
+    - Stage 1: Semantic Analysis + Action Selection (context.stage = "action_selection")
+    - Stage 2: Field Mapping (context.stage = "field_mapping")
+    - Legacy: Journal Entry Generation (context.stage not set or other value)
     
     Response format: {"success": bool, "output": dict|str, "metadata": {...}}
     No Pydantic validation to allow dynamic response structure from Mixtral.
@@ -265,15 +287,47 @@ async def prompt_endpoint(request: Request, data: PromptInput):
     
     try:
         prompt_start = asyncio.get_event_loop().time()
-        logger.info(f"[PROMPT] 📨 Received classification request")
+        
+        # Determine stage from context
+        stage = data.context.get('stage', 'journal_entry') if data.context else 'journal_entry'
+        
+        # Extract generation parameters from request
+        generation_config = {
+            'max_new_tokens': data.max_tokens,
+            'temperature': data.temperature,
+            'top_p': data.top_p,
+            'top_k': data.top_k,
+            'repetition_penalty': data.repetition_penalty,
+            'max_input_length': data.max_input_length
+        }
+        
+        logger.info(f"[PROMPT] 📨 Received {stage} request")
         logger.info(f"[PROMPT] 📝 Prompt length: {len(data.prompt)} chars")
+        logger.info(f"[PROMPT] ⚙️  Generation config: max_tokens={data.max_tokens}, temp={data.temperature}, max_input={data.max_input_length}")
         logger.info(f"[PROMPT] 🎯 Sending to Mixtral: {data.prompt[:100]}...")
         
-        # Generate with Mixtral (runs in thread pool to avoid blocking)
-        logger.info(f"[PROMPT] 🔄 Running generation in thread pool...")
-        output = await asyncio.get_event_loop().run_in_executor(
-            None, generate_with_llama, data.prompt, data.context
-        )
+        # Route based on stage
+        if stage == 'action_selection':
+            # Stage 1: Semantic Analysis + Action Selection
+            logger.info(f"[PROMPT] 🔍 Stage 1: Action Selection")
+            from app.classification import classify_stage1
+            output = await asyncio.get_event_loop().run_in_executor(
+                None, classify_stage1, data.prompt, data.context, generation_config
+            )
+        elif stage == 'field_mapping':
+            # Stage 2: Field Mapping
+            action = data.context.get('action', 'unknown') if data.context else 'unknown'
+            logger.info(f"[PROMPT] �️  Stage 2: Field Mapping for {action}")
+            from app.classification import classify_stage2
+            output = await asyncio.get_event_loop().run_in_executor(
+                None, classify_stage2, data.prompt, data.context, generation_config
+            )
+        else:
+            # Legacy: Journal Entry Generation
+            logger.info(f"[PROMPT] 📝 Legacy: Journal Entry Generation")
+            output = await asyncio.get_event_loop().run_in_executor(
+                None, generate_with_llama, data.prompt, data.context, generation_config
+            )
         
         prompt_time = asyncio.get_event_loop().time() - prompt_start
         logger.info(f"[PROMPT] ⏱️  Total prompt processing time: {prompt_time:.1f}s")

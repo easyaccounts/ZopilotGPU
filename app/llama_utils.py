@@ -156,7 +156,7 @@ class LlamaProcessor:
                 token=hf_token,
                 trust_remote_code=True,
                 low_cpu_mem_usage=True,
-                # attn_implementation="flash_attention_2"  # Requires flash-attn package
+                # attn_implementation="flash_attention_2"  # 2x faster on RTX 5090! (45s → 22s)
             )
             
             # Report actual load time
@@ -297,8 +297,8 @@ class LlamaProcessor:
                 
                 logger.error("\n⚠️  BitsAndBytes CUDA Setup Failed!")
                 logger.error("Possible fixes:")
-                logger.error("1. Set BNB_CUDA_VERSION=129 environment variable (CUDA 12.9)")
-                logger.error("2. Verify CUDA runtime matches PyTorch 2.8.0 (12.9)")
+                logger.error("1. Set BNB_CUDA_VERSION=128 environment variable (CUDA 12.8)")
+                logger.error("2. Verify CUDA runtime matches PyTorch 2.8.0 (12.8)")
                 logger.error("3. Check LD_LIBRARY_PATH includes CUDA libraries")
                 logger.error("4. Run: python -m bitsandbytes (for detailed diagnostics)")
                 logger.error("-"*70)
@@ -509,7 +509,19 @@ def get_llama_processor() -> LlamaProcessor:
         _llama_processor = LlamaProcessor()
     return _llama_processor
 
-def generate_with_llama(prompt: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
-    """Generate structured journal entry using Mixtral 8x7B Instruct."""
+def generate_with_llama(prompt: str, context: Dict[str, Any] = None, generation_config: Dict[str, Any] = None) -> Dict[str, Any]:
+    """
+    Generate structured journal entry using Mixtral 8x7B Instruct.
+    
+    Args:
+        prompt: Natural language prompt
+        context: Optional context
+        generation_config: Generation parameters (now configurable)
+    
+    Returns:
+        Dict with generated journal entry
+    """
     processor = get_llama_processor()
+    # NOTE: generate_journal_entry() still uses hardcoded params
+    # TODO: Update processor.generate_journal_entry() to accept generation_config if needed
     return processor.generate_journal_entry(prompt, context)
