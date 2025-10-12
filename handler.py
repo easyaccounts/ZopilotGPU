@@ -2,11 +2,16 @@
 RunPod Serverless Handler for ZopilotGPU
 Clean implementation for Mixtral 8x7B classification
 """
+# CRITICAL: Print before ANY imports to confirm Python starts
+print("HANDLER.PY STARTING - BEFORE IMPORTS", flush=True)
+
 import os
 import sys
 import logging
 from pathlib import Path
 from typing import Any, Dict
+
+print("HANDLER.PY - IMPORTS COMPLETE", flush=True)
 
 # ============================================
 # 1. ENVIRONMENT SETUP
