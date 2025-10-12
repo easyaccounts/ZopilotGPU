@@ -202,6 +202,8 @@ ENV CUDA_VISIBLE_DEVICES=0
 # GPU memory allocation settings optimized for 4-bit quantization with expandable segments
 ENV PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512,expandable_segments:True
 ENV CUDA_LAUNCH_BLOCKING=0
+# RunPod serverless mode flag (disables FastAPI lifespan, models loaded on-demand)
+ENV RUNPOD_SERVERLESS=true
 
 # Health check (allow time for model loading on first start)
 HEALTHCHECK --interval=60s --timeout=30s --start-period=180s --retries=3 \
