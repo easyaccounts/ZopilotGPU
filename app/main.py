@@ -76,16 +76,12 @@ async def initialize_models():
         return_exceptions=True
     )
 
-# Check if running in RunPod serverless mode (no lifespan needed, models loaded on-demand)
-# In RunPod serverless, handler.py imports this module but doesn't start FastAPI server
-IS_RUNPOD_SERVERLESS = os.getenv("RUNPOD_SERVERLESS", "false").lower() == "true"
-
 # Create FastAPI app
 app = FastAPI(
     title="ZopilotGPU API",
     description="LLM prompting with Mixtral 8x7B on RTX 5090",
     version="2.0.0",
-    lifespan=None if IS_RUNPOD_SERVERLESS else lifespan  # Disable lifespan in RunPod serverless
+    lifespan=lifespan
 )
 
 # Security: Get allowed origins from environment
