@@ -191,6 +191,30 @@ if missing_vars:
     print("⚠️  CONTINUING - Some features may not work without these variables")
     # REMOVED: sys.exit(1) - Allow worker to continue for debugging
 
+# COMPREHENSIVE STARTUP DIAGNOSTICS
+print("\n" + "=" * 80)
+print("🔍 STARTUP DIAGNOSTICS")
+print("=" * 80)
+
+# System info
+import platform
+import subprocess
+print(f"\n🖥️  SYSTEM INFORMATION:")
+print(f"   OS: {platform.system()} {platform.release()}")
+print(f"   Python: {platform.python_version()}")
+print(f"   Platform: {platform.platform()}")
+
+# GPU info via nvidia-smi
+print(f"\n🎮 GPU INFORMATION:")
+try:
+    nvidia_smi = subprocess.check_output(
+        ['nvidia-smi', '--query-gpu=name,driver_version,memory.total', '--format=csv,noheader'],
+        timeout=10
+    ).decode().strip()
+    print(f"   {nvidia_smi}")
+except Exception as e:
+    print(f"   ⚠️  Could not get GPU info via nvidia-smi: {e}")
+
 # Check GPU availability and memory
 try:
     import torch
@@ -384,7 +408,44 @@ try:
 except ImportError as e:
     print(f"⚠️  PyTorch not available for GPU check: {e}")
 
+# Disk space diagnostics
+print("\n" + "=" * 60)
+print("💾 DISK SPACE DIAGNOSTICS")
 print("=" * 60)
+try:
+    import shutil
+    
+    # Check /runpod-volume (network volume)
+    if workspace_path.exists():
+        total, used, free = shutil.disk_usage(str(workspace_path))
+        total_gb = total // (2**30)
+        used_gb = used // (2**30)
+        free_gb = free // (2**30)
+        usage_percent = (used / total) * 100
+        print(f"📁 /runpod-volume:")
+        print(f"   Total: {total_gb}GB")
+        print(f"   Used: {used_gb}GB ({usage_percent:.1f}%)")
+        print(f"   Free: {free_gb}GB")
+        
+        if free_gb < 50:
+            print(f"   ⚠️  WARNING: Low disk space (< 50GB free)")
+            print(f"      Mixtral model requires ~93GB for download")
+    else:
+        print(f"   ⚠️  /runpod-volume not accessible")
+    
+    # Check root filesystem
+    total, used, free = shutil.disk_usage("/")
+    print(f"📁 / (root):")
+    print(f"   Total: {total // (2**30)}GB")
+    print(f"   Used: {used // (2**30)}GB")
+    print(f"   Free: {free // (2**30)}GB")
+    
+except Exception as e:
+    print(f"⚠️  Disk space check failed: {e}")
+
+print("=" * 80)
+print("✅ STARTUP DIAGNOSTICS COMPLETE")
+print("=" * 80 + "\n")
 
 try:
     import runpod  # type: ignore
@@ -583,6 +644,58 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
                         }
                     }
         
+        elif endpoint == '/health':
+            # Health check endpoint
+            logger.info(f"[RunPod] ❤️  Health check requested")
+            
+            health_status = {
+                "status": "healthy",
+                "service": "ZopilotGPU",
+                "timestamp": str(Path.cwd()),  # Using Path import for timestamp
+                "gpu_available": torch.cuda.is_available(),
+                "model_loaded": False,
+                "free_memory_gb": 0.0,
+                "total_memory_gb": 0.0
+            }
+            
+            # GPU diagnostics
+            if torch.cuda.is_available():
+                try:
+                    torch.cuda.synchronize()
+                    device_props = torch.cuda.get_device_properties(0)
+                    total_memory = device_props.total_memory
+                    allocated_memory = torch.cuda.memory_allocated(0)
+                    reserved_memory = torch.cuda.memory_reserved(0)
+                    free_memory = total_memory - reserved_memory
+                    
+                    health_status.update({
+                        "total_memory_gb": total_memory / (1024**3),
+                        "allocated_memory_gb": allocated_memory / (1024**3),
+                        "reserved_memory_gb": reserved_memory / (1024**3),
+                        "free_memory_gb": free_memory / (1024**3),
+                        "gpu_name": torch.cuda.get_device_name(0),
+                        "cuda_version": torch.version.cuda
+                    })
+                    
+                    # Check if model is loaded (imported check)
+                    try:
+                        from app.llama_utils import model_cache
+                        health_status["model_loaded"] = "llm" in model_cache and model_cache["llm"] is not None
+                        if health_status["model_loaded"]:
+                            logger.info(f"[RunPod] ✅ Model is loaded and ready")
+                        else:
+                            logger.info(f"[RunPod] ⚠️  Model not yet loaded (will load on first request)")
+                    except Exception as e:
+                        health_status["model_check_error"] = str(e)
+                        logger.warning(f"[RunPod] ⚠️  Could not check model status: {e}")
+                        
+                except Exception as e:
+                    health_status["gpu_error"] = str(e)
+                    logger.warning(f"[RunPod] ⚠️  GPU diagnostics failed: {e}")
+            
+            logger.info(f"[RunPod] ✅ Health check completed: {health_status['status']}")
+            return health_status
+        
         else:
             # Unknown endpoint
             logger.error(f"[RunPod] ❌ Unknown endpoint: {endpoint}")
@@ -605,10 +718,29 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
         }
 
 
-# Initialize FastAPI app (outside handler for proper lifecycle management)
-# RunPod will call handler() for each request
+# Start RunPod serverless worker
 if __name__ == "__main__":
-    # This section won't run in RunPod serverless (uses handler() directly)
-    # But useful for local testing
-    print("ZopilotGPU Handler initialized")
-    print("Waiting for RunPod requests...")
+    logger.info("=" * 70)
+    logger.info("🚀 Starting RunPod Serverless Worker for ZopilotGPU")
+    logger.info("=" * 70)
+    logger.info(f"✅ Handler function: async_handler")
+    logger.info(f"✅ Supported endpoints: /prompt, /health")
+    logger.info(f"✅ GPU Memory Threshold: {GPU_MEMORY_THRESHOLD_GB}GB")
+    logger.info(f"✅ Model Memory Estimate: {CLASSIFICATION_MEMORY_ESTIMATE_GB}GB")
+    logger.info(f"✅ Concurrency: {classification_semaphore._value} concurrent requests")
+    logger.info("=" * 70)
+    
+    if runpod is None:
+        logger.error("❌ RunPod SDK not available!")
+        logger.error("   Install with: pip install runpod")
+        sys.exit(1)
+    
+    try:
+        logger.info("🎯 Calling runpod.serverless.start()...")
+        runpod.serverless.start({"handler": async_handler})
+        logger.info("✅ RunPod serverless started successfully")
+    except Exception as e:
+        logger.error(f"❌ Failed to start RunPod serverless: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise

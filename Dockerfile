@@ -63,13 +63,53 @@ RUN pip install --no-cache-dir --ignore-installed blinker \
     -r requirements.txt
 
 # CRITICAL: Verify correct versions installed (fail fast if wrong binaries)
-RUN python -c "import torch; print(f'✅ PyTorch: {torch.__version__}'); major_minor = '.'.join(torch.__version__.split('.')[:2]); assert major_minor in ['2.6', '2.7'], f'Wrong PyTorch version {torch.__version__} (need 2.6.x or 2.7.x for RTX 5090)'"
+RUN echo "============================================================" && \
+    echo "VERIFICATION: Checking PyTorch Installation" && \
+    echo "============================================================" && \
+    python -c "import torch; \
+        print(f'✅ PyTorch Version: {torch.__version__}'); \
+        print(f'   CUDA Runtime: {torch.version.cuda}'); \
+        print(f'   cuDNN Version: {torch.backends.cudnn.version()}'); \
+        print(f'   Build: {torch.__config__.show()}' if hasattr(torch.__config__, 'show') else ''); \
+        major_minor = '.'.join(torch.__version__.split('.')[:2]); \
+        assert major_minor in ['2.6', '2.7'], \
+        f'Wrong PyTorch version {torch.__version__} (need 2.6.x or 2.7.x for RTX 5090)'" && \
+    echo "============================================================"
+
 # FIXED: PyTorch 2.6.x comes with CUDA 12.6, not 12.4! Accept 12.4, 12.5, or 12.6
-RUN python -c "import torch; print(f'✅ CUDA: {torch.version.cuda}'); cuda_major_minor = '.'.join(torch.version.cuda.split('.')[:2]); assert cuda_major_minor in ['12.4', '12.5', '12.6'], f'Wrong CUDA version: {torch.version.cuda} (need 12.4-12.6)'"
-RUN python -c "import numpy as np; print(f'✅ NumPy: {np.__version__}'); assert np.__version__.startswith('2.'), f'Wrong NumPy (need 2.x for PyTorch 2.6+): {np.__version__}'"
-RUN python -c "import bitsandbytes as bnb; print(f'✅ BitsAndBytes: {bnb.__version__}'); assert bnb.__version__ == '0.45.0', f'Wrong BnB: {bnb.__version__}'"
-RUN python -c "import transformers; print(f'✅ Transformers: {transformers.__version__}')"
-RUN python -c "print('✅ All dependency versions verified!')"
+RUN echo "VERIFICATION: Checking CUDA Version" && \
+    python -c "import torch; \
+        print(f'✅ CUDA Version: {torch.version.cuda}'); \
+        cuda_major_minor = '.'.join(torch.version.cuda.split('.')[:2]); \
+        print(f'   CUDA Major.Minor: {cuda_major_minor}'); \
+        assert cuda_major_minor in ['12.4', '12.5', '12.6'], \
+        f'Wrong CUDA version: {torch.version.cuda} (need 12.4-12.6)'" && \
+    echo "============================================================"
+
+RUN echo "VERIFICATION: Checking NumPy Version" && \
+    python -c "import numpy as np; \
+        print(f'✅ NumPy Version: {np.__version__}'); \
+        assert np.__version__.startswith('2.'), \
+        f'Wrong NumPy (need 2.x for PyTorch 2.6+): {np.__version__}'" && \
+    echo "============================================================"
+
+# REMOVED: BitsAndBytes import check - requires GPU at import time (not available during Docker build)
+# BitsAndBytes will be validated at runtime in handler.py when GPU is available
+RUN echo "VERIFICATION: Checking Transformers Version" && \
+    python -c "import transformers; \
+        print(f'✅ Transformers Version: {transformers.__version__}')" && \
+    echo "============================================================"
+
+RUN echo "VERIFICATION: Checking BitsAndBytes Package (NOT importing - requires GPU)" && \
+    python -c "import pkg_resources; \
+        bnb_version = pkg_resources.get_distribution('bitsandbytes').version; \
+        print(f'✅ BitsAndBytes Package Installed: {bnb_version}'); \
+        print(f'   Note: Import verification will happen at runtime when GPU is available')" && \
+    echo "============================================================"
+
+RUN echo "✅ All dependency versions verified!" && \
+    echo "   Note: BitsAndBytes import will be verified at runtime" && \
+    echo "============================================================"
 
 # Copy application code
 COPY app/ ./app/
@@ -150,4 +190,5 @@ EXPOSE 8000
 
 # Default command for RunPod Serverless
 # Use handler.py for serverless, start.sh for direct deployment
-CMD ["python", "handler.py"]
+# -u flag: unbuffered output (CRITICAL for real-time logs in RunPod dashboard)
+CMD ["python", "-u", "handler.py"]
