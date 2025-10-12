@@ -1,0 +1,23 @@
+# Constraints file to prevent pip from upgrading critical dependencies
+# Used with: pip install --constraint constraints.txt -r requirements.txt
+
+# CRITICAL: Lock PyTorch to 2.6.x or 2.7.x (prevent upgrade to 2.8.0+)
+# PyTorch 2.6+ supports RTX 5090 Blackwell (sm_120)
+# PyTorch 2.8.0 has compatibility issues with some dependencies
+torch>=2.6.0,<2.8.0
+torchvision>=0.21.0,<0.23.0
+
+# CRITICAL: NumPy 2.x required for PyTorch 2.6+
+numpy>=2.0.0,<3.0.0
+
+# CRITICAL: BitsAndBytes 0.45.0 for CUDA 12.4 support
+bitsandbytes==0.45.0
+
+# CRITICAL: accelerate 1.0+ for NumPy 2.x compatibility
+accelerate>=1.0.0,<2.0.0
+
+# Scipy 1.13+ for NumPy 2.x compatibility
+scipy>=1.13.0,<1.15.0
+
+# Transformers version lock
+transformers>=4.38.0,<4.50.0

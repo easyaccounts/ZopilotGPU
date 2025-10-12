@@ -38,8 +38,8 @@ RUN python -m pip install --upgrade pip
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+# Copy requirements and constraints files first for better caching
+COPY requirements.txt constraints.txt ./
 
 # Install build dependencies first (required for package compilation)
 RUN pip install --no-cache-dir packaging wheel setuptools
@@ -47,17 +47,19 @@ RUN pip install --no-cache-dir packaging wheel setuptools
 # CRITICAL: Install PyTorch 2.6.x with CUDA 12.4 for RTX 5090 (sm_120) support
 # PyTorch 2.6+ has native Blackwell architecture support (sm_120 compute capability)
 # PyTorch 2.5.1 only supports up to sm_90 (Hopper) - will crash on RTX 5090
-# PyTorch 2.6+ requires NumPy 2.x (installed via requirements.txt)
+# PyTorch 2.6+ requires NumPy 2.x (will be constrained by constraints.txt)
 # Using cu124 wheel for native CUDA 12.4 support
 # Pinned to 2.6.x to avoid 2.8.0+ which may have compatibility issues
 RUN pip install --no-cache-dir \
     "torch>=2.6.0,<2.8.0" "torchvision>=0.21.0,<0.23.0" \
     --index-url https://download.pytorch.org/whl/cu124
 
-# Install remaining Python dependencies from requirements.txt
-# NumPy 2.x will be installed (required by PyTorch 2.6+)
-# BitsAndBytes 0.45.0 has native CUDA 12.4 support - no BNB_CUDA_VERSION override needed!
+# Install remaining Python dependencies from requirements.txt with constraints
+# constraints.txt prevents pip from upgrading PyTorch, NumPy, and other critical packages
+# NumPy 2.x enforced by constraints (required by PyTorch 2.6+)
+# BitsAndBytes 0.45.0 locked to prevent version drift
 RUN pip install --no-cache-dir --ignore-installed blinker \
+    --constraint constraints.txt \
     -r requirements.txt
 
 # CRITICAL: Verify correct versions installed (fail fast if wrong binaries)
