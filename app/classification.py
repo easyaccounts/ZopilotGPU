@@ -41,6 +41,12 @@ def classify_stage1(prompt: str, context: Dict[str, Any], generation_config: Opt
     
     Returns:
         {
+            "accounting_relevance": {
+                "has_accounting_relevance": bool,
+                "relevance_reasoning": "...",
+                "document_classification": "financial_transaction|informational|administrative|non_accounting",
+                "rejection_reason": "If false, reason for rejection"
+            },
             "semantic_analysis": {
                 "document_type": "invoice|bill|receipt|...",
                 "document_direction": "incoming|outgoing",
@@ -388,6 +394,7 @@ def _validate_stage1_response(response: Dict[str, Any]) -> None:
     """
     Validate Stage 1 response has required structure.
     Fixes common issues like missing PRIMARY action.
+    Handles new accounting_relevance field for filtering non-accounting documents.
     
     Args:
         response: Parsed Stage 1 response dictionary
@@ -395,6 +402,30 @@ def _validate_stage1_response(response: Dict[str, Any]) -> None:
     Raises:
         ValueError: If validation fails
     """
+    # Check for accounting_relevance field (new enhancement)
+    if 'accounting_relevance' not in response:
+        logger.warning("[Stage 1] ⚠️  No 'accounting_relevance' field - assuming has accounting relevance (legacy response)")
+        response['accounting_relevance'] = {
+            'has_accounting_relevance': True,
+            'relevance_reasoning': 'Legacy response - assumed to have accounting relevance',
+            'document_classification': 'financial_transaction'
+        }
+    
+    # If document has no accounting relevance, allow empty suggested_actions
+    has_accounting_relevance = response['accounting_relevance'].get('has_accounting_relevance', True)
+    
+    if not has_accounting_relevance:
+        logger.info("[Stage 1] ℹ️  Document marked as non-accounting, empty actions allowed")
+        # Ensure suggested_actions is empty array for non-accounting documents
+        if 'suggested_actions' not in response or not isinstance(response['suggested_actions'], list):
+            response['suggested_actions'] = []
+        # semantic_analysis can be empty for non-accounting documents
+        if 'semantic_analysis' not in response:
+            response['semantic_analysis'] = {}
+        logger.info("[Stage 1] ✅ Non-accounting document validation passed")
+        return
+    
+    # For accounting documents, enforce strict validation
     # Check required top-level fields
     if 'semantic_analysis' not in response:
         logger.error("❌ Stage 1 response missing 'semantic_analysis'")
@@ -450,6 +481,13 @@ def _validate_stage1_response(response: Dict[str, Any]) -> None:
     for i, action in enumerate(response['suggested_actions']):
         if 'action' not in action:
             raise ValueError(f"Action #{i} missing 'action' field")
+        
+        # Validate action name format (should be camelCase, not snake_case)
+        action_name = action['action']
+        if '_' in action_name:
+            logger.warning(f"[Stage 1] ⚠️  Action '{action_name}' uses snake_case - backend will normalize to camelCase")
+            # Note: Backend has normalization logic, but warn about format inconsistency
+        
         if 'entity' not in action:
             raise ValueError(f"Action '{action['action']}' missing 'entity' field")
         if 'action_type' not in action:
