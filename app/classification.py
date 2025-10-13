@@ -113,8 +113,17 @@ def classify_stage1(prompt: str, context: Dict[str, Any], generation_config: Opt
         # Get model processor
         processor = get_llama_processor()
         
-        # Build Mixtral-compatible prompt with instruction tags
-        formatted_prompt = f"<s>[INST] {prompt}\n\nRespond with ONLY valid JSON. No markdown, no explanations. [/INST]"
+        # Build Mixtral-compatible prompt with instruction tags and STRONG JSON enforcement
+        formatted_prompt = f"""<s>[INST] {prompt}
+
+⚠️ CRITICAL INSTRUCTION ⚠️
+You MUST respond with PURE JSON ONLY.
+First character of your response MUST be: {{
+Last character of your response MUST be: }}
+DO NOT write any text like "Based on the document" or "Here is the analysis".
+START IMMEDIATELY with the opening brace {{.
+
+[/INST]{{"""
         
         # Tokenize input with CONFIGURABLE max_input_length
         logger.info("🔢 [Stage 1] Tokenizing prompt...")

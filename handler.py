@@ -148,7 +148,45 @@ except Exception as e:
     model_loaded = False
 
 # ============================================
-# 4. HANDLER FUNCTION
+# 4. CALLBACK HELPER
+# ============================================
+async def send_callback(job_id: str, callback_url: str, callback_api_key: str, status: str, result: Dict[str, Any] = None, error: str = None):
+    """
+    Send callback to backend when job completes
+    Replaces polling with push-based updates
+    """
+    try:
+        import aiohttp
+        
+        payload = {
+            'job_id': job_id,
+            'status': status,
+            'api_key': callback_api_key
+        }
+        
+        if result:
+            payload['result'] = result
+        if error:
+            payload['error'] = error
+        
+        logger.info(f"[Callback] Sending {status} callback for job {job_id} to {callback_url}")
+        
+        timeout = aiohttp.ClientTimeout(total=30)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.post(callback_url, json=payload) as response:
+                if response.status == 200:
+                    logger.info(f"[Callback] ✅ Callback successful for job {job_id}")
+                else:
+                    logger.error(f"[Callback] ❌ Callback failed for job {job_id}: HTTP {response.status}")
+                    resp_text = await response.text()
+                    logger.error(f"[Callback] Response: {resp_text[:500]}")
+    except Exception as e:
+        logger.error(f"[Callback] ❌ Failed to send callback for job {job_id}: {e}")
+        import traceback
+        logger.error(traceback.format_exc()[:1000])
+
+# ============================================
+# 5. HANDLER FUNCTION
 # ============================================
 class MockRequest:
     """Mock Request object for API key verification"""
@@ -178,8 +216,12 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
         endpoint = job_input.get('endpoint')
         data = job_input.get('data', {})
         api_key = job_input.get('api_key')
+        callback_url = job_input.get('callback_url')  # ✅ NEW: Get callback URL
+        callback_api_key = job_input.get('callback_api_key')  # ✅ NEW: Get callback auth
         
         logger.info(f"[RunPod] Request: {endpoint}")
+        if callback_url:
+            logger.info(f"[RunPod] Callback URL: {callback_url}")
         
         # Create mock request for API verification
         mock_request = MockRequest(api_key=api_key)
@@ -195,28 +237,50 @@ async def async_handler(job: Dict[str, Any]) -> Dict[str, Any]:
                 # Call prompt endpoint
                 result = await prompt_endpoint(mock_request, input_data)
                 
-                # Handle JSONResponse
+                # Convert result to dict
                 if hasattr(result, 'body'):
                     import json
-                    return json.loads(result.body.decode('utf-8'))
-                # Handle dict response
+                    result_dict = json.loads(result.body.decode('utf-8'))
                 elif isinstance(result, dict):
-                    return result
-                # Handle Pydantic model
+                    result_dict = result
                 elif hasattr(result, 'dict'):
-                    return result.dict()
+                    result_dict = result.dict()
                 else:
-                    return {"success": True, "output": str(result)}
+                    result_dict = {"success": True, "output": str(result)}
+                
+                # ✅ NEW: If callback URL provided, send callback
+                if callback_url:
+                    await send_callback(
+                        job_id=job.get('id'),
+                        callback_url=callback_url,
+                        callback_api_key=callback_api_key,
+                        status='COMPLETED',
+                        result=result_dict
+                    )
+                
+                return result_dict
                     
             except Exception as e:
                 logger.error(f"[RunPod] Prompt failed: {e}")
                 import traceback
-                return {
+                error_result = {
                     "success": False,
                     "error": str(e),
                     "error_type": type(e).__name__,
                     "traceback": traceback.format_exc()[:2000]
                 }
+                
+                # ✅ NEW: If callback URL provided, send error callback
+                if callback_url:
+                    await send_callback(
+                        job_id=job.get('id'),
+                        callback_url=callback_url,
+                        callback_api_key=callback_api_key,
+                        status='FAILED',
+                        error=str(e)
+                    )
+                
+                return error_result
         
         # Handle /health endpoint
         elif endpoint == '/health':
