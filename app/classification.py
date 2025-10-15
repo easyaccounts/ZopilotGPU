@@ -7,10 +7,19 @@ Stage 1: Semantic Analysis + Action Selection
 - Suggests prerequisites, primary action, and follow-ups
 - Returns: {semantic_analysis, suggested_actions, overall_confidence}
 
-Stage 2: Field Mapping
-- Maps extracted data to API-ready request body format
-- Generates entity lookups (Customer, Item, Account)
-- Returns: {api_request_body, lookups_required}
+Stage 2: Field Mapping to API-Ready Format
+- Maps extracted data directly to accounting software API request body format
+- No transformations needed - output is POST-ready for Zoho/QuickBooks
+- Generates entity lookups for ID resolution (Customer, Vendor, Item, Account)
+- Performs tax verification and currency detection
+- Returns: {api_request_body, lookups_required, validation}
+
+Pipeline Flow:
+1. Stage 1: Select action → 2. Stage 2: Build API request → 3. Stage 2.5: Lookup resolution → 4. Direct API POST
+
+Removed Stages (rely on API validation instead):
+- Stage 2.6: Business rule validation (doesn't scale to 145+ actions)
+- Stage 2.7: Currency conversion (creates reconciliation errors - let accounting software handle)
 """
 
 import json
@@ -239,9 +248,26 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
             "validation": {
                 "total_amount_matches": true,
                 "all_required_fields_present": true,
-                "warnings": []
+                "calculated_total": 1234.50,
+                "extracted_total": 1234.50,
+                "warnings": [
+                    "Optional field X not found in extracted data",
+                    "Date format converted from DD/MM/YYYY to YYYY-MM-DD"
+                ],
+                "tax_verification": {
+                    "tax_calculation_valid": true,
+                    "extracted_tax_amount": 123.45,
+                    "extracted_tax_rate": 10,
+                    "calculated_tax_base": 1234.50,
+                    "taxable_charges": ["freight", "service_fee"],
+                    "non_taxable_charges": [],
+                    "discrepancy": 0.00
+                }
             }
         }
+        
+    Note: Backend relies on API validation for final checks. This validation is informational only.
+    Removed stages: Business rule validation (2.6) and currency conversion (2.7) - let API handle.
     """
     action_name = context.get('action', 'unknown')
     logger.info(f"🎯 [Stage 2] Starting field mapping for action: {action_name}")
