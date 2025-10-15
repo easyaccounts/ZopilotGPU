@@ -377,6 +377,12 @@ def _parse_classification_response(response: str, stage: int) -> Dict[str, Any]:
         json_str = response.replace('```json\n', '').replace('```json', '')
         json_str = json_str.replace('```\n', '').replace('```', '').strip()
         
+        # FIX: LLM sometimes omits opening brace despite [/INST]{ prompt seed
+        # If response starts with a quote (likely a JSON key), prepend {
+        if json_str and json_str[0] == '"':
+            logger.warning(f"⚠️  Stage {stage} response missing opening brace, prepending {{")
+            json_str = '{' + json_str
+        
         # Find JSON boundaries (first { to last })
         start = json_str.find('{')
         end = json_str.rfind('}') + 1
