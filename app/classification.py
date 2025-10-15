@@ -246,15 +246,15 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
     action_name = context.get('action', 'unknown')
     logger.info(f"🎯 [Stage 2] Starting field mapping for action: {action_name}")
     
-    # Extract generation parameters with defaults (NOTE: Backend sends 3000 tokens, 0.05 temp for Stage 2)
+    # Extract generation parameters with defaults (FIX: Increase temp from 0.05 to 0.1 for better JSON adherence)
     if generation_config is None:
         generation_config = {}
     
-    max_new_tokens = generation_config.get('max_new_tokens', 3000)  # Backend sends 3000 (was hardcoded to 2000!)
-    temperature = generation_config.get('temperature', 0.05)        # Backend sends 0.05 (was hardcoded to 0.1!)
+    max_new_tokens = generation_config.get('max_new_tokens', 3000)  # Backend sends 3000
+    temperature = generation_config.get('temperature', 0.1)         # FIX: Default 0.1 instead of 0.05 (less deterministic)
     top_p = generation_config.get('top_p', 0.95)
     top_k = generation_config.get('top_k', 50)
-    repetition_penalty = generation_config.get('repetition_penalty', 1.1)
+    repetition_penalty = generation_config.get('repetition_penalty', 1.15)  # FIX: Increased from 1.1 to prevent repetition
     max_input_length = generation_config.get('max_input_length', 29491)
     
     # Validate token limits
@@ -271,8 +271,9 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
         # Get model processor
         processor = get_llama_processor()
         
-        # Build Mixtral-compatible prompt
-        formatted_prompt = f"<s>[INST] {prompt}\n\nRespond with ONLY valid JSON. No markdown, no explanations. [/INST]"
+        # FIX: Build Mixtral-compatible prompt with JSON prefix forcing
+        # Force model to start generation with { to prevent preamble text
+        formatted_prompt = f"<s>[INST] {prompt}\n\n⚠️ CRITICAL: Your response must start with the opening brace character {{ and contain ONLY valid JSON. No text before the JSON. No explanations after. [/INST]\n{{"
         
         # Tokenize with CONFIGURABLE max_input_length
         logger.info("🔢 [Stage 2] Tokenizing prompt...")
@@ -303,6 +304,10 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
         tokens_per_sec = output_tokens / gen_time if gen_time > 0 else 0
         logger.info(f"✅ [Stage 2] Generated {output_tokens} tokens in {gen_time:.1f}s ({tokens_per_sec:.1f} tok/s)")
         
+        # FIX: Detect suspiciously low token count (hallucination indicator)
+        if output_tokens < 100:
+            logger.warning(f"⚠️  [Stage 2] Suspiciously low token count ({output_tokens} tokens) - possible hallucination or early stopping")
+        
         # Decode
         logger.info("📖 [Stage 2] Decoding response...")
         response_text = processor.tokenizer.decode(
@@ -310,6 +315,9 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
             skip_special_tokens=True
         )
         logger.info(f"   Response length: {len(response_text)} chars")
+        
+        # FIX: Prepend the { we forced in the prompt (model continues from {)
+        response_text = "{" + response_text
         
         # CRITICAL: Clear KV cache
         if hasattr(processor.model, 'past_key_values'):
@@ -325,7 +333,48 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
         
         # Parse JSON
         logger.info("🔍 [Stage 2] Parsing JSON response...")
-        result = _parse_classification_response(response_text, stage=2)
+        try:
+            result = _parse_classification_response(response_text, stage=2)
+        except ValueError as parse_error:
+            # FIX: If JSON parsing fails due to preamble/hallucination, retry once with stronger prompt
+            if output_tokens < 100 or "No JSON object found" in str(parse_error):
+                logger.warning(f"⚠️  [Stage 2] First attempt failed (low tokens or no JSON), retrying with stronger enforcement...")
+                
+                # Clear cache before retry
+                if hasattr(processor.model, 'past_key_values'):
+                    processor.model.past_key_values = None
+                torch.cuda.empty_cache()
+                
+                # Retry with even stronger JSON enforcement and higher temperature
+                retry_prompt = f"<s>[INST] {prompt}\n\n🚨 CRITICAL REQUIREMENT 🚨\nYour response MUST be valid JSON only. Start immediately with {{ character. No preamble text allowed.\n\nRespond now with JSON: [/INST]\n{{"
+                
+                retry_inputs = processor.tokenizer(retry_prompt, return_tensors="pt", truncation=True, max_length=max_input_length)
+                retry_inputs = {k: v.to(processor.model.device) for k, v in retry_inputs.items()}
+                
+                logger.info("🔄 [Stage 2] Retry generation with stronger JSON enforcement...")
+                with torch.no_grad():
+                    retry_outputs = processor.model.generate(
+                        **retry_inputs,
+                        max_new_tokens=max_new_tokens,
+                        temperature=0.15,  # Slightly higher temp for retry
+                        do_sample=True,
+                        top_p=0.9,
+                        top_k=40,
+                        repetition_penalty=1.2,
+                        pad_token_id=processor.tokenizer.eos_token_id,
+                        eos_token_id=processor.tokenizer.eos_token_id
+                    )
+                
+                retry_response = "{" + processor.tokenizer.decode(
+                    retry_outputs[0][len(retry_inputs["input_ids"][0]):], 
+                    skip_special_tokens=True
+                )
+                
+                logger.info(f"🔄 [Stage 2] Retry generated {len(retry_outputs[0]) - len(retry_inputs['input_ids'][0])} tokens")
+                result = _parse_classification_response(retry_response, stage=2)
+                logger.info("✅ [Stage 2] Retry successful!")
+            else:
+                raise  # Re-raise if not a recoverable error
         
         # Validate Stage 2 structure
         _validate_stage2_response(result)
@@ -344,6 +393,7 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
         
         # CRITICAL: Clean up KV cache even on error
         try:
+            processor = get_llama_processor()
             if hasattr(processor.model, 'past_key_values'):
                 processor.model.past_key_values = None
             torch.cuda.empty_cache()
@@ -360,7 +410,7 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
 
 def _parse_classification_response(response: str, stage: int) -> Dict[str, Any]:
     """
-    Parse JSON from model response, handling markdown code blocks.
+    Parse JSON from model response, handling markdown code blocks and preamble text.
     
     Args:
         response: Raw model output text
@@ -376,6 +426,29 @@ def _parse_classification_response(response: str, stage: int) -> Dict[str, Any]:
         # Remove markdown code blocks (```json ... ```)
         json_str = response.replace('```json\n', '').replace('```json', '')
         json_str = json_str.replace('```\n', '').replace('```', '').strip()
+        
+        # FIX: Detect and remove preamble text (e.g., "Based on the provided document...")
+        # Look for common preamble patterns that appear before JSON
+        preamble_patterns = [
+            "Based on the provided",
+            "Here's the",
+            "Here is the",
+            "The following is",
+            "Below is the",
+            "I'll provide",
+            "Let me provide"
+        ]
+        
+        for pattern in preamble_patterns:
+            if json_str.lower().startswith(pattern.lower()):
+                logger.warning(f"⚠️  Stage {stage} response has preamble text, removing...")
+                logger.warning(f"   Preamble: {json_str[:100]}...")
+                # Find where JSON actually starts
+                json_start = json_str.find('{')
+                if json_start > 0:
+                    json_str = json_str[json_start:]
+                    logger.info(f"   Extracted JSON starting at position {json_start}")
+                break
         
         # FIX: LLM sometimes omits opening brace despite [/INST]{ prompt seed
         # If response starts with a quote (likely a JSON key), prepend {
@@ -393,9 +466,16 @@ def _parse_classification_response(response: str, stage: int) -> Dict[str, Any]:
             raise ValueError(f"No JSON object found in Stage {stage} response")
         
         json_str = json_str[start:end]
+        
+        # FIX: Validate JSON is not suspiciously short
+        if len(json_str) < 50 and stage == 2:
+            logger.error(f"❌ Stage 2 JSON too short ({len(json_str)} chars) - likely incomplete response")
+            logger.error(f"   JSON: {json_str}")
+            raise ValueError(f"Stage 2 JSON response too short ({len(json_str)} chars) - incomplete generation")
+        
         parsed = json.loads(json_str)
         
-        logger.info(f"✅ Successfully parsed Stage {stage} JSON")
+        logger.info(f"✅ Successfully parsed Stage {stage} JSON ({len(json_str)} chars)")
         return parsed
         
     except json.JSONDecodeError as e:
