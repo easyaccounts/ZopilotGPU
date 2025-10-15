@@ -577,11 +577,9 @@ def _validate_stage1_response(response: Dict[str, Any]) -> None:
         if 'action' not in action:
             raise ValueError(f"Action #{i} missing 'action' field")
         
-        # Validate action name format (should be camelCase, not snake_case)
+        # Action names should be in snake_case format (create_invoice, create_bill, etc.)
+        # No validation needed - backend validates against software-specific action registries
         action_name = action['action']
-        if '_' in action_name:
-            logger.warning(f"[Stage 1] ⚠️  Action '{action_name}' uses snake_case - backend will normalize to camelCase")
-            # Note: Backend has normalization logic, but warn about format inconsistency
         
         if 'entity' not in action:
             raise ValueError(f"Action '{action['action']}' missing 'entity' field")
