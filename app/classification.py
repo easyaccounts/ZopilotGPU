@@ -8,9 +8,9 @@ Stage 1: Semantic Analysis + Action Selection
 - Returns: {semantic_analysis, suggested_actions, overall_confidence}
 
 Stage 2: Field Mapping
-- Maps extracted data to action-specific fields
+- Maps extracted data to API-ready request body format
 - Generates entity lookups (Customer, Item, Account)
-- Returns: {field_mappings, lookups_required, validation}
+- Returns: {api_request_body, lookups_required}
 """
 
 import json
@@ -222,7 +222,7 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
     
     Returns:
         {
-            "field_mappings": {
+            "api_request_body": {
                 "customer_id": "{{lookup:Customer:ABC Corp}}",
                 "invoice_number": "INV-12345",
                 "date": "2024-10-12",
@@ -380,10 +380,10 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
         _validate_stage2_response(result)
         
         lookups_count = len(result.get('lookups_required', []))
-        fields_count = len(result.get('field_mappings', {}))
+        fields_count = len(result.get('api_request_body', {}))
         
         logger.info(f"🎉 [Stage 2] Field mapping complete for {action_name}!")
-        logger.info(f"   Fields mapped: {fields_count}")
+        logger.info(f"   API fields mapped: {fields_count}")
         logger.info(f"   Lookups required: {lookups_count}")
         
         return result
@@ -607,13 +607,13 @@ def _validate_stage2_response(response: Dict[str, Any]) -> None:
         ValueError: If validation fails
     """
     # Check required field
-    if 'field_mappings' not in response:
-        logger.error("❌ Stage 2 response missing 'field_mappings'")
-        raise ValueError("Stage 2 response missing 'field_mappings'")
+    if 'api_request_body' not in response:
+        logger.error("❌ Stage 2 response missing 'api_request_body'")
+        raise ValueError("Stage 2 response missing 'api_request_body'")
     
-    if not isinstance(response['field_mappings'], dict):
-        logger.error("❌ Stage 2 'field_mappings' must be an object")
-        raise ValueError("Stage 2 'field_mappings' must be an object")
+    if not isinstance(response['api_request_body'], dict):
+        logger.error("❌ Stage 2 'api_request_body' must be an object")
+        raise ValueError("Stage 2 'api_request_body' must be an object")
     
     # Optional but recommended fields - add defaults if missing
     if 'lookups_required' not in response:
