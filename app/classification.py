@@ -449,6 +449,96 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
 # Helper Functions
 # ============================================================================
 
+# ============================================================================
+# JSON Parsing & Validation
+# ============================================================================
+
+def _repair_malformed_json(json_str: str, stage: int) -> str:
+    """
+    Repair common JSON malformations from LLM output.
+    
+    CRITICAL FIX: Models often generate multiple JSON objects separated by commas
+    instead of one properly nested object. This function fixes that.
+    
+    Common issues fixed:
+    1. Multiple JSON objects: {"obj1": {...}}, {"obj2": {...}} → {"obj1": {...}, "obj2": {...}}
+    2. Missing root braces: "field": value, ... → {"field": value, ...}
+    3. Trailing commas: {..., } → {...}
+    4. Extra closing braces: {...}}, → {...}
+    5. Missing commas between fields
+    
+    Args:
+        json_str: Raw JSON string from model
+        stage: Classification stage (1 or 2) for logging
+    
+    Returns:
+        Repaired JSON string
+    """
+    import re
+    
+    original_len = len(json_str)
+    logger.info(f"🔧 [JSON Repair] Attempting to repair Stage {stage} JSON ({original_len} chars)...")
+    
+    # Issue #1: Multiple JSON objects separated by "},\n  \""
+    # Pattern: "},\n  "field": ... → ",\n  "field": ...
+    # This is THE CRITICAL FIX for the production bug
+    if '},\n' in json_str or '},\r\n' in json_str:
+        logger.warning(f"   🔧 Detected multiple JSON objects separated by closing braces")
+        logger.warning(f"   Original snippet: {json_str[:300]}...")
+        
+        # Remove closing brace before newline + opening quote pattern
+        # "},\n  "field" → ",\n  "field"
+        json_str = re.sub(r'\},\s*\n\s*"', ',\n  "', json_str)
+        
+        # Also handle: },\n  { → ,\n  { (less common)
+        json_str = re.sub(r'\},\s*\n\s*\{', ',\n  {', json_str)
+        
+        logger.info(f"   ✅ Removed extra closing braces between objects")
+        logger.info(f"   Repaired snippet: {json_str[:300]}...")
+    
+    # Issue #2: Missing opening brace at start
+    if not json_str.lstrip().startswith('{'):
+        logger.warning(f"   🔧 JSON doesn't start with opening brace, adding...")
+        json_str = '{' + json_str
+    
+    # Issue #3: Missing closing brace at end
+    if not json_str.rstrip().endswith('}'):
+        logger.warning(f"   🔧 JSON doesn't end with closing brace, adding...")
+        json_str = json_str + '}'
+    
+    # Issue #4: Trailing commas before closing braces
+    # {..."field": value,} → {..."field": value}
+    json_str = re.sub(r',(\s*[}\]])', r'\1', json_str)
+    
+    # Issue #5: Multiple consecutive commas
+    json_str = re.sub(r',\s*,', ',', json_str)
+    
+    # Issue #6: Extra closing braces at end
+    # {...}}} → {...}
+    while json_str.count('}') > json_str.count('{'):
+        last_brace = json_str.rfind('}')
+        if last_brace > 0:
+            json_str = json_str[:last_brace]
+            logger.warning(f"   🔧 Removed extra closing brace")
+    
+    # Issue #7: Extra opening braces at start
+    while json_str.count('{') > json_str.count('}'):
+        first_brace = json_str.find('{', 1)  # Find second opening brace
+        if first_brace > 0 and json_str[0] == '{':
+            json_str = json_str[1:]  # Remove first opening brace
+            logger.warning(f"   🔧 Removed extra opening brace")
+        else:
+            break
+    
+    repaired_len = len(json_str)
+    if repaired_len != original_len:
+        logger.info(f"   ✅ Repaired JSON ({original_len} → {repaired_len} chars)")
+    else:
+        logger.info(f"   ℹ️  No repairs needed")
+    
+    return json_str
+
+
 def _parse_classification_response(response: str, stage: int) -> Dict[str, Any]:
     """
     Parse JSON from model response, handling markdown code blocks and preamble text.
@@ -519,15 +609,37 @@ def _parse_classification_response(response: str, stage: int) -> Dict[str, Any]:
             logger.error(f"   JSON: {json_str}")
             raise ValueError(f"Stage 2 JSON response too short ({len(json_str)} chars) - incomplete generation")
         
+        # CRITICAL: Attempt JSON repair BEFORE parsing
+        json_str = _repair_malformed_json(json_str, stage)
+        
+        # Try to parse the repaired JSON
         parsed = json.loads(json_str)
         
         logger.info(f"✅ Successfully parsed Stage {stage} JSON ({len(json_str)} chars)")
         return parsed
         
     except json.JSONDecodeError as e:
-        logger.error(f"❌ Failed to parse Stage {stage} JSON: {str(e)}")
+        logger.error(f"❌ Failed to parse Stage {stage} JSON even after repair: {str(e)}")
         logger.error(f"   JSON string: {json_str[:500] if 'json_str' in locals() else 'N/A'}...")
         logger.error(f"   Raw response: {response[:500]}...")
+        
+        # Last resort: Try to extract valid JSON using regex
+        try:
+            logger.warning(f"🔧 Attempting last-resort JSON extraction...")
+            import re
+            # Try to find the largest valid JSON object
+            json_matches = re.findall(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL)
+            if json_matches:
+                largest_json = max(json_matches, key=len)
+                logger.warning(f"   Found potential JSON ({len(largest_json)} chars)")
+                # Try to repair and parse the extracted JSON
+                largest_json = _repair_malformed_json(largest_json, stage)
+                parsed = json.loads(largest_json)
+                logger.info(f"✅ Successfully extracted JSON using regex fallback")
+                return parsed
+        except Exception as fallback_error:
+            logger.error(f"   ❌ Regex fallback also failed: {str(fallback_error)}")
+        
         raise ValueError(f"Invalid JSON in Stage {stage} response: {str(e)}")
 
 
