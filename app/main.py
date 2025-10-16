@@ -314,10 +314,16 @@ async def prompt_endpoint(request: Request, data: PromptInput):
             output = await asyncio.get_event_loop().run_in_executor(
                 None, classify_stage1, data.prompt, data.context, generation_config
             )
-        elif stage == 'field_mapping':
-            # Stage 2: Field Mapping
-            action = data.context.get('action', 'unknown') if data.context else 'unknown'
-            logger.info(f"[PROMPT] �️  Stage 2: Field Mapping for {action}")
+        elif stage == 'field_mapping' or stage == 'field_mapping_batch':
+            # Stage 2: Field Mapping (single action or batch)
+            if stage == 'field_mapping_batch':
+                action_count = data.context.get('action_count', 'unknown') if data.context else 'unknown'
+                actions = data.context.get('actions', []) if data.context else []
+                logger.info(f"[PROMPT] 🗺️  Stage 2: Batch Field Mapping for {action_count} actions: {actions}")
+            else:
+                action = data.context.get('action', 'unknown') if data.context else 'unknown'
+                logger.info(f"[PROMPT] 🗺️  Stage 2: Field Mapping for {action}")
+            
             from app.classification import classify_stage2
             output = await asyncio.get_event_loop().run_in_executor(
                 None, classify_stage2, data.prompt, data.context, generation_config

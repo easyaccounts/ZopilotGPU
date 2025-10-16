@@ -218,18 +218,20 @@ START IMMEDIATELY with the opening brace {{.
 
 def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
-    Stage 2: Field Mapping
+    Stage 2: Field Mapping (Single Action or Batch)
     
     Args:
         prompt: Field mapping prompt with action spec, semantic analysis, extracted data, COA
-        context: {"stage": "field_mapping", "action": "createInvoice", "entity": "Invoice"}
+        context: 
+            Single: {"stage": "field_mapping", "action": "createInvoice", "entity": "Invoice"}
+            Batch:  {"stage": "field_mapping_batch", "action_count": 2, "actions": ["createContact", "createBill"]}
         generation_config: Generation parameters from backend
-            - max_new_tokens: Maximum output tokens (default 3000, backend sends 3000)
+            - max_new_tokens: Maximum output tokens (default 4000 for batch, 3000 for single)
             - temperature: Sampling temperature (default 0.05, backend sends 0.05)
             - top_p, top_k, repetition_penalty
             - max_input_length: Input truncation limit (default 29491)
     
-    Returns:
+    Returns (Single Action):
         {
             "api_request_body": {
                 "customer_id": "{{lookup:Customer:ABC Corp}}",
@@ -246,31 +248,44 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
                 }
             ],
             "validation": {
-                "total_amount_matches": true,
-                "all_required_fields_present": true,
-                "calculated_total": 1234.50,
-                "extracted_total": 1234.50,
-                "warnings": [
-                    "Optional field X not found in extracted data",
-                    "Date format converted from DD/MM/YYYY to YYYY-MM-DD"
-                ],
-                "tax_verification": {
-                    "tax_calculation_valid": true,
-                    "extracted_tax_amount": 123.45,
-                    "extracted_tax_rate": 10,
-                    "calculated_tax_base": 1234.50,
-                    "taxable_charges": ["freight", "service_fee"],
-                    "non_taxable_charges": [],
-                    "discrepancy": 0.00
-                }
+                "warnings": [],
+                "missing_fields": []
             }
         }
+    
+    Returns (Batch Actions - NEW):
+        {
+            "actions": [
+                {
+                    "action_index": 0,
+                    "action_name": "create_contact",
+                    "api_request_body": {...},
+                    "lookups_required": [...],
+                    "validation": {...}
+                },
+                {
+                    "action_index": 1,
+                    "action_name": "create_bill",
+                    "api_request_body": {...},
+                    "lookups_required": [...],
+                    "validation": {...}
+                }
+            ]
+        }
         
-    Note: Backend relies on API validation for final checks. This validation is informational only.
-    Removed stages: Business rule validation (2.6) and currency conversion (2.7) - let API handle.
+    Note: 
+    - GPU code is agnostic to single vs batch - both use same generation logic
+    - Backend prompt structure determines output format (single or batch)
+    - Batch processing allows consistent mapping across multiple actions from same document
+    - Backend removed stages: Business rule validation (2.6) and currency conversion (2.7)
     """
-    action_name = context.get('action', 'unknown')
-    logger.info(f"🎯 [Stage 2] Starting field mapping for action: {action_name}")
+    action_name = context.get('action', context.get('actions', ['unknown'])[0] if context.get('actions') else 'unknown')
+    action_count = context.get('action_count', 1)
+    
+    if action_count > 1:
+        logger.info(f"🎯 [Stage 2] Starting BATCH field mapping for {action_count} actions")
+    else:
+        logger.info(f"🎯 [Stage 2] Starting field mapping for action: {action_name}")
     
     # Extract generation parameters with defaults (FIX: Increase temp from 0.05 to 0.1 for better JSON adherence)
     if generation_config is None:
