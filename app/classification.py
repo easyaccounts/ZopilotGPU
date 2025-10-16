@@ -299,7 +299,7 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
         
         # FIX: Build Mixtral-compatible prompt with JSON prefix forcing
         # Force model to start generation with { to prevent preamble text
-        formatted_prompt = f"<s>[INST] {prompt}\n\n⚠️ CRITICAL: Your response must start with the opening brace character {{ and contain ONLY valid JSON. No text before the JSON. No explanations after. [/INST]\n{{"
+        formatted_prompt = f"<s>[INST] {prompt}\n\n🚨 CRITICAL INSTRUCTIONS 🚨\n1. Your response MUST be ONLY valid JSON\n2. Start IMMEDIATELY with {{ character (opening brace)\n3. NO preamble text allowed (no 'Based on...', 'Here is...', etc.)\n4. NO explanations before or after the JSON\n5. NO markdown code blocks\n\nRespond with JSON now: [/INST]\n{{"
         
         # Tokenize with CONFIGURABLE max_input_length
         logger.info("🔢 [Stage 2] Tokenizing prompt...")
@@ -341,9 +341,7 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
             skip_special_tokens=True
         )
         logger.info(f"   Response length: {len(response_text)} chars")
-        
-        # FIX: Prepend the { we forced in the prompt (model continues from {)
-        response_text = "{" + response_text
+        logger.info(f"   Raw decoded response: {response_text[:200]}...")
         
         # CRITICAL: Clear KV cache
         if hasattr(processor.model, 'past_key_values'):
@@ -371,8 +369,8 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
                     processor.model.past_key_values = None
                 torch.cuda.empty_cache()
                 
-                # Retry with even stronger JSON enforcement and higher temperature
-                retry_prompt = f"<s>[INST] {prompt}\n\n🚨 CRITICAL REQUIREMENT 🚨\nYour response MUST be valid JSON only. Start immediately with {{ character. No preamble text allowed.\n\nRespond now with JSON: [/INST]\n{{"
+                # Retry with even stronger JSON enforcement and zero temperature
+                retry_prompt = f"<s>[INST] {prompt}\n\n🚨🚨🚨 ABSOLUTE REQUIREMENT 🚨🚨🚨\n\nYou MUST respond with PURE JSON ONLY.\n\nFORBIDDEN:\n- Any text before the opening {{ brace\n- Any text after the closing }} brace  \n- Phrases like 'Based on', 'Here is', 'Sure', etc.\n- Markdown formatting\n- Code blocks\n- Explanations\n\nREQUIRED:\n- Start with {{ character\n- End with }} character\n- Valid JSON syntax only\n\nGenerate JSON now: [/INST]\n{{"
                 
                 retry_inputs = processor.tokenizer(retry_prompt, return_tensors="pt", truncation=True, max_length=max_input_length)
                 retry_inputs = {k: v.to(processor.model.device) for k, v in retry_inputs.items()}
@@ -382,8 +380,8 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
                     retry_outputs = processor.model.generate(
                         **retry_inputs,
                         max_new_tokens=max_new_tokens,
-                        temperature=0.15,  # Slightly higher temp for retry
-                        do_sample=True,
+                        temperature=0.0,  # Zero temperature for maximum determinism - no sampling
+                        do_sample=False,  # Greedy decoding only
                         top_p=0.9,
                         top_k=40,
                         repetition_penalty=1.2,
@@ -391,10 +389,12 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
                         eos_token_id=processor.tokenizer.eos_token_id
                     )
                 
-                retry_response = "{" + processor.tokenizer.decode(
+                retry_response = processor.tokenizer.decode(
                     retry_outputs[0][len(retry_inputs["input_ids"][0]):], 
                     skip_special_tokens=True
                 )
+                logger.info(f"   Retry response length: {len(retry_response)} chars")
+                logger.info(f"   Retry raw decoded response: {retry_response[:200]}...")
                 
                 logger.info(f"🔄 [Stage 2] Retry generated {len(retry_outputs[0]) - len(retry_inputs['input_ids'][0])} tokens")
                 result = _parse_classification_response(retry_response, stage=2)
@@ -455,32 +455,37 @@ def _parse_classification_response(response: str, stage: int) -> Dict[str, Any]:
         
         # FIX: Detect and remove preamble text (e.g., "Based on the provided document...")
         # Look for common preamble patterns that appear before JSON
+        # CRITICAL: Check ANYWHERE in first 200 chars, not just at start (preamble might come after forced {)
         preamble_patterns = [
             "Based on the provided",
+            "Based on the document",
+            "Based on this",
             "Here's the",
             "Here is the",
             "The following is",
             "Below is the",
             "I'll provide",
-            "Let me provide"
+            "Let me provide",
+            "Sure, here",
+            "Certainly",
+            "Looking at the document",
+            "From the document"
         ]
         
+        # Check if any preamble pattern exists in the first 200 characters
+        preamble_found = False
         for pattern in preamble_patterns:
-            if json_str.lower().startswith(pattern.lower()):
+            if pattern.lower() in json_str[:200].lower():
                 logger.warning(f"⚠️  Stage {stage} response has preamble text, removing...")
-                logger.warning(f"   Preamble: {json_str[:100]}...")
-                # Find where JSON actually starts
+                logger.warning(f"   Preamble pattern detected: '{pattern}'")
+                logger.warning(f"   First 200 chars: {json_str[:200]}...")
+                # Find where JSON actually starts (first '{' in the string)
                 json_start = json_str.find('{')
                 if json_start > 0:
                     json_str = json_str[json_start:]
-                    logger.info(f"   Extracted JSON starting at position {json_start}")
+                    logger.info(f"   ✅ Extracted JSON starting at position {json_start}")
+                preamble_found = True
                 break
-        
-        # FIX: LLM sometimes omits opening brace despite [/INST]{ prompt seed
-        # If response starts with a quote (likely a JSON key), prepend {
-        if json_str and json_str[0] == '"':
-            logger.warning(f"⚠️  Stage {stage} response missing opening brace, prepending {{")
-            json_str = '{' + json_str
         
         # Find JSON boundaries (first { to last })
         start = json_str.find('{')
