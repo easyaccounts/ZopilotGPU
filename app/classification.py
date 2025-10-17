@@ -165,11 +165,15 @@ START IMMEDIATELY with the opening brace {{.
         
         # Decode response
         logger.info("📖 [Stage 1] Decoding response...")
-        response_text = processor.tokenizer.decode(
+        # FIX: Prompt ends with [/INST]{ to force JSON start, but decoder excludes prompt tokens
+        # So we need to prepend the { that we forced in the prompt
+        decoded_output = processor.tokenizer.decode(
             outputs[0][input_tokens:], 
             skip_special_tokens=True
         )
-        logger.info(f"   Response length: {len(response_text)} chars")
+        # Prepend { since prompt forced it but it's not in the decoded generated tokens
+        response_text = "{" + decoded_output
+        logger.info(f"   Response length: {len(response_text)} chars (prepended opening brace)")
         
         # CRITICAL: Clear KV cache to prevent memory leak
         if hasattr(processor.model, 'past_key_values'):
@@ -351,11 +355,15 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
         
         # Decode
         logger.info("📖 [Stage 2] Decoding response...")
-        response_text = processor.tokenizer.decode(
+        # FIX: Prompt ends with [/INST]{ to force JSON start, but decoder excludes prompt tokens
+        # So we need to prepend the { that we forced in the prompt
+        decoded_output = processor.tokenizer.decode(
             outputs[0][input_tokens:], 
             skip_special_tokens=True
         )
-        logger.info(f"   Response length: {len(response_text)} chars")
+        # Prepend { since prompt forced it but it's not in the decoded generated tokens
+        response_text = "{" + decoded_output
+        logger.info(f"   Response length: {len(response_text)} chars (prepended opening brace)")
         logger.info(f"   Raw decoded response: {response_text[:200]}...")
         
         # CRITICAL: Clear KV cache
@@ -477,18 +485,25 @@ def _repair_malformed_json(json_str: str, stage: int) -> str:
     import re
     
     original_len = len(json_str)
+    original_str = json_str  # Keep original for debugging
     logger.info(f"🔧 [JSON Repair] Attempting to repair Stage {stage} JSON ({original_len} chars)...")
+    
+    # Strip leading/trailing whitespace first
+    json_str = json_str.strip()
     
     # Issue #1: Multiple JSON objects separated by "},\n  \""
     # Pattern: "},\n  "field": ... → ",\n  "field": ...
     # This is THE CRITICAL FIX for the production bug
-    if '},\n' in json_str or '},\r\n' in json_str:
+    if '},\n' in json_str or '},\r\n' in json_str or '},  "' in json_str:
         logger.warning(f"   🔧 Detected multiple JSON objects separated by closing braces")
         logger.warning(f"   Original snippet: {json_str[:300]}...")
         
         # Remove closing brace before newline + opening quote pattern
         # "},\n  "field" → ",\n  "field"
         json_str = re.sub(r'\},\s*\n\s*"', ',\n  "', json_str)
+        
+        # Also handle same-line pattern: },  " → ,  "
+        json_str = re.sub(r'\},\s*"', ',  "', json_str)
         
         # Also handle: },\n  { → ,\n  { (less common)
         json_str = re.sub(r'\},\s*\n\s*\{', ',\n  {', json_str)
@@ -497,14 +512,15 @@ def _repair_malformed_json(json_str: str, stage: int) -> str:
         logger.info(f"   Repaired snippet: {json_str[:300]}...")
     
     # Issue #2: Missing opening brace at start
-    if not json_str.lstrip().startswith('{'):
+    needs_outer_wrapper = not json_str.startswith('{')
+    if needs_outer_wrapper:
         logger.warning(f"   🔧 JSON doesn't start with opening brace, adding...")
-        json_str = '{' + json_str
+        json_str = '{\n' + json_str
     
     # Issue #3: Missing closing brace at end
-    if not json_str.rstrip().endswith('}'):
+    if not json_str.endswith('}'):
         logger.warning(f"   🔧 JSON doesn't end with closing brace, adding...")
-        json_str = json_str + '}'
+        json_str = json_str + '\n}'
     
     # Issue #4: Trailing commas before closing braces
     # {..."field": value,} → {..."field": value}
@@ -513,22 +529,28 @@ def _repair_malformed_json(json_str: str, stage: int) -> str:
     # Issue #5: Multiple consecutive commas
     json_str = re.sub(r',\s*,', ',', json_str)
     
+    # Count braces for balance check
+    open_braces = json_str.count('{')
+    close_braces = json_str.count('}')
+    
     # Issue #6: Extra closing braces at end
-    # {...}}} → {...}
-    while json_str.count('}') > json_str.count('{'):
-        last_brace = json_str.rfind('}')
-        if last_brace > 0:
-            json_str = json_str[:last_brace]
-            logger.warning(f"   🔧 Removed extra closing brace")
+    if close_braces > open_braces:
+        logger.warning(f"   🔧 Found {close_braces} closing braces but only {open_braces} opening braces")
+        while json_str.count('}') > json_str.count('{'):
+            last_brace = json_str.rfind('}')
+            if last_brace > 0:
+                json_str = json_str[:last_brace] + json_str[last_brace+1:]
+                logger.warning(f"   🔧 Removed extra closing brace at position {last_brace}")
     
     # Issue #7: Extra opening braces at start
-    while json_str.count('{') > json_str.count('}'):
-        first_brace = json_str.find('{', 1)  # Find second opening brace
-        if first_brace > 0 and json_str[0] == '{':
-            json_str = json_str[1:]  # Remove first opening brace
-            logger.warning(f"   🔧 Removed extra opening brace")
-        else:
-            break
+    # IMPORTANT: Only remove if we DIDN'T add a wrapper in Issue #2
+    # This prevents the bug where we add { then immediately remove it
+    if not needs_outer_wrapper and json_str.count('{') > json_str.count('}'):
+        logger.warning(f"   🔧 Found {json_str.count('{')} opening braces but only {json_str.count('}')} closing braces")
+        # Only remove if there's actually a duplicate at the start
+        if json_str.startswith('{{'):
+            json_str = json_str[1:]
+            logger.warning(f"   🔧 Removed duplicate opening brace at start")
     
     repaired_len = len(json_str)
     if repaired_len != original_len:
