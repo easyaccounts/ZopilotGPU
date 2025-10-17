@@ -125,12 +125,14 @@ def classify_stage1(prompt: str, context: Dict[str, Any], generation_config: Opt
         # Build Mixtral-compatible prompt with instruction tags and STRONG JSON enforcement
         formatted_prompt = f"""<s>[INST] {prompt}
 
-⚠️ CRITICAL INSTRUCTION ⚠️
+🚨 CRITICAL INSTRUCTIONS 🚨
 You MUST respond with PURE JSON ONLY.
-First character of your response MUST be: {{
-Last character of your response MUST be: }}
-DO NOT write any text like "Based on the document" or "Here is the analysis".
-START IMMEDIATELY with the opening brace {{.
+1. First character MUST be: {{
+2. Last character MUST be: }}
+3. NO preamble text allowed (no 'Based on...', 'Here is...', etc.)
+4. NO explanations before or after JSON
+5. NO markdown code blocks
+START IMMEDIATELY with opening brace.
 
 [/INST]{{"""
         
@@ -316,9 +318,19 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
         # Get model processor
         processor = get_llama_processor()
         
-        # FIX: Build Mixtral-compatible prompt with JSON prefix forcing
-        # Force model to start generation with { to prevent preamble text
-        formatted_prompt = f"<s>[INST] {prompt}\n\n🚨 CRITICAL INSTRUCTIONS 🚨\n1. Your response MUST be ONLY valid JSON\n2. Start IMMEDIATELY with {{ character (opening brace)\n3. NO preamble text allowed (no 'Based on...', 'Here is...', etc.)\n4. NO explanations before or after the JSON\n5. NO markdown code blocks\n\nRespond with JSON now: [/INST]\n{{"
+        # Build Mixtral-compatible prompt with JSON prefix forcing
+        formatted_prompt = f"""<s>[INST] {prompt}
+
+🚨 CRITICAL INSTRUCTIONS 🚨
+You MUST respond with PURE JSON ONLY.
+1. First character MUST be: {{
+2. Last character MUST be: }}
+3. NO preamble text allowed (no 'Based on...', 'Here is...', etc.)
+4. NO explanations before or after JSON
+5. NO markdown code blocks
+START IMMEDIATELY with opening brace.
+
+[/INST]{{"""
         
         # Tokenize with CONFIGURABLE max_input_length
         logger.info("🔢 [Stage 2] Tokenizing prompt...")
@@ -393,7 +405,23 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
                 torch.cuda.empty_cache()
                 
                 # Retry with even stronger JSON enforcement and zero temperature
-                retry_prompt = f"<s>[INST] {prompt}\n\n🚨🚨🚨 ABSOLUTE REQUIREMENT 🚨🚨🚨\n\nYou MUST respond with PURE JSON ONLY.\n\nFORBIDDEN:\n- Any text before the opening {{ brace\n- Any text after the closing }} brace  \n- Phrases like 'Based on', 'Here is', 'Sure', etc.\n- Markdown formatting\n- Code blocks\n- Explanations\n\nREQUIRED:\n- Start with {{ character\n- End with }} character\n- Valid JSON syntax only\n\nGenerate JSON now: [/INST]\n{{"
+                retry_prompt = f"""<s>[INST] {prompt}
+
+🚨🚨🚨 ABSOLUTE REQUIREMENT 🚨🚨🚨
+You MUST respond with PURE JSON ONLY.
+FORBIDDEN:
+- Any text before opening {{ brace
+- Any text after closing }} brace
+- Phrases like 'Based on', 'Here is', 'Sure', etc.
+- Markdown formatting or code blocks
+- Any explanations
+REQUIRED:
+- Start with {{ character
+- End with }} character
+- Valid JSON syntax only
+Generate JSON immediately:
+
+[/INST]{{"""
                 
                 retry_inputs = processor.tokenizer(retry_prompt, return_tensors="pt", truncation=True, max_length=max_input_length)
                 retry_inputs = {k: v.to(processor.model.device) for k, v in retry_inputs.items()}
@@ -412,11 +440,13 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
                         eos_token_id=processor.tokenizer.eos_token_id
                     )
                 
-                retry_response = processor.tokenizer.decode(
+                retry_decoded = processor.tokenizer.decode(
                     retry_outputs[0][len(retry_inputs["input_ids"][0]):], 
                     skip_special_tokens=True
                 )
-                logger.info(f"   Retry response length: {len(retry_response)} chars")
+                # FIX: Prepend { since retry prompt also ends with [/INST]{
+                retry_response = "{" + retry_decoded
+                logger.info(f"   Retry response length: {len(retry_response)} chars (prepended opening brace)")
                 logger.info(f"   Retry raw decoded response: {retry_response[:200]}...")
                 
                 logger.info(f"🔄 [Stage 2] Retry generated {len(retry_outputs[0]) - len(retry_inputs['input_ids'][0])} tokens")
@@ -491,25 +521,22 @@ def _repair_malformed_json(json_str: str, stage: int) -> str:
     # Strip leading/trailing whitespace first
     json_str = json_str.strip()
     
-    # Issue #1: Multiple JSON objects separated by "},\n  \""
-    # Pattern: "},\n  "field": ... → ",\n  "field": ...
-    # This is THE CRITICAL FIX for the production bug
-    if '},\n' in json_str or '},\r\n' in json_str or '},  "' in json_str:
-        logger.warning(f"   🔧 Detected multiple JSON objects separated by closing braces")
-        logger.warning(f"   Original snippet: {json_str[:300]}...")
-        
-        # Remove closing brace before newline + opening quote pattern
-        # "},\n  "field" → ",\n  "field"
-        json_str = re.sub(r'\},\s*\n\s*"', ',\n  "', json_str)
-        
-        # Also handle same-line pattern: },  " → ,  "
-        json_str = re.sub(r'\},\s*"', ',  "', json_str)
-        
-        # Also handle: },\n  { → ,\n  { (less common)
-        json_str = re.sub(r'\},\s*\n\s*\{', ',\n  {', json_str)
-        
-        logger.info(f"   ✅ Removed extra closing braces between objects")
-        logger.info(f"   Repaired snippet: {json_str[:300]}...")
+    # Issue #1: DISABLED - This was incorrectly removing valid nested object closing braces
+    # The pattern "},\n  "field" appears in VALID nested JSON like:
+    # { "obj1": { "inner": "value" }, "obj2": { ... } }
+    #                              ^^^ This is VALID, not a bug!
+    # 
+    # Original intent was to fix model outputting multiple separate root objects:
+    # { "obj1": "val" }
+    # { "obj2": "val" }
+    # 
+    # But this case is extremely rare with Mixtral when prompt forces JSON format.
+    # The decoder fix (prepending {) already handles the root issue.
+    # Leaving this aggressive repair causes MORE problems than it solves.
+    #
+    # if '},\n' in json_str or '},\r\n' in json_str or '},  "' in json_str:
+    #     logger.warning(f"   🔧 Detected multiple JSON objects separated by closing braces")
+    #     ... DISABLED ...
     
     # Issue #2: Missing opening brace at start
     needs_outer_wrapper = not json_str.startswith('{')
