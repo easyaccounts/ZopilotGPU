@@ -805,44 +805,101 @@ def _validate_stage1_response(response: Dict[str, Any]) -> None:
 def _validate_stage2_response(response: Dict[str, Any]) -> None:
     """
     Validate Stage 2 response has required structure.
+    Handles both single action and batch formats.
     Adds default values for optional fields.
     
     Args:
         response: Parsed Stage 2 response dictionary
+            Single: {"api_request_body": {...}, "lookups_required": [...], "validation": {...}}
+            Batch:  {"actions": [{"action_index": 0, "action_name": "...", "api_request_body": {...}, ...}]}
     
     Raises:
         ValueError: If validation fails
     """
-    # Check required field
-    if 'api_request_body' not in response:
-        logger.error("❌ Stage 2 response missing 'api_request_body'")
-        raise ValueError("Stage 2 response missing 'api_request_body'")
+    # Detect format: batch (has 'actions' array) or single (has 'api_request_body' at root)
+    is_batch = 'actions' in response
     
-    if not isinstance(response['api_request_body'], dict):
-        logger.error("❌ Stage 2 'api_request_body' must be an object")
-        raise ValueError("Stage 2 'api_request_body' must be an object")
-    
-    # Optional but recommended fields - add defaults if missing
-    if 'lookups_required' not in response:
-        logger.warning("[Stage 2] ⚠️  No 'lookups_required' array - setting empty array")
-        response['lookups_required'] = []
-    
-    if not isinstance(response['lookups_required'], list):
-        logger.warning("[Stage 2] ⚠️  'lookups_required' is not an array - converting to array")
-        response['lookups_required'] = []
-    
-    if 'validation' not in response:
-        logger.warning("[Stage 2] ⚠️  No 'validation' object - creating default")
-        response['validation'] = {
-            "all_required_fields_present": True,
-            "warnings": []
-        }
-    
-    if not isinstance(response['validation'], dict):
-        logger.warning("[Stage 2] ⚠️  'validation' is not an object - creating default")
-        response['validation'] = {
-            "all_required_fields_present": True,
-            "warnings": []
-        }
-    
-    logger.info("[Stage 2] ✅ Validation passed")
+    if is_batch:
+        # Batch format validation
+        if not isinstance(response['actions'], list):
+            logger.error("❌ Stage 2 batch response 'actions' must be an array")
+            raise ValueError("Stage 2 batch response 'actions' must be an array")
+        
+        if len(response['actions']) == 0:
+            logger.error("❌ Stage 2 batch response 'actions' array is empty")
+            raise ValueError("Stage 2 batch response 'actions' array is empty")
+        
+        # Validate each action in batch
+        for i, action in enumerate(response['actions']):
+            if not isinstance(action, dict):
+                logger.error(f"❌ Stage 2 batch action[{i}] must be an object")
+                raise ValueError(f"Stage 2 batch action[{i}] must be an object")
+            
+            # Required fields per action
+            if 'api_request_body' not in action:
+                logger.error(f"❌ Stage 2 batch action[{i}] missing 'api_request_body'")
+                raise ValueError(f"Stage 2 batch action[{i}] missing 'api_request_body'")
+            
+            if not isinstance(action['api_request_body'], dict):
+                logger.error(f"❌ Stage 2 batch action[{i}] 'api_request_body' must be an object")
+                raise ValueError(f"Stage 2 batch action[{i}] 'api_request_body' must be an object")
+            
+            # Optional fields - add defaults
+            if 'lookups_required' not in action:
+                logger.debug(f"[Stage 2] Action[{i}] no 'lookups_required' - setting empty array")
+                action['lookups_required'] = []
+            
+            if not isinstance(action['lookups_required'], list):
+                logger.warning(f"[Stage 2] ⚠️  Action[{i}] 'lookups_required' not array - converting")
+                action['lookups_required'] = []
+            
+            if 'validation' not in action:
+                logger.debug(f"[Stage 2] Action[{i}] no 'validation' - creating default")
+                action['validation'] = {
+                    "all_required_fields_present": True,
+                    "warnings": []
+                }
+            
+            if not isinstance(action['validation'], dict):
+                logger.warning(f"[Stage 2] ⚠️  Action[{i}] 'validation' not object - creating default")
+                action['validation'] = {
+                    "all_required_fields_present": True,
+                    "warnings": []
+                }
+        
+        logger.info(f"[Stage 2] ✅ Batch validation passed ({len(response['actions'])} actions)")
+        
+    else:
+        # Single action format validation
+        if 'api_request_body' not in response:
+            logger.error("❌ Stage 2 response missing 'api_request_body'")
+            raise ValueError("Stage 2 response missing 'api_request_body'")
+        
+        if not isinstance(response['api_request_body'], dict):
+            logger.error("❌ Stage 2 'api_request_body' must be an object")
+            raise ValueError("Stage 2 'api_request_body' must be an object")
+        
+        # Optional but recommended fields - add defaults if missing
+        if 'lookups_required' not in response:
+            logger.warning("[Stage 2] ⚠️  No 'lookups_required' array - setting empty array")
+            response['lookups_required'] = []
+        
+        if not isinstance(response['lookups_required'], list):
+            logger.warning("[Stage 2] ⚠️  'lookups_required' is not an array - converting to array")
+            response['lookups_required'] = []
+        
+        if 'validation' not in response:
+            logger.warning("[Stage 2] ⚠️  No 'validation' object - creating default")
+            response['validation'] = {
+                "all_required_fields_present": True,
+                "warnings": []
+            }
+        
+        if not isinstance(response['validation'], dict):
+            logger.warning("[Stage 2] ⚠️  'validation' is not an object - creating default")
+            response['validation'] = {
+                "all_required_fields_present": True,
+                "warnings": []
+            }
+        
+        logger.info("[Stage 2] ✅ Single action validation passed")
