@@ -280,8 +280,10 @@ def classify_stage2_5_entity_extraction(prompt: str, context: Dict[str, Any], ge
     logger.info(f"[Stage 2.5] Config: max_tokens={max_new_tokens}, temp={temperature}, top_p={top_p}, top_k={top_k}")
     
     try:
-        # Get model and tokenizer
-        model, tokenizer = get_llama_processor()
+        # Get model and tokenizer from processor
+        processor = get_llama_processor()
+        model = processor.model
+        tokenizer = processor.tokenizer
         
         # Truncate prompt if needed
         prompt_tokens = tokenizer.encode(prompt, add_special_tokens=False)
@@ -330,6 +332,18 @@ def classify_stage2_5_entity_extraction(prompt: str, context: Dict[str, Any], ge
         
         logger.info(f"[Stage 2.5] Generated {len(response_text)} characters")
         logger.debug(f"[Stage 2.5] Raw response: {response_text[:500]}...")
+        
+        # CRITICAL: Clear KV cache after generation to prevent memory leaks
+        # KV cache can grow to 4-8GB and stays in VRAM if not cleared
+        if hasattr(model, 'past_key_values'):
+            model.past_key_values = None
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()  # Ensure cleanup completes before continuing
+        
+        if torch.cuda.is_available():
+            allocated = torch.cuda.memory_allocated(0) / (1024**3)
+            reserved = torch.cuda.memory_reserved(0) / (1024**3)
+            logger.info(f"🧹 [Stage 2.5] KV cache cleared: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved")
         
         # Parse JSON response
         json_match = re.search(r'\{[\s\S]*\}', response_text)
@@ -400,9 +414,17 @@ def classify_stage2_5_entity_extraction(prompt: str, context: Dict[str, Any], ge
         import traceback
         logger.error(traceback.format_exc())
         
-        # Clean up GPU memory on error
+        # CRITICAL: Clean up KV cache and GPU memory on error to prevent memory leaks
+        try:
+            if 'model' in locals() and hasattr(model, 'past_key_values'):
+                model.past_key_values = None
+        except:
+            pass
+        
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            logger.info("🧹 [Stage 2.5] GPU memory cleaned after error")
         
         raise RuntimeError(f"Stage 2.5 entity extraction failed: {str(e)}") from e
 
@@ -1167,8 +1189,10 @@ def classify_stage0_5_math(prompt: str, context: Dict[str, Any], generation_conf
     logger.info(f"[Stage 0.5] Config: max_tokens={max_new_tokens}, temp={temperature}, top_p={top_p}, top_k={top_k}")
     
     try:
-        # Get model and tokenizer
-        model, tokenizer = get_llama_processor()
+        # Get model and tokenizer from processor
+        processor = get_llama_processor()
+        model = processor.model
+        tokenizer = processor.tokenizer
         
         # Truncate prompt if needed
         prompt_tokens = tokenizer.encode(prompt, add_special_tokens=False)
@@ -1218,6 +1242,18 @@ def classify_stage0_5_math(prompt: str, context: Dict[str, Any], generation_conf
         logger.info(f"[Stage 0.5] Generated {len(response_text)} characters")
         logger.debug(f"[Stage 0.5] Raw response: {response_text[:500]}...")
         
+        # CRITICAL: Clear KV cache after generation to prevent memory leaks
+        # KV cache can grow to 4-8GB and stays in VRAM if not cleared
+        if hasattr(model, 'past_key_values'):
+            model.past_key_values = None
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()  # Ensure cleanup completes before continuing
+        
+        if torch.cuda.is_available():
+            allocated = torch.cuda.memory_allocated(0) / (1024**3)
+            reserved = torch.cuda.memory_reserved(0) / (1024**3)
+            logger.info(f"🧹 [Stage 0.5] KV cache cleared: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved")
+        
         # Parse JSON response
         json_match = re.search(r'\{[\s\S]*\}', response_text)
         if not json_match:
@@ -1260,9 +1296,17 @@ def classify_stage0_5_math(prompt: str, context: Dict[str, Any], generation_conf
         import traceback
         logger.error(traceback.format_exc())
         
-        # Clean up GPU memory on error
+        # CRITICAL: Clean up KV cache and GPU memory on error to prevent memory leaks
+        try:
+            if 'model' in locals() and hasattr(model, 'past_key_values'):
+                model.past_key_values = None
+        except:
+            pass
+        
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            logger.info("🧹 [Stage 0.5] GPU memory cleaned after error")
         
         raise RuntimeError(f"Stage 0.5 math validation failed: {str(e)}") from e
 
