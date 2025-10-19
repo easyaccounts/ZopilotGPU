@@ -307,22 +307,37 @@ async def prompt_endpoint(request: Request, data: PromptInput):
         logger.info(f"[PROMPT] 🎯 Sending to Mixtral: {data.prompt[:100]}...")
         
         # Route based on stage
-        if stage == 'action_selection':
+        if stage == 'math_validation':
+            # Stage 0.5: Math Validation (LLM-Powered)
+            logger.info(f"[PROMPT] 🧮 Stage 0.5: Math Validation")
+            from app.classification import classify_stage0_5_math
+            output = await asyncio.get_event_loop().run_in_executor(
+                None, classify_stage0_5_math, data.prompt, data.context, generation_config
+            )
+        elif stage == 'action_selection':
             # Stage 1: Semantic Analysis + Action Selection
             logger.info(f"[PROMPT] 🔍 Stage 1: Action Selection")
             from app.classification import classify_stage1
             output = await asyncio.get_event_loop().run_in_executor(
                 None, classify_stage1, data.prompt, data.context, generation_config
             )
+        elif stage == 'entity_extraction':
+            # Stage 2.5: Entity Field Extraction (LLM-Powered)
+            entity_types = data.context.get('entity_types', []) if data.context else []
+            logger.info(f"[PROMPT] 🔍 Stage 2.5: Entity Field Extraction for {len(entity_types)} entity types: {entity_types}")
+            from app.classification import classify_stage2_5_entity_extraction
+            output = await asyncio.get_event_loop().run_in_executor(
+                None, classify_stage2_5_entity_extraction, data.prompt, data.context, generation_config
+            )
         elif stage == 'field_mapping' or stage == 'field_mapping_batch':
-            # Stage 2: Field Mapping (single action or batch)
+            # Stage 4: Field Mapping (single action or batch)
             if stage == 'field_mapping_batch':
                 action_count = data.context.get('action_count', 'unknown') if data.context else 'unknown'
                 actions = data.context.get('actions', []) if data.context else []
-                logger.info(f"[PROMPT] 🗺️  Stage 2: Batch Field Mapping for {action_count} actions: {actions}")
+                logger.info(f"[PROMPT] 🗺️  Stage 4: Batch Field Mapping for {action_count} actions: {actions}")
             else:
                 action = data.context.get('action', 'unknown') if data.context else 'unknown'
-                logger.info(f"[PROMPT] 🗺️  Stage 2: Field Mapping for {action}")
+                logger.info(f"[PROMPT] 🗺️  Stage 4: Field Mapping for {action}")
             
             from app.classification import classify_stage2
             output = await asyncio.get_event_loop().run_in_executor(

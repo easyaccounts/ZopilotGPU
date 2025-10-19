@@ -1,21 +1,29 @@
 """
 Document Classification Module for ZopilotGPU
-Handles Stage 1 (Action Selection) and Stage 2 (Field Mapping) for backend
+Handles GPU-accelerated classification stages for backend
 
-Stage 1: Semantic Analysis + Action Selection
+Stage 0.5: Math Validation (LLM-Powered)
+- Validates mathematical calculations in documents
+- Detects discrepancies, rounding errors, tax mismatches
+- Returns: {is_valid, issues[], corrected_values, confidence}
+
+Stage 1: Semantic Analysis + Action Selection (LLM-Powered)
 - Analyzes document type, parties, amounts
 - Suggests prerequisites, primary action, and follow-ups
 - Returns: {semantic_analysis, suggested_actions, overall_confidence}
 
-Stage 2: Field Mapping to API-Ready Format
+Stage 4: Field Mapping (LLM-Powered)
 - Maps extracted data directly to accounting software API request body format
 - No transformations needed - output is POST-ready for Zoho/QuickBooks
 - Generates entity lookups for ID resolution (Customer, Vendor, Item, Account)
 - Performs tax verification and currency detection
 - Returns: {api_request_body, lookups_required, validation}
 
+REMOVED STAGES (now run in backend):
+- Stage 2: Action Schema Analysis (uses ActionRegistry + APISchemaLoader, CPU-only ~5-20ms)
+
 Pipeline Flow:
-1. Stage 1: Select action → 2. Stage 2: Build API request → 3. Stage 2.5: Lookup resolution → 4. Direct API POST
+1. Stage 1: Select action → 2. [Backend] Schema analysis → 3. [Backend] Entity resolution → 4. Stage 4: Build API request → 5. Direct API POST
 
 Removed Stages (rely on API validation instead):
 - Stage 2.6: Business rule validation (doesn't scale to 145+ actions)
@@ -49,50 +57,24 @@ def classify_stage1(prompt: str, context: Dict[str, Any], generation_config: Opt
             - max_input_length: Input truncation limit (default 29491)
     
     Returns:
+        Simplified format as requested by backend prompt:
         {
-            "accounting_relevance": {
-                "has_accounting_relevance": bool,
-                "relevance_reasoning": "...",
-                "document_classification": "financial_transaction|informational|administrative|non_accounting",
-                "rejection_reason": "If false, reason for rejection"
+            "business_relevant": bool,
+            "selected_action": string|null,  // snake_case action name or null
+            "confidence": number,  // 0-100
+            "reasoning": string,  // 2-3 sentences explaining the decision
+            "document_type": string,  // "invoice", "bill", "receipt", etc.
+            "transaction_direction": "incoming"|"outgoing"|"neutral",
+            "primary_party": {
+                "name": string|null,
+                "role": "customer"|"vendor"|"employee"|"other"|null
             },
-            "semantic_analysis": {
-                "document_type": "invoice|bill|receipt|...",
-                "document_direction": "incoming|outgoing",
-                "transaction_nature": "sale|purchase|...",
-                "is_revenue_transaction": bool,
-                "is_expense_transaction": bool,
-                "primary_party": {...},
-                "total_amount": float,
-                "currency": "USD",
-                "includes_tax": bool,
-                "tax_amount": float,
-                ...
-            },
-            "suggested_actions": [
-                {
-                    "action": "createCustomer",
-                    "entity": "Customer",
-                    "action_type": "PREREQUISITE",
-                    "priority": 0,
-                    "confidence": 95,
-                    "reasoning": "...",
-                    "auto_execute": true,
-                    "requires": []
-                },
-                {
-                    "action": "createInvoice",
-                    "entity": "Invoice",
-                    "action_type": "PRIMARY",
-                    "priority": 1,
-                    "confidence": 92,
-                    "reasoning": "...",
-                    "requires": ["createCustomer"]
-                }
-            ],
-            "overall_confidence": 92,
-            "missing_data": [],
-            "assumptions": []
+            "extracted_summary": {
+                "total_amount": number|null,
+                "currency": string|null,  // "USD", "EUR", etc.
+                "document_date": string|null,  // "YYYY-MM-DD"
+                "document_number": string|null
+            }
         }
     """
     logger.info("🎯 [Stage 1] Starting semantic analysis and action selection...")
@@ -193,17 +175,25 @@ START IMMEDIATELY with opening brace.
         logger.info("🔍 [Stage 1] Parsing JSON response...")
         result = _parse_classification_response(response_text, stage=1)
         
-        # Validate Stage 1 structure
+        # Validate Stage 1 structure (ensures proper simplified format)
         _validate_stage1_response(result)
         
-        actions_count = len(result.get('suggested_actions', []))
-        doc_type = result.get('semantic_analysis', {}).get('document_type', 'unknown')
-        confidence = result.get('overall_confidence', 0)
+        # ✅ CRITICAL: Add 'format' field for backend detection
+        # Backend relies on this field to distinguish simplified vs legacy format
+        result['format'] = 'simplified'
+        
+        # Extract values from simplified format
+        business_relevant = result.get('business_relevant', False)
+        selected_action = result.get('selected_action', None)
+        doc_type = result.get('document_type', 'unknown')
+        confidence = result.get('confidence', 0)
         
         logger.info(f"🎉 [Stage 1] Classification complete!")
+        logger.info(f"   Format: simplified")
+        logger.info(f"   Business relevant: {business_relevant}")
         logger.info(f"   Document type: {doc_type}")
-        logger.info(f"   Actions suggested: {actions_count}")
-        logger.info(f"   Overall confidence: {confidence}%")
+        logger.info(f"   Selected action: {selected_action}")
+        logger.info(f"   Confidence: {confidence}%")
         
         return result
         
@@ -222,9 +212,207 @@ START IMMEDIATELY with opening brace.
         raise RuntimeError(f"Stage 1 classification failed: {str(e)}") from e
 
 
+def classify_stage2_5_entity_extraction(prompt: str, context: Dict[str, Any], generation_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """
+    Stage 2.5: Entity Field Extraction (LLM-Powered)
+    
+    Extracts complete entity creation fields from document for each required entity type.
+    Uses semantic analysis context to correctly identify party roles, account types, and item classifications.
+    
+    Args:
+        prompt: Entity extraction prompt with:
+            - semantic_analysis (document context, party roles, transaction nature)
+            - entities_required (entity types to extract)
+            - extracted_data (raw OCR data)
+            - entity_creation_schemas (Zoho/QB API schemas)
+        context: {"stage": "entity_extraction", "entity_types": [...], "accounting_software": "zohobooks"}
+        generation_config: Generation parameters
+            - max_new_tokens: Default 2000 (entity extraction needs detail)
+            - temperature: Default 0.1 (low for accurate extraction)
+            - top_p: 0.95, top_k: 50
+    
+    Returns:
+        {
+            "entities_to_resolve": [
+                {
+                    "entity_type": "customer",
+                    "extracted_fields": {
+                        "contact_name": "ABC Corp",
+                        "email": "info@abccorp.com",
+                        "phone": "+1-555-0123",
+                        "contact_type": "customer"
+                    },
+                    "search_criteria": {
+                        "primary": "ABC Corp",
+                        "alternatives": ["ABC Corporation", "ABC Corp."]
+                    },
+                    "confidence": 95,
+                    "extraction_reasoning": "Primary party identified as customer from incoming invoice"
+                }
+            ],
+            "extraction_metadata": {
+                "total_entities": 3,
+                "entities_by_type": {"customer": 1, "item": 2},
+                "average_confidence": 94
+            }
+        }
+    """
+    logger.info("🔍 [Stage 2.5] Starting LLM-powered entity field extraction...")
+    
+    # Extract generation parameters with defaults
+    max_new_tokens = 2000
+    temperature = 0.1  # Low for accurate extraction
+    top_p = 0.95
+    top_k = 50
+    repetition_penalty = 1.1
+    max_input_length = 29491
+    
+    if generation_config:
+        max_new_tokens = generation_config.get('max_new_tokens', max_new_tokens)
+        temperature = generation_config.get('temperature', temperature)
+        top_p = generation_config.get('top_p', top_p)
+        top_k = generation_config.get('top_k', top_k)
+        repetition_penalty = generation_config.get('repetition_penalty', repetition_penalty)
+        max_input_length = generation_config.get('max_input_length', max_input_length)
+    
+    entity_types = context.get('entity_types', []) if context else []
+    logger.info(f"[Stage 2.5] Extracting fields for entity types: {entity_types}")
+    logger.info(f"[Stage 2.5] Config: max_tokens={max_new_tokens}, temp={temperature}, top_p={top_p}, top_k={top_k}")
+    
+    try:
+        # Get model and tokenizer
+        model, tokenizer = get_llama_processor()
+        
+        # Truncate prompt if needed
+        prompt_tokens = tokenizer.encode(prompt, add_special_tokens=False)
+        if len(prompt_tokens) > max_input_length:
+            logger.warning(f"[Stage 2.5] ⚠️  Prompt too long ({len(prompt_tokens)} tokens), truncating to {max_input_length}")
+            prompt_tokens = prompt_tokens[:max_input_length]
+            prompt = tokenizer.decode(prompt_tokens, skip_special_tokens=True)
+        else:
+            logger.info(f"[Stage 2.5] Prompt length: {len(prompt_tokens)} tokens (within limit)")
+        
+        # Tokenize with chat template
+        inputs = tokenizer.apply_chat_template(
+            [{"role": "user", "content": prompt}],
+            add_generation_prompt=True,
+            return_tensors="pt",
+            return_dict=True
+        )
+        
+        if torch.cuda.is_available():
+            inputs = {k: v.cuda() for k, v in inputs.items()}
+        
+        logger.info(f"[Stage 2.5] Generating with {inputs['input_ids'].shape[1]} input tokens...")
+        
+        # Generate response
+        with torch.no_grad():
+            outputs = model.generate(
+                **inputs,
+                max_new_tokens=max_new_tokens,
+                temperature=temperature,
+                top_p=top_p,
+                top_k=top_k,
+                repetition_penalty=repetition_penalty,
+                do_sample=True if temperature > 0 else False,
+                pad_token_id=tokenizer.eos_token_id,
+                eos_token_id=tokenizer.eos_token_id
+            )
+        
+        # Decode response
+        full_output = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        
+        # Extract only the assistant's response
+        if "[/INST]" in full_output:
+            response_text = full_output.split("[/INST]")[-1].strip()
+        else:
+            response_text = full_output
+        
+        logger.info(f"[Stage 2.5] Generated {len(response_text)} characters")
+        logger.debug(f"[Stage 2.5] Raw response: {response_text[:500]}...")
+        
+        # Parse JSON response
+        json_match = re.search(r'\{[\s\S]*\}', response_text)
+        if not json_match:
+            logger.error("❌ Stage 2.5: No JSON found in response")
+            raise ValueError("Stage 2.5 response did not contain valid JSON")
+        
+        response = json.loads(json_match.group(0))
+        logger.info("[Stage 2.5] ✅ JSON parsed successfully")
+        
+        # Validate response structure
+        if 'entities_to_resolve' not in response:
+            logger.error("❌ Stage 2.5 response missing 'entities_to_resolve' field")
+            raise ValueError("Stage 2.5 response missing 'entities_to_resolve' field")
+        
+        if not isinstance(response['entities_to_resolve'], list):
+            logger.error("❌ Stage 2.5 'entities_to_resolve' must be array")
+            raise ValueError("Stage 2.5 'entities_to_resolve' must be array")
+        
+        # Validate each entity
+        for i, entity in enumerate(response['entities_to_resolve']):
+            if 'entity_type' not in entity:
+                logger.error(f"❌ Entity {i} missing 'entity_type'")
+                raise ValueError(f"Entity {i} missing 'entity_type'")
+            if 'extracted_fields' not in entity:
+                logger.error(f"❌ Entity {i} missing 'extracted_fields'")
+                raise ValueError(f"Entity {i} missing 'extracted_fields'")
+            if 'search_criteria' not in entity:
+                logger.warning(f"⚠️  Entity {i} missing 'search_criteria', adding default")
+                entity['search_criteria'] = {
+                    "primary": entity['extracted_fields'].get('contact_name') or entity['extracted_fields'].get('name') or 'Unknown',
+                    "alternatives": []
+                }
+            if 'confidence' not in entity:
+                logger.warning(f"⚠️  Entity {i} missing 'confidence', setting to 80")
+                entity['confidence'] = 80
+        
+        # Add metadata if missing
+        if 'extraction_metadata' not in response:
+            total_entities = len(response['entities_to_resolve'])
+            entities_by_type = {}
+            total_confidence = 0
+            
+            for entity in response['entities_to_resolve']:
+                entity_type = entity['entity_type']
+                entities_by_type[entity_type] = entities_by_type.get(entity_type, 0) + 1
+                total_confidence += entity.get('confidence', 80)
+            
+            response['extraction_metadata'] = {
+                "total_entities": total_entities,
+                "entities_by_type": entities_by_type,
+                "average_confidence": round(total_confidence / total_entities, 1) if total_entities > 0 else 0
+            }
+        
+        logger.info(f"[Stage 2.5] ✅ Entity extraction complete: {response['extraction_metadata']['total_entities']} entities extracted")
+        logger.info(f"[Stage 2.5] Entities by type: {response['extraction_metadata']['entities_by_type']}")
+        logger.info(f"[Stage 2.5] Average confidence: {response['extraction_metadata']['average_confidence']}%")
+        
+        return response
+        
+    except json.JSONDecodeError as e:
+        logger.error(f"❌ Stage 2.5: JSON parsing failed: {str(e)}")
+        logger.error(f"Response text: {response_text[:1000]}")
+        raise ValueError(f"Stage 2.5 returned invalid JSON: {str(e)}") from e
+    
+    except Exception as e:
+        logger.error(f"❌ Stage 2.5 failed: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        
+        # Clean up GPU memory on error
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        
+        raise RuntimeError(f"Stage 2.5 entity extraction failed: {str(e)}") from e
+
+
 def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
-    Stage 2: Field Mapping (Single Action or Batch)
+    Stage 4: Field Mapping (Single Action or Batch)
+    
+    NOTE: Function name 'classify_stage2' is legacy naming - this is actually STAGE 4 in the pipeline.
+    Stage 2 (Action Schema Analysis) now runs in backend using ActionRegistry.
     
     Args:
         prompt: Field mapping prompt with action spec, semantic analysis, extracted data, COA
@@ -289,9 +477,9 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
     action_count = context.get('action_count', 1)
     
     if action_count > 1:
-        logger.info(f"🎯 [Stage 2] Starting BATCH field mapping for {action_count} actions")
+        logger.info(f"🎯 [Stage 4] Starting BATCH field mapping for {action_count} actions")
     else:
-        logger.info(f"🎯 [Stage 2] Starting field mapping for action: {action_name}")
+        logger.info(f"🎯 [Stage 4] Starting field mapping for action: {action_name}")
     
     # Extract generation parameters with defaults (FIX: Increase temp from 0.05 to 0.1 for better JSON adherence)
     if generation_config is None:
@@ -312,7 +500,7 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
         logger.warning(f"⚠️  max_input_length {max_input_length} exceeds 32k limit, capping to 32768")
         max_input_length = 32768
     
-    logger.info(f"⚙️  [Stage 2] Generation config: max_new_tokens={max_new_tokens}, temp={temperature}, max_input={max_input_length}")
+    logger.info(f"⚙️  [Stage 4] Generation config: max_new_tokens={max_new_tokens}, temp={temperature}, max_input={max_input_length}")
     
     try:
         # Get model processor
@@ -333,14 +521,14 @@ START IMMEDIATELY with opening brace.
 [/INST]{{"""
         
         # Tokenize with CONFIGURABLE max_input_length
-        logger.info("🔢 [Stage 2] Tokenizing prompt...")
+        logger.info("🔢 [Stage 4] Tokenizing prompt...")
         inputs = processor.tokenizer(formatted_prompt, return_tensors="pt", truncation=True, max_length=max_input_length)
         inputs = {k: v.to(processor.model.device) for k, v in inputs.items()}
         input_tokens = len(inputs["input_ids"][0])
         logger.info(f"   Input tokens: {input_tokens}")
         
         # Generate with CONFIGURABLE parameters
-        logger.info(f"🚀 [Stage 2] Generating field mappings (max {max_new_tokens} tokens)...")
+        logger.info(f"🚀 [Stage 4] Generating field mappings (max {max_new_tokens} tokens)...")
         gen_start = __import__('time').time()
         
         with torch.no_grad():
@@ -359,14 +547,14 @@ START IMMEDIATELY with opening brace.
         gen_time = __import__('time').time() - gen_start
         output_tokens = len(outputs[0]) - input_tokens
         tokens_per_sec = output_tokens / gen_time if gen_time > 0 else 0
-        logger.info(f"✅ [Stage 2] Generated {output_tokens} tokens in {gen_time:.1f}s ({tokens_per_sec:.1f} tok/s)")
+        logger.info(f"✅ [Stage 4] Generated {output_tokens} tokens in {gen_time:.1f}s ({tokens_per_sec:.1f} tok/s)")
         
         # FIX: Detect suspiciously low token count (hallucination indicator)
         if output_tokens < 100:
-            logger.warning(f"⚠️  [Stage 2] Suspiciously low token count ({output_tokens} tokens) - possible hallucination or early stopping")
+            logger.warning(f"⚠️  [Stage 4] Suspiciously low token count ({output_tokens} tokens) - possible hallucination or early stopping")
         
         # Decode
-        logger.info("📖 [Stage 2] Decoding response...")
+        logger.info("📖 [Stage 4] Decoding response...")
         # FIX: Prompt ends with [/INST]{ to force JSON start, but decoder excludes prompt tokens
         # So we need to prepend the { that we forced in the prompt
         decoded_output = processor.tokenizer.decode(
@@ -391,13 +579,13 @@ START IMMEDIATELY with opening brace.
             logger.info(f"🧹 KV cache cleared: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved")
         
         # Parse JSON
-        logger.info("🔍 [Stage 2] Parsing JSON response...")
+        logger.info("🔍 [Stage 4] Parsing JSON response...")
         try:
             result = _parse_classification_response(response_text, stage=2)
         except ValueError as parse_error:
             # FIX: If JSON parsing fails due to preamble/hallucination, retry once with stronger prompt
             if output_tokens < 100 or "No JSON object found" in str(parse_error):
-                logger.warning(f"⚠️  [Stage 2] First attempt failed (low tokens or no JSON), retrying with stronger enforcement...")
+                logger.warning(f"⚠️  [Stage 4] First attempt failed (low tokens or no JSON), retrying with stronger enforcement...")
                 
                 # Clear cache before retry
                 if hasattr(processor.model, 'past_key_values'):
@@ -426,7 +614,7 @@ Generate JSON immediately:
                 retry_inputs = processor.tokenizer(retry_prompt, return_tensors="pt", truncation=True, max_length=max_input_length)
                 retry_inputs = {k: v.to(processor.model.device) for k, v in retry_inputs.items()}
                 
-                logger.info("🔄 [Stage 2] Retry generation with stronger JSON enforcement...")
+                logger.info("🔄 [Stage 4] Retry generation with stronger JSON enforcement...")
                 with torch.no_grad():
                     retry_outputs = processor.model.generate(
                         **retry_inputs,
@@ -449,9 +637,9 @@ Generate JSON immediately:
                 logger.info(f"   Retry response length: {len(retry_response)} chars (prepended opening brace)")
                 logger.info(f"   Retry raw decoded response: {retry_response[:200]}...")
                 
-                logger.info(f"🔄 [Stage 2] Retry generated {len(retry_outputs[0]) - len(retry_inputs['input_ids'][0])} tokens")
+                logger.info(f"🔄 [Stage 4] Retry generated {len(retry_outputs[0]) - len(retry_inputs['input_ids'][0])} tokens")
                 result = _parse_classification_response(retry_response, stage=2)
-                logger.info("✅ [Stage 2] Retry successful!")
+                logger.info("✅ [Stage 4] Retry successful!")
             else:
                 raise  # Re-raise if not a recoverable error
         
@@ -461,14 +649,14 @@ Generate JSON immediately:
         lookups_count = len(result.get('lookups_required', []))
         fields_count = len(result.get('api_request_body', {}))
         
-        logger.info(f"🎉 [Stage 2] Field mapping complete for {action_name}!")
+        logger.info(f"🎉 [Stage 4] Field mapping complete for {action_name}!")
         logger.info(f"   API fields mapped: {fields_count}")
         logger.info(f"   Lookups required: {lookups_count}")
         
         return result
         
     except Exception as e:
-        logger.error(f"❌ [Stage 2] Field mapping failed for {action_name}: {str(e)}")
+        logger.error(f"❌ [Stage 4] Field mapping failed for {action_name}: {str(e)}")
         
         # CRITICAL: Clean up KV cache even on error
         try:
@@ -694,9 +882,18 @@ def _parse_classification_response(response: str, stage: int) -> Dict[str, Any]:
 
 def _validate_stage1_response(response: Dict[str, Any]) -> None:
     """
-    Validate Stage 1 response has required structure.
-    Fixes common issues like missing PRIMARY action.
-    Handles new accounting_relevance field for filtering non-accounting documents.
+    Validate Stage 1 response has required SIMPLIFIED format structure.
+    Expected format from backend prompt:
+    {
+        "business_relevant": boolean,
+        "selected_action": string|null,
+        "confidence": number,
+        "reasoning": string,
+        "document_type": string,
+        "transaction_direction": "incoming"|"outgoing"|"neutral",
+        "primary_party": {...},
+        "extracted_summary": {...}
+    }
     
     Args:
         response: Parsed Stage 1 response dictionary
@@ -704,102 +901,103 @@ def _validate_stage1_response(response: Dict[str, Any]) -> None:
     Raises:
         ValueError: If validation fails
     """
-    # Check for accounting_relevance field (new enhancement)
-    if 'accounting_relevance' not in response:
-        logger.warning("[Stage 1] ⚠️  No 'accounting_relevance' field - assuming has accounting relevance (legacy response)")
-        response['accounting_relevance'] = {
-            'has_accounting_relevance': True,
-            'relevance_reasoning': 'Legacy response - assumed to have accounting relevance',
-            'document_classification': 'financial_transaction'
-        }
+    # Check required top-level fields for simplified format
+    if 'business_relevant' not in response:
+        logger.error("❌ Stage 1 response missing 'business_relevant' field")
+        raise ValueError("Stage 1 response missing 'business_relevant' field")
     
-    # If document has no accounting relevance, allow empty suggested_actions
-    has_accounting_relevance = response['accounting_relevance'].get('has_accounting_relevance', True)
+    if not isinstance(response['business_relevant'], bool):
+        logger.error("❌ Stage 1 'business_relevant' must be a boolean")
+        raise ValueError("Stage 1 'business_relevant' must be a boolean")
     
-    if not has_accounting_relevance:
-        logger.info("[Stage 1] ℹ️  Document marked as non-accounting, empty actions allowed")
-        # Ensure suggested_actions is empty array for non-accounting documents
-        if 'suggested_actions' not in response or not isinstance(response['suggested_actions'], list):
-            response['suggested_actions'] = []
-        # semantic_analysis can be empty for non-accounting documents
-        if 'semantic_analysis' not in response:
-            response['semantic_analysis'] = {}
-        logger.info("[Stage 1] ✅ Non-accounting document validation passed")
+    if 'selected_action' not in response:
+        logger.error("❌ Stage 1 response missing 'selected_action' field")
+        raise ValueError("Stage 1 response missing 'selected_action' field")
+    
+    if 'confidence' not in response:
+        logger.error("❌ Stage 1 response missing 'confidence' field")
+        raise ValueError("Stage 1 response missing 'confidence' field")
+    
+    if 'reasoning' not in response:
+        logger.error("❌ Stage 1 response missing 'reasoning' field")
+        raise ValueError("Stage 1 response missing 'reasoning' field")
+    
+    if 'document_type' not in response:
+        logger.warning("[Stage 1] ⚠️  Missing 'document_type' - setting to 'unknown'")
+        response['document_type'] = 'unknown'
+    
+    if 'transaction_direction' not in response:
+        logger.warning("[Stage 1] ⚠️  Missing 'transaction_direction' - setting to 'neutral'")
+        response['transaction_direction'] = 'neutral'
+    
+    # Validate business_relevant logic
+    business_relevant = response['business_relevant']
+    selected_action = response['selected_action']
+    confidence = response['confidence']
+    
+    # If not business relevant, selected_action must be null and confidence must be 0
+    if not business_relevant:
+        if selected_action is not None:
+            logger.warning(f"[Stage 1] ⚠️  business_relevant=false but selected_action='{selected_action}' - setting to null")
+            response['selected_action'] = None
+        if confidence != 0:
+            logger.warning(f"[Stage 1] ⚠️  business_relevant=false but confidence={confidence} - setting to 0")
+            response['confidence'] = 0
+        logger.info("[Stage 1] ✅ Non-business document validation passed")
         return
     
-    # For accounting documents, enforce strict validation
-    # Check required top-level fields
-    if 'semantic_analysis' not in response:
-        logger.error("❌ Stage 1 response missing 'semantic_analysis'")
-        raise ValueError("Stage 1 response missing 'semantic_analysis'")
-    
-    if 'suggested_actions' not in response:
-        logger.error("❌ Stage 1 response missing 'suggested_actions'")
-        raise ValueError("Stage 1 response missing 'suggested_actions'")
-    
-    if not isinstance(response['suggested_actions'], list):
-        logger.error("❌ Stage 1 'suggested_actions' must be an array")
-        raise ValueError("Stage 1 'suggested_actions' must be an array")
-    
-    if len(response['suggested_actions']) == 0:
-        logger.error("❌ Stage 1 'suggested_actions' array is empty")
-        raise ValueError("Stage 1 must suggest at least one action")
-    
-    # Check for PRIMARY action (exactly 1 required)
-    primary_actions = [a for a in response['suggested_actions'] if a.get('action_type') == 'PRIMARY']
-    
-    if len(primary_actions) == 0:
-        logger.warning("[Stage 1] ⚠️  No PRIMARY action found - auto-fixing by marking highest confidence as PRIMARY")
-        # Auto-fix: Mark highest confidence action as PRIMARY
-        if response['suggested_actions']:
-            sorted_actions = sorted(
-                response['suggested_actions'], 
-                key=lambda a: a.get('confidence', 0), 
-                reverse=True
-            )
-            sorted_actions[0]['action_type'] = 'PRIMARY'
-            sorted_actions[0]['priority'] = 1
-            logger.info(f"   ✅ Marked '{sorted_actions[0].get('action')}' as PRIMARY (confidence: {sorted_actions[0].get('confidence')}%)")
-    
-    elif len(primary_actions) > 1:
-        logger.warning(f"[Stage 1] ⚠️  Multiple PRIMARY actions found ({len(primary_actions)}) - keeping only highest confidence")
-        # Auto-fix: Keep highest confidence primary, demote others
-        sorted_primaries = sorted(
-            primary_actions, 
-            key=lambda a: a.get('confidence', 0), 
-            reverse=True
-        )
-        # Keep first as PRIMARY
-        logger.info(f"   ✅ Keeping '{sorted_primaries[0].get('action')}' as PRIMARY")
-        # Demote rest to FOLLOW_UP
-        for action in sorted_primaries[1:]:
-            action['action_type'] = 'FOLLOW_UP'
-            action['priority'] = 2
-            action['optional'] = True
-            action['requires_user_confirmation'] = True
-            logger.info(f"   ➡️  Demoted '{action.get('action')}' to FOLLOW_UP")
-    
-    # Validate action structure
-    for i, action in enumerate(response['suggested_actions']):
-        if 'action' not in action:
-            raise ValueError(f"Action #{i} missing 'action' field")
+    # If business_relevant is true, validate further
+    if selected_action is not None:
+        # Validate action name format (snake_case)
+        if not isinstance(selected_action, str):
+            logger.error(f"❌ Stage 1 'selected_action' must be string or null, got {type(selected_action)}")
+            raise ValueError(f"Stage 1 'selected_action' must be string or null")
         
-        # Action names should be in snake_case format (create_invoice, create_bill, etc.)
-        # No validation needed - backend validates against software-specific action registries
-        action_name = action['action']
+        # Basic format validation: snake_case with underscores
+        if not re.match(r'^[a-z][a-z0-9_]*$', selected_action):
+            logger.warning(f"⚠️  Action '{selected_action}' has suspicious format (expected snake_case)")
+            # Don't fail here - backend will validate against actual registry
         
-        if 'entity' not in action:
-            raise ValueError(f"Action '{action['action']}' missing 'entity' field")
-        if 'action_type' not in action:
-            raise ValueError(f"Action '{action['action']}' missing 'action_type' field")
-        if 'confidence' not in action:
-            logger.warning(f"Action '{action['action']}' missing 'confidence' - setting to 80")
-            action['confidence'] = 80
-        if 'reasoning' not in action:
-            logger.warning(f"Action '{action['action']}' missing 'reasoning' - setting default")
-            action['reasoning'] = f"Suggested action based on document analysis"
+        # Check for common hallucination patterns
+        hallucination_patterns = [
+            'super_', 'advanced_', 'custom_', 'special_', 'auto_', 'smart_',
+            'new_', 'enhanced_', 'improved_', 'optimized_', 'fast_'
+        ]
+        for pattern in hallucination_patterns:
+            if selected_action.startswith(pattern):
+                logger.warning(f"⚠️  Action '{selected_action}' may be hallucinated (suspicious prefix: {pattern})")
     
-    logger.info("[Stage 1] ✅ Validation passed")
+    # Validate confidence range
+    if not isinstance(confidence, (int, float)):
+        logger.error(f"❌ Stage 1 'confidence' must be a number, got {type(confidence)}")
+        raise ValueError("Stage 1 'confidence' must be a number")
+    
+    if confidence < 0 or confidence > 100:
+        logger.warning(f"[Stage 1] ⚠️  confidence {confidence} out of range [0-100] - clamping")
+        response['confidence'] = max(0, min(100, confidence))
+    
+    # Validate transaction_direction
+    valid_directions = ['incoming', 'outgoing', 'neutral']
+    if response['transaction_direction'] not in valid_directions:
+        logger.warning(f"[Stage 1] ⚠️  Invalid transaction_direction '{response['transaction_direction']}' - setting to 'neutral'")
+        response['transaction_direction'] = 'neutral'
+    
+    # Ensure primary_party exists (optional but should be present)
+    if 'primary_party' not in response:
+        logger.warning("[Stage 1] ⚠️  Missing 'primary_party' - setting to null")
+        response['primary_party'] = None
+    
+    # Ensure extracted_summary exists
+    if 'extracted_summary' not in response:
+        logger.warning("[Stage 1] ⚠️  Missing 'extracted_summary' - creating default")
+        response['extracted_summary'] = {
+            'total_amount': None,
+            'currency': None,
+            'document_date': None,
+            'document_number': None
+        }
+    
+    logger.info(f"[Stage 1] ✅ Validation passed - business_relevant={business_relevant}, action={selected_action}, confidence={confidence}%")
 
 
 def _validate_stage2_response(response: Dict[str, Any]) -> None:
@@ -846,28 +1044,28 @@ def _validate_stage2_response(response: Dict[str, Any]) -> None:
             
             # Optional fields - add defaults
             if 'lookups_required' not in action:
-                logger.debug(f"[Stage 2] Action[{i}] no 'lookups_required' - setting empty array")
+                logger.debug(f"[Stage 4] Action[{i}] no 'lookups_required' - setting empty array")
                 action['lookups_required'] = []
             
             if not isinstance(action['lookups_required'], list):
-                logger.warning(f"[Stage 2] ⚠️  Action[{i}] 'lookups_required' not array - converting")
+                logger.warning(f"[Stage 4] ⚠️  Action[{i}] 'lookups_required' not array - converting")
                 action['lookups_required'] = []
             
             if 'validation' not in action:
-                logger.debug(f"[Stage 2] Action[{i}] no 'validation' - creating default")
+                logger.debug(f"[Stage 4] Action[{i}] no 'validation' - creating default")
                 action['validation'] = {
                     "all_required_fields_present": True,
                     "warnings": []
                 }
             
             if not isinstance(action['validation'], dict):
-                logger.warning(f"[Stage 2] ⚠️  Action[{i}] 'validation' not object - creating default")
+                logger.warning(f"[Stage 4] ⚠️  Action[{i}] 'validation' not object - creating default")
                 action['validation'] = {
                     "all_required_fields_present": True,
                     "warnings": []
                 }
         
-        logger.info(f"[Stage 2] ✅ Batch validation passed ({len(response['actions'])} actions)")
+        logger.info(f"[Stage 4] ✅ Batch validation passed ({len(response['actions'])} actions)")
         
     else:
         # Single action format validation
@@ -881,25 +1079,198 @@ def _validate_stage2_response(response: Dict[str, Any]) -> None:
         
         # Optional but recommended fields - add defaults if missing
         if 'lookups_required' not in response:
-            logger.warning("[Stage 2] ⚠️  No 'lookups_required' array - setting empty array")
+            logger.warning("[Stage 4] ⚠️  No 'lookups_required' array - setting empty array")
             response['lookups_required'] = []
         
         if not isinstance(response['lookups_required'], list):
-            logger.warning("[Stage 2] ⚠️  'lookups_required' is not an array - converting to array")
+            logger.warning("[Stage 4] ⚠️  'lookups_required' is not an array - converting to array")
             response['lookups_required'] = []
         
         if 'validation' not in response:
-            logger.warning("[Stage 2] ⚠️  No 'validation' object - creating default")
+            logger.warning("[Stage 4] ⚠️  No 'validation' object - creating default")
             response['validation'] = {
                 "all_required_fields_present": True,
                 "warnings": []
             }
         
         if not isinstance(response['validation'], dict):
-            logger.warning("[Stage 2] ⚠️  'validation' is not an object - creating default")
+            logger.warning("[Stage 4] ⚠️  'validation' is not an object - creating default")
             response['validation'] = {
                 "all_required_fields_present": True,
                 "warnings": []
             }
         
-        logger.info("[Stage 2] ✅ Single action validation passed")
+        logger.info("[Stage 4] ✅ Single action validation passed")
+
+
+def classify_stage0_5_math(prompt: str, context: Dict[str, Any], generation_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """
+    Stage 0.5: Math Validation (LLM-Powered)
+    
+    Validates mathematical consistency in financial documents using LLM reasoning.
+    Replaces hardcoded TypeScript validation with intelligent analysis.
+    
+    Args:
+        prompt: Math validation prompt with extracted financial data
+        context: {"stage": "math_validation", "document_type": "invoice"}
+        generation_config: Generation parameters
+            - max_new_tokens: Default 1500 (math analysis needs less than field mapping)
+            - temperature: Default 0.05 (very low for math accuracy)
+            - top_p: 0.9, top_k: 40
+    
+    Returns:
+        {
+            "passed": bool,  # Overall validation result
+            "errors": [  # Critical math errors
+                {
+                    "field": "total",
+                    "issue": "Total calculation incorrect",
+                    "expected": 1150.0,
+                    "actual": 1200.0,
+                    "severity": "error"
+                }
+            ],
+            "warnings": [  # Non-critical issues
+                {
+                    "field": "discount",
+                    "issue": "Discount percentage seems high",
+                    "value": 50,
+                    "severity": "warning"
+                }
+            ],
+            "calculations": {  # LLM's calculation breakdown
+                "subtotal_verified": true,
+                "tax_calculation_method": "percentage",
+                "total_breakdown": "1000 + 150 (tax) + 50 (shipping) - 50 (discount) = 1150"
+            },
+            "complexity": "simple|moderate|complex"
+        }
+    """
+    logger.info("🧮 [Stage 0.5] Starting LLM-powered math validation...")
+    
+    # Extract generation parameters with defaults optimized for math
+    max_new_tokens = 1500
+    temperature = 0.05  # Very low for math accuracy
+    top_p = 0.9
+    top_k = 40
+    repetition_penalty = 1.1
+    max_input_length = 29491
+    
+    if generation_config:
+        max_new_tokens = generation_config.get('max_new_tokens', max_new_tokens)
+        temperature = generation_config.get('temperature', temperature)
+        top_p = generation_config.get('top_p', top_p)
+        top_k = generation_config.get('top_k', top_k)
+        repetition_penalty = generation_config.get('repetition_penalty', repetition_penalty)
+        max_input_length = generation_config.get('max_input_length', max_input_length)
+    
+    logger.info(f"[Stage 0.5] Config: max_tokens={max_new_tokens}, temp={temperature}, top_p={top_p}, top_k={top_k}")
+    
+    try:
+        # Get model and tokenizer
+        model, tokenizer = get_llama_processor()
+        
+        # Truncate prompt if needed
+        prompt_tokens = tokenizer.encode(prompt, add_special_tokens=False)
+        if len(prompt_tokens) > max_input_length:
+            logger.warning(f"[Stage 0.5] ⚠️  Prompt too long ({len(prompt_tokens)} tokens), truncating to {max_input_length}")
+            prompt_tokens = prompt_tokens[:max_input_length]
+            prompt = tokenizer.decode(prompt_tokens, skip_special_tokens=True)
+        else:
+            logger.info(f"[Stage 0.5] Prompt length: {len(prompt_tokens)} tokens (within limit)")
+        
+        # Tokenize with chat template
+        inputs = tokenizer.apply_chat_template(
+            [{"role": "user", "content": prompt}],
+            add_generation_prompt=True,
+            return_tensors="pt",
+            return_dict=True
+        )
+        
+        if torch.cuda.is_available():
+            inputs = {k: v.cuda() for k, v in inputs.items()}
+        
+        logger.info(f"[Stage 0.5] Generating with {inputs['input_ids'].shape[1]} input tokens...")
+        
+        # Generate response
+        with torch.no_grad():
+            outputs = model.generate(
+                **inputs,
+                max_new_tokens=max_new_tokens,
+                temperature=temperature,
+                top_p=top_p,
+                top_k=top_k,
+                repetition_penalty=repetition_penalty,
+                do_sample=True if temperature > 0 else False,
+                pad_token_id=tokenizer.eos_token_id,
+                eos_token_id=tokenizer.eos_token_id
+            )
+        
+        # Decode response
+        full_output = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        
+        # Extract only the assistant's response (after the prompt)
+        if "[/INST]" in full_output:
+            response_text = full_output.split("[/INST]")[-1].strip()
+        else:
+            response_text = full_output
+        
+        logger.info(f"[Stage 0.5] Generated {len(response_text)} characters")
+        logger.debug(f"[Stage 0.5] Raw response: {response_text[:500]}...")
+        
+        # Parse JSON response
+        json_match = re.search(r'\{[\s\S]*\}', response_text)
+        if not json_match:
+            logger.error("❌ Stage 0.5: No JSON found in response")
+            raise ValueError("Stage 0.5 response did not contain valid JSON")
+        
+        response = json.loads(json_match.group(0))
+        logger.info("[Stage 0.5] ✅ JSON parsed successfully")
+        
+        # Validate response structure
+        if 'passed' not in response:
+            logger.error("❌ Stage 0.5 response missing 'passed' field")
+            raise ValueError("Stage 0.5 response missing 'passed' field")
+        
+        if not isinstance(response['passed'], bool):
+            logger.error("❌ Stage 0.5 'passed' must be boolean")
+            raise ValueError("Stage 0.5 'passed' must be boolean")
+        
+        # Add defaults for optional fields
+        if 'errors' not in response:
+            response['errors'] = []
+        if 'warnings' not in response:
+            response['warnings'] = []
+        if 'calculations' not in response:
+            response['calculations'] = {}
+        if 'complexity' not in response:
+            response['complexity'] = 'moderate'
+        
+        logger.info(f"[Stage 0.5] ✅ Validation complete: passed={response['passed']}, errors={len(response['errors'])}, warnings={len(response['warnings'])}")
+        
+        return response
+        
+    except json.JSONDecodeError as e:
+        logger.error(f"❌ Stage 0.5: JSON parsing failed: {str(e)}")
+        logger.error(f"Response text: {response_text[:1000]}")
+        raise ValueError(f"Stage 0.5 returned invalid JSON: {str(e)}") from e
+    
+    except Exception as e:
+        logger.error(f"❌ Stage 0.5 failed: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        
+        # Clean up GPU memory on error
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        
+        raise RuntimeError(f"Stage 0.5 math validation failed: {str(e)}") from e
+
+
+# ============================================
+# STAGE 2: REMOVED - Now runs in backend
+# ============================================
+# Stage 2 (Action Schema Analysis) has been moved to backend
+# Uses ActionRegistry + APISchemaLoader (CPU-only, ~5-20ms)
+# No longer requires GPU inference
+# Backend implementation: documentClassificationService.performActionSchemaAnalysis()
