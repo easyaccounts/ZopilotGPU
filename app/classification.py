@@ -309,11 +309,16 @@ START IMMEDIATELY with opening brace.
         logger.info(f"🚀 [Stage 2.5] Generating entity extraction (max {max_new_tokens} tokens)...")
         gen_start = __import__('time').time()
         
+        # ✅ FIX: Set minimum tokens to prevent premature stopping
+        # Stage 2.5 entity extraction needs at least 150-200 tokens for valid JSON
+        min_tokens_required = 150
+        
         # Generate response
         with torch.no_grad():
             outputs = model.generate(
                 **inputs,
                 max_new_tokens=max_new_tokens,
+                min_new_tokens=min_tokens_required,  # ✅ NEW: Force minimum generation length
                 temperature=temperature,
                 do_sample=temperature > 0,
                 top_p=top_p,
@@ -333,6 +338,20 @@ START IMMEDIATELY with opening brace.
         decoded_output = tokenizer.decode(outputs[0][input_tokens:], skip_special_tokens=True)
         response_text = "{" + decoded_output
         logger.info(f"   Response length: {len(response_text)} chars (prepended opening brace)")
+        
+        # ✅ FIX: Validate response is long enough for valid entity JSON
+        MIN_EXPECTED_LENGTH = 150  # Minimum chars for valid entity extraction JSON
+        if len(response_text) < MIN_EXPECTED_LENGTH:
+            logger.error(f"❌ Stage 2.5 response too short: {len(response_text)} chars (expected >{MIN_EXPECTED_LENGTH})")
+            logger.error(f"   This indicates premature EOS or truncated generation")
+            logger.error(f"   Response: {response_text}")
+            
+            # Try to salvage by auto-completing JSON
+            logger.warning(f"🔧 Attempting to auto-complete truncated JSON...")
+            open_braces = response_text.count('{') - response_text.count('}')
+            open_brackets = response_text.count('[') - response_text.count(']')
+            response_text = response_text.rstrip() + (']' * open_brackets) + ('}' * open_braces)
+            logger.info(f"   ✅ Auto-completed to {len(response_text)} chars")
         
         # CRITICAL: Clear KV cache after generation to prevent memory leaks
         # KV cache can grow to 4-8GB and stays in VRAM if not cleared
@@ -374,30 +393,24 @@ START IMMEDIATELY with opening brace.
                     "primary": entity['extracted_fields'].get('contact_name') or entity['extracted_fields'].get('name') or 'Unknown',
                     "alternatives": []
                 }
-            if 'confidence' not in entity:
-                logger.warning(f"⚠️  Entity {i} missing 'confidence', setting to 80")
-                entity['confidence'] = 80
+            # ✅ REMOVED: confidence field is no longer required (simplified prompt)
         
         # Add metadata if missing
         if 'extraction_metadata' not in response:
             total_entities = len(response['entities_to_resolve'])
             entities_by_type = {}
-            total_confidence = 0
             
             for entity in response['entities_to_resolve']:
                 entity_type = entity['entity_type']
                 entities_by_type[entity_type] = entities_by_type.get(entity_type, 0) + 1
-                total_confidence += entity.get('confidence', 80)
             
             response['extraction_metadata'] = {
                 "total_entities": total_entities,
-                "entities_by_type": entities_by_type,
-                "average_confidence": round(total_confidence / total_entities, 1) if total_entities > 0 else 0
+                "entities_by_type": entities_by_type
             }
         
         logger.info(f"[Stage 2.5] ✅ Entity extraction complete: {response['extraction_metadata']['total_entities']} entities extracted")
         logger.info(f"[Stage 2.5] Entities by type: {response['extraction_metadata']['entities_by_type']}")
-        logger.info(f"[Stage 2.5] Average confidence: {response['extraction_metadata']['average_confidence']}%")
         
         return response
         
@@ -816,7 +829,8 @@ def _parse_classification_response(response: str, stage: float) -> Dict[str, Any
         
         # FIX: Detect and remove preamble text (e.g., "Based on the provided document...")
         # Look for common preamble patterns that appear before JSON
-        # CRITICAL: Check ANYWHERE in first 200 chars, not just at start (preamble might come after forced {)
+        # ✅ FIX: Check first 500 chars for Stage 2.5 (longer prompts = longer preambles)
+        check_length = 500 if stage == 2.5 else 200
         preamble_patterns = [
             "Based on the provided",
             "Based on the document",
@@ -833,10 +847,10 @@ def _parse_classification_response(response: str, stage: float) -> Dict[str, Any
             "From the document"
         ]
         
-        # Check if any preamble pattern exists in the first 200 characters
+        # Check if any preamble pattern exists in the first N characters
         preamble_found = False
         for pattern in preamble_patterns:
-            if pattern.lower() in json_str[:200].lower():
+            if pattern.lower() in json_str[:check_length].lower():
                 logger.warning(f"⚠️  Stage {stage} response has preamble text, removing...")
                 logger.warning(f"   Preamble pattern detected: '{pattern}'")
                 logger.warning(f"   First 200 chars: {json_str[:200]}...")
@@ -852,18 +866,39 @@ def _parse_classification_response(response: str, stage: float) -> Dict[str, Any
         start = json_str.find('{')
         end = json_str.rfind('}') + 1
         
-        if start == -1 or end == 0:
-            logger.error(f"❌ No JSON found in Stage {stage} response")
+        # ✅ FIX: Handle incomplete JSON for Stage 2.5
+        if start == -1:
+            logger.error(f"❌ No JSON opening brace found in Stage {stage} response")
             logger.error(f"   Response preview: {response[:200]}...")
             raise ValueError(f"No JSON object found in Stage {stage} response")
         
-        json_str = json_str[start:end]
+        if end == 0:
+            # No closing brace found - likely incomplete generation
+            logger.warning(f"⚠️  Stage {stage} JSON incomplete (no closing brace) - attempting to complete it")
+            logger.warning(f"   Response length: {len(json_str)} chars")
+            
+            # Extract JSON starting from first brace
+            json_str = json_str[start:]
+            
+            # Count open braces/brackets to determine how many closing characters are needed
+            open_braces = json_str.count('{') - json_str.count('}')
+            open_brackets = json_str.count('[') - json_str.count(']')
+            
+            logger.warning(f"   Missing: {open_braces} closing braces, {open_brackets} closing brackets")
+            
+            # Auto-complete the JSON by adding missing closures
+            json_str = json_str.rstrip() + (']' * open_brackets) + ('}' * open_braces)
+            logger.info(f"   ✅ Auto-completed JSON to {len(json_str)} chars")
+        else:
+            # Normal case - extract between braces
+            json_str = json_str[start:end]
         
-        # FIX: Validate JSON is not suspiciously short
-        if len(json_str) < 50 and stage == 2:
-            logger.error(f"❌ Stage 2 JSON too short ({len(json_str)} chars) - likely incomplete response")
+        # FIX: Validate JSON is not suspiciously short (for Stage 2 and 2.5)
+        min_length = 50 if stage == 2 else 150 if stage == 2.5 else 30
+        if len(json_str) < min_length:
+            logger.error(f"❌ Stage {stage} JSON too short ({len(json_str)} chars, expected >{min_length}) - likely incomplete response")
             logger.error(f"   JSON: {json_str}")
-            raise ValueError(f"Stage 2 JSON response too short ({len(json_str)} chars) - incomplete generation")
+            raise ValueError(f"Stage {stage} JSON response too short ({len(json_str)} chars) - incomplete generation")
         
         # CRITICAL: Attempt JSON repair BEFORE parsing
         json_str = _repair_malformed_json(json_str, stage)
