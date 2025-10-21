@@ -285,27 +285,29 @@ def classify_stage2_5_entity_extraction(prompt: str, context: Dict[str, Any], ge
         model = processor.model
         tokenizer = processor.tokenizer
         
-        # Truncate prompt if needed
-        prompt_tokens = tokenizer.encode(prompt, add_special_tokens=False)
-        if len(prompt_tokens) > max_input_length:
-            logger.warning(f"[Stage 2.5] ⚠️  Prompt too long ({len(prompt_tokens)} tokens), truncating to {max_input_length}")
-            prompt_tokens = prompt_tokens[:max_input_length]
-            prompt = tokenizer.decode(prompt_tokens, skip_special_tokens=True)
-        else:
-            logger.info(f"[Stage 2.5] Prompt length: {len(prompt_tokens)} tokens (within limit)")
+        # Build Mixtral-compatible prompt with STRONG JSON enforcement (same as Stage 1 & 4)
+        formatted_prompt = f"""<s>[INST] {prompt}
+
+🚨 CRITICAL INSTRUCTIONS 🚨
+You MUST respond with PURE JSON ONLY.
+1. First character MUST be: {{
+2. Last character MUST be: }}
+3. NO preamble text allowed (no 'Based on...', 'Here is...', etc.)
+4. NO explanations before or after JSON
+5. NO markdown code blocks
+START IMMEDIATELY with opening brace.
+
+[/INST]{{"""
         
-        # Tokenize with chat template
-        inputs = tokenizer.apply_chat_template(
-            [{"role": "user", "content": prompt}],
-            add_generation_prompt=True,
-            return_tensors="pt",
-            return_dict=True
-        )
+        # Tokenize with CONFIGURABLE max_input_length (same as Stage 1)
+        logger.info("🔢 [Stage 2.5] Tokenizing prompt...")
+        inputs = tokenizer(formatted_prompt, return_tensors="pt", truncation=True, max_length=max_input_length)
+        inputs = {k: v.to(model.device) for k, v in inputs.items()}
+        input_tokens = len(inputs["input_ids"][0])
+        logger.info(f"   Input tokens: {input_tokens}")
         
-        if torch.cuda.is_available():
-            inputs = {k: v.cuda() for k, v in inputs.items()}
-        
-        logger.info(f"[Stage 2.5] Generating with {inputs['input_ids'].shape[1]} input tokens...")
+        logger.info(f"🚀 [Stage 2.5] Generating entity extraction (max {max_new_tokens} tokens)...")
+        gen_start = __import__('time').time()
         
         # Generate response
         with torch.no_grad():
@@ -313,25 +315,24 @@ def classify_stage2_5_entity_extraction(prompt: str, context: Dict[str, Any], ge
                 **inputs,
                 max_new_tokens=max_new_tokens,
                 temperature=temperature,
+                do_sample=temperature > 0,
                 top_p=top_p,
                 top_k=top_k,
                 repetition_penalty=repetition_penalty,
-                do_sample=True if temperature > 0 else False,
                 pad_token_id=tokenizer.eos_token_id,
                 eos_token_id=tokenizer.eos_token_id
             )
         
+        gen_time = __import__('time').time() - gen_start
+        output_tokens = len(outputs[0]) - input_tokens
+        tokens_per_sec = output_tokens / gen_time if gen_time > 0 else 0
+        logger.info(f"✅ [Stage 2.5] Generated {output_tokens} tokens in {gen_time:.1f}s ({tokens_per_sec:.1f} tok/s)")
+        
         # Decode response
-        full_output = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        
-        # Extract only the assistant's response
-        if "[/INST]" in full_output:
-            response_text = full_output.split("[/INST]")[-1].strip()
-        else:
-            response_text = full_output
-        
-        logger.info(f"[Stage 2.5] Generated {len(response_text)} characters")
-        logger.debug(f"[Stage 2.5] Raw response: {response_text[:500]}...")
+        logger.info("📖 [Stage 2.5] Decoding response...")
+        decoded_output = tokenizer.decode(outputs[0][input_tokens:], skip_special_tokens=True)
+        response_text = "{" + decoded_output
+        logger.info(f"   Response length: {len(response_text)} chars (prepended opening brace)")
         
         # CRITICAL: Clear KV cache after generation to prevent memory leaks
         # KV cache can grow to 4-8GB and stays in VRAM if not cleared
@@ -345,13 +346,9 @@ def classify_stage2_5_entity_extraction(prompt: str, context: Dict[str, Any], ge
             reserved = torch.cuda.memory_reserved(0) / (1024**3)
             logger.info(f"🧹 [Stage 2.5] KV cache cleared: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved")
         
-        # Parse JSON response
-        json_match = re.search(r'\{[\s\S]*\}', response_text)
-        if not json_match:
-            logger.error("❌ Stage 2.5: No JSON found in response")
-            raise ValueError("Stage 2.5 response did not contain valid JSON")
-        
-        response = json.loads(json_match.group(0))
+        # Parse JSON using centralized parser (same as Stage 1)
+        logger.info("🔍 [Stage 2.5] Parsing JSON response...")
+        response = _parse_classification_response(response_text, stage=2.5)
         logger.info("[Stage 2.5] ✅ JSON parsed successfully")
         
         # Validate response structure
@@ -798,7 +795,7 @@ def _repair_malformed_json(json_str: str, stage: int) -> str:
     return json_str
 
 
-def _parse_classification_response(response: str, stage: int) -> Dict[str, Any]:
+def _parse_classification_response(response: str, stage: float) -> Dict[str, Any]:
     """
     Parse JSON from model response, handling markdown code blocks and preamble text.
     
