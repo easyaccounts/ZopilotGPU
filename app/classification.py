@@ -57,7 +57,8 @@ def _init_outlines():
     
     try:
         import outlines
-        from outlines import models, generate
+        from outlines import from_transformers, Generator
+        from outlines.types import JsonSchema
         logger.info("✅ [Outlines] Library loaded successfully")
         _outlines_available = True
         return True
@@ -304,23 +305,28 @@ def _generate_with_outlines(prompt: str, schema: Dict[str, Any], model, tokenize
         Parsed JSON dict or None if generation fails
     """
     try:
-        from outlines import models as outlines_models, generate
+        from outlines import from_transformers, Generator
+        from outlines.types import JsonSchema
+        import json
         
         logger.info("🎯 [Outlines] Starting grammar-constrained generation...")
         gen_start = __import__('time').time()
         
         # Wrap model with Outlines (this is fast, ~10ms)
-        outlines_model = outlines_models.Transformers(model, tokenizer)
+        outlines_model = from_transformers(model, tokenizer)
         
         # Create JSON generator with schema constraint
         # This builds FSM (can take 300-800ms first time, then cached)
-        generator = generate.json(outlines_model, schema)
+        generator = Generator(outlines_model, JsonSchema(json.dumps(schema)))
         
         # Generate - output is GUARANTEED to match schema
-        result = generator(prompt, max_tokens=max_tokens)
+        result_json = generator(prompt, max_new_tokens=max_tokens)
         
         gen_time = __import__('time').time() - gen_start
         logger.info(f"✅ [Outlines] Generated valid JSON in {gen_time:.1f}s")
+        
+        # Parse the JSON string result
+        result = json.loads(result_json)
         logger.info(f"   Result type: {type(result)}")
         logger.info(f"   Result keys: {result.keys() if isinstance(result, dict) else 'N/A'}")
         
