@@ -1,0 +1,304 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_customer API Request (QUICKBOOKS)",
+  "description": "Schema for create_customer - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string",
+      "description": "Unique identifier (for updates only)"
+    },
+    "SyncToken": {
+      "type": "string",
+      "description": "Version number (required for updates)"
+    },
+    "DisplayName": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "Display name"
+    },
+    "Title": {
+      "type": "string",
+      "maxLength": 15,
+      "description": "Title (Mr., Mrs., etc.)"
+    },
+    "GivenName": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "First name"
+    },
+    "MiddleName": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "Middle name"
+    },
+    "FamilyName": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "Last name"
+    },
+    "Suffix": {
+      "type": "string",
+      "maxLength": 10,
+      "description": "Suffix (Jr., Sr., etc.)"
+    },
+    "CompanyName": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "Company name"
+    },
+    "PrintOnCheckName": {
+      "type": "string",
+      "maxLength": 110,
+      "description": "Name on checks"
+    },
+    "Active": {
+      "type": "boolean",
+      "description": "Active status"
+    },
+    "PrimaryPhone": {
+      "type": "object",
+      "properties": {
+        "FreeFormNumber": {
+          "type": "string",
+          "maxLength": 30
+        }
+      },
+      "description": "Primary phone"
+    },
+    "AlternatePhone": {
+      "type": "object",
+      "properties": {
+        "FreeFormNumber": {
+          "type": "string",
+          "maxLength": 30
+        }
+      },
+      "description": "Alternate phone"
+    },
+    "Mobile": {
+      "type": "object",
+      "properties": {
+        "FreeFormNumber": {
+          "type": "string",
+          "maxLength": 30
+        }
+      },
+      "description": "Mobile phone"
+    },
+    "Fax": {
+      "type": "object",
+      "properties": {
+        "FreeFormNumber": {
+          "type": "string",
+          "maxLength": 30
+        }
+      },
+      "description": "Fax number"
+    },
+    "PrimaryEmailAddr": {
+      "type": "object",
+      "properties": {
+        "Address": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 100
+        }
+      },
+      "description": "Primary email"
+    },
+    "WebAddr": {
+      "type": "object",
+      "properties": {
+        "URI": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      },
+      "description": "Website"
+    },
+    "BillAddr": {
+      "type": "object",
+      "properties": {
+        "Id": {
+          "type": "string"
+        },
+        "Line1": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "Line2": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "Line3": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "Line4": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "Line5": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "City": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "Country": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "CountrySubDivisionCode": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "State/Province code"
+        },
+        "PostalCode": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "Lat": {
+          "type": "string"
+        },
+        "Long": {
+          "type": "string"
+        }
+      },
+      "description": "Billing address"
+    },
+    "ShipAddr": {
+      "type": "object",
+      "properties": {
+        "Id": {
+          "type": "string"
+        },
+        "Line1": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "Line2": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "Line3": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "Line4": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "Line5": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "City": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "Country": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "CountrySubDivisionCode": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "State/Province code"
+        },
+        "PostalCode": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "Lat": {
+          "type": "string"
+        },
+        "Long": {
+          "type": "string"
+        }
+      },
+      "description": "Shipping address"
+    },
+    "Notes": {
+      "type": "string",
+      "maxLength": 2000,
+      "description": "Notes"
+    },
+    "Balance": {
+      "type": "number",
+      "format": "decimal",
+      "description": "Balance"
+    },
+    "BalanceWithJobs": {
+      "type": "number",
+      "format": "decimal",
+      "description": "Balance with jobs"
+    },
+    "CurrencyRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        }
+      },
+      "description": "Currency reference"
+    },
+    "PreferredDeliveryMethod": {
+      "type": "string",
+      "enum": [
+        "Print",
+        "Email",
+        "None"
+      ],
+      "description": "Delivery method"
+    },
+    "ResaleNum": {
+      "type": "string",
+      "maxLength": 15,
+      "description": "Resale number"
+    },
+    "SalesTermRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        }
+      },
+      "description": "Payment terms"
+    },
+    "PaymentMethodRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        }
+      },
+      "description": "Default payment method"
+    },
+    "Taxable": {
+      "type": "boolean",
+      "description": "Is taxable"
+    }
+  },
+  "required": [
+    "DisplayName"
+  ],
+  "additionalProperties": false
+}

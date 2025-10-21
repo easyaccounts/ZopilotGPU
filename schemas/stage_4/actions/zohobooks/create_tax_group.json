@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_tax_group API Request (ZOHOBOOKS)",
+  "description": "Schema for create_tax_group - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "tax_group_name": {
+      "description": "Name of the tax group to be created.",
+      "type": "string"
+    },
+    "taxes": {
+      "description": "Comma Seperated list of tax IDs that are to be associated to the tax group.",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

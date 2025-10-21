@@ -1,0 +1,56 @@
+{
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string",
+      "description": "Unique identifier"
+    },
+    "SyncToken": {
+      "type": "string",
+      "description": "Version number"
+    },
+    "GivenName": {
+      "type": "string",
+      "description": "First name"
+    },
+    "FamilyName": {
+      "type": "string",
+      "description": "Last name"
+    },
+    "DisplayName": {
+      "type": "string",
+      "description": "Display name"
+    },
+    "Email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email address"
+    },
+    "Active": {
+      "type": "boolean",
+      "description": "Is active"
+    },
+    "MetaData": {
+      "type": "object",
+      "properties": {
+        "CreateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "LastUpdatedTime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "domain": {
+      "type": "string"
+    },
+    "sparse": {
+      "type": "boolean"
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "delete_user API Request (QUICKBOOKS)",
+  "description": "Schema for delete_user - extracted from quickbooks OpenAPI spec - NOTE: QuickBooks Users are READ-ONLY, this is for reference only"
+}

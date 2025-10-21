@@ -1,0 +1,195 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "delete_expense API Request (QUICKBOOKS)",
+  "description": "Schema for delete_expense - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string"
+    },
+    "SyncToken": {
+      "type": "string"
+    },
+    "DocNumber": {
+      "type": "string",
+      "maxLength": 21,
+      "description": "Check number"
+    },
+    "TxnDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "PaymentType": {
+      "type": "string",
+      "enum": [
+        "Cash",
+        "Check",
+        "CreditCard"
+      ],
+      "description": "Payment type (required)"
+    },
+    "AccountRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "description": "Bank/CC account (required)"
+    },
+    "Line": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "DetailType": {
+            "type": "string",
+            "enum": [
+              "AccountBasedExpenseLineDetail",
+              "ItemBasedExpenseLineDetail"
+            ]
+          },
+          "Amount": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "AccountBasedExpenseLineDetail": {
+            "type": "object",
+            "properties": {
+              "AccountRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "description": "Expense account"
+              },
+              "ClassRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              },
+              "CustomerRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              },
+              "BillableStatus": {
+                "type": "string",
+                "enum": [
+                  "Billable",
+                  "NotBillable",
+                  "HasBeenBilled"
+                ]
+              }
+            }
+          },
+          "ItemBasedExpenseLineDetail": {
+            "type": "object",
+            "properties": {
+              "ItemRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              },
+              "Qty": {
+                "type": "number",
+                "format": "decimal"
+              },
+              "UnitPrice": {
+                "type": "number",
+                "format": "decimal"
+              },
+              "CustomerRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              },
+              "BillableStatus": {
+                "type": "string",
+                "enum": [
+                  "Billable",
+                  "NotBillable",
+                  "HasBeenBilled"
+                ]
+              }
+            }
+          },
+          "Description": {
+            "type": "string",
+            "maxLength": 4000
+          }
+        }
+      },
+      "description": "Line items (required)"
+    },
+    "EntityRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "description": "Vendor/customer/employee"
+    },
+    "Credit": {
+      "type": "boolean",
+      "description": "Is credit (return)"
+    },
+    "TotalAmt": {
+      "type": "number",
+      "format": "decimal"
+    },
+    "PrivateNote": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "PrintStatus": {
+      "type": "string",
+      "enum": [
+        "NeedToPrint",
+        "PrintComplete"
+      ]
+    }
+  },
+  "required": [
+    "Line",
+    "AccountRef",
+    "PaymentType"
+  ],
+  "additionalProperties": false
+}

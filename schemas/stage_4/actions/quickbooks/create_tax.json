@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_tax API Request (QUICKBOOKS)",
+  "description": "Schema for create_tax - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string"
+    },
+    "SyncToken": {
+      "type": "string"
+    },
+    "Name": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "Tax code name (required)"
+    },
+    "Description": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "Active": {
+      "type": "boolean"
+    },
+    "Taxable": {
+      "type": "boolean",
+      "description": "Is taxable"
+    },
+    "TaxGroup": {
+      "type": "boolean",
+      "description": "Is tax group"
+    },
+    "SalesTaxRateList": {
+      "type": "object",
+      "properties": {
+        "TaxRateDetail": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "TaxRateRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              },
+              "TaxTypeApplicable": {
+                "type": "string",
+                "enum": [
+                  "TaxOnAmount",
+                  "TaxOnAmountPlusTax"
+                ]
+              },
+              "TaxOrder": {
+                "type": "integer",
+                "description": "Tax calculation order"
+              }
+            }
+          }
+        }
+      }
+    },
+    "PurchaseTaxRateList": {
+      "type": "object",
+      "properties": {
+        "TaxRateDetail": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "TaxRateRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              },
+              "TaxTypeApplicable": {
+                "type": "string",
+                "enum": [
+                  "TaxOnAmount",
+                  "TaxOnAmountPlusTax"
+                ]
+              },
+              "TaxOrder": {
+                "type": "integer",
+                "description": "Tax calculation order"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "Name"
+  ],
+  "additionalProperties": false
+}

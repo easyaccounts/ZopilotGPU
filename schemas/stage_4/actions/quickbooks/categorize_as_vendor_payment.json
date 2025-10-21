@@ -1,0 +1,185 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "categorize_as_vendor_payment API Request (QUICKBOOKS)",
+  "description": "Schema for categorize_as_vendor_payment - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string",
+      "description": "Unique identifier (for updates only)"
+    },
+    "SyncToken": {
+      "type": "string",
+      "description": "Version number (required for updates)"
+    },
+    "VendorRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        }
+      },
+      "description": "Vendor reference (required)"
+    },
+    "TotalAmt": {
+      "type": "number",
+      "format": "decimal",
+      "description": "Total payment amount (required)"
+    },
+    "PayType": {
+      "type": "string",
+      "enum": [
+        "Check",
+        "CreditCard"
+      ],
+      "description": "Payment type"
+    },
+    "APAccountRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        }
+      },
+      "description": "AP account"
+    },
+    "BankAccountRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        }
+      },
+      "description": "Bank account (for check payments)"
+    },
+    "CheckPayment": {
+      "type": "object",
+      "properties": {
+        "BankAccountRef": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "string",
+              "description": "Unique identifier"
+            },
+            "name": {
+              "type": "string",
+              "description": "Display name"
+            }
+          }
+        },
+        "PrintStatus": {
+          "type": "string",
+          "enum": [
+            "NeedToPrint",
+            "PrintComplete"
+          ]
+        },
+        "CheckNum": {
+          "type": "string"
+        }
+      },
+      "description": "Check payment details"
+    },
+    "CreditCardPayment": {
+      "type": "object",
+      "properties": {
+        "CCAccountRef": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "string",
+              "description": "Unique identifier"
+            },
+            "name": {
+              "type": "string",
+              "description": "Display name"
+            }
+          }
+        }
+      },
+      "description": "Credit card payment details"
+    },
+    "Line": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "Amount": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Amount to pay"
+          },
+          "LinkedTxn": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "TxnId": {
+                  "type": "string"
+                },
+                "TxnType": {
+                  "type": "string"
+                },
+                "TxnLineId": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Linked bill transactions"
+          }
+        }
+      },
+      "description": "Linked bills to pay"
+    },
+    "TxnDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Payment date"
+    },
+    "PrivateNote": {
+      "type": "string",
+      "maxLength": 4000,
+      "description": "Internal note"
+    },
+    "DocNumber": {
+      "type": "string",
+      "maxLength": 21,
+      "description": "Document number"
+    },
+    "DepartmentRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        }
+      },
+      "description": "Department reference"
+    }
+  },
+  "required": [
+    "VendorRef",
+    "TotalAmt"
+  ],
+  "additionalProperties": false
+}

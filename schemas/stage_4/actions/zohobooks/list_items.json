@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_items API Request (ZOHOBOOKS)",
+  "description": "Schema for list_items - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "description": "ID of the item.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the item. Max-length [100]",
+            "type": "string"
+          },
+          "status": {
+            "description": "Status of the item. It can be <code>active</code> or <code>inactive</code>",
+            "type": "string"
+          },
+          "description": {
+            "description": "Description for the item. Max-length [2000]",
+            "type": "string"
+          },
+          "rate": {
+            "description": "Price of the item.",
+            "type": "number",
+            "format": "double"
+          },
+          "unit": {
+            "description": "If there is a measurement unit for the items you are adding.",
+            "type": "string"
+          },
+          "tax_id": {
+            "description": "ID of the tax to be associated to the item.",
+            "type": "string"
+          },
+          "purchase_tax_rule_id": {
+            "description": "Id of the purchase tax rule",
+            "type": "string"
+          },
+          "sales_tax_rule_id": {
+            "description": "Id of the sales tax rule",
+            "type": "string"
+          },
+          "tax_name": {
+            "type": "string"
+          },
+          "tax_percentage": {
+            "description": "Percent of the tax.",
+            "type": "string"
+          },
+          "tax_type": {
+            "description": "Type of the tax.",
+            "type": "string"
+          },
+          "sku": {
+            "description": "SKU value of item,should be unique throughout the product",
+            "type": "string"
+          },
+          "product_type": {
+            "description": "Specify the type of an item. Allowed values:<br/><code> goods</code> or <code> service</code> or <code> digital_service</code>. <br/><b>For SouthAfrica Edition:</b> <code>service</code>, <code>goods</code>, <code>capital_service</code> and <code>capital_goods</code>",
+            "type": "string"
+          },
+          "sat_item_key_code": {
+            "description": "Add SAT Item Key Code for your goods/services. Download the <a href= http://omawww.sat.gob.mx/tramitesyservicios/Paginas/documentos/catCFDI_V_4_07122022.xls  >CFDI Catalogs.</a>",
+            "type": "string"
+          },
+          "unitkey_code": {
+            "description": "Add Unit Key Code for your goods/services. Download the <a href= http://omawww.sat.gob.mx/tramitesyservicios/Paginas/documentos/catCFDI_V_4_07122022.xls  >CFDI Catalogs.</a>",
+            "type": "string"
+          },
+          "custom_fields": {
+            "description": "Custom fields for an item.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "customfield_id": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "value": {
+                  "description": "Value of the Custom Field",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "page_context": {
+      "description": "The context of a particular page.",
+      "type": "object",
+      "properties": {
+        "page": {
+          "description": "Number of pages",
+          "type": "integer"
+        },
+        "per_page": {
+          "description": "Per page values",
+          "type": "integer"
+        },
+        "has_more_page": {
+          "description": "Check if has more pages",
+          "type": "boolean"
+        },
+        "report_name": {
+          "description": "The displaying the  report name",
+          "type": "string"
+        },
+        "sort_column": {
+          "description": "Sort items. Allowed Values: <code>name</code>, <code>rate</code> and <code>tax_name</code>",
+          "type": "string"
+        },
+        "sort_order": {
+          "description": "The order for sorting",
+          "type": "string"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

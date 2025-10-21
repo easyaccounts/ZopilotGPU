@@ -1,0 +1,115 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_taxes API Request (ZOHOBOOKS)",
+  "description": "Schema for list_taxes - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    },
+    "taxes": {
+      "description": "Comma Seperated list of tax IDs that are to be associated to the tax group.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tax_id": {
+            "description": "ID of the Tax",
+            "type": "string"
+          },
+          "tax_name": {
+            "description": "Name of the Tax",
+            "type": "string"
+          },
+          "tax_percentage": {
+            "description": "Number of Percentage Taxable.",
+            "type": "number",
+            "format": "double"
+          },
+          "tax_type": {
+            "description": "Type to determine whether it is a simple or compound tax. <code>Allowed Values: tax and compound_tax</code>",
+            "type": "string"
+          },
+          "tax_factor": {
+            "description": "Type of Tax Factor. Allowed values: <code>rate</code>, <code>share</code>",
+            "type": "string"
+          },
+          "tax_specific_type": {
+            "description": "Type of Tax For <b>Indian</b> Edition. Allowed Values : <code>igst</code> ,<code>cgst</code> ,<code>sgst</code> ,<code>nil</code>, <code> cess </code>.</br>Type of Tax for <b>Mexico</b> Edition. Allowed Values : <code>isr</code>, <code>iva</code>, <code>ieps</code>.</br>Type of Tax for <b>South Africa</b> Edition. Allowed Values : </br><code>soa_less_than_28d</code> - Supply of accommodation not exceeding 28 days, </br><code>soa_more_than_28d</code> - Supply of accommodation exceeding than 28 days, </br><code>ciu_prev_tax_supply</code> - Change in use (Taxable supplies), </br><code>ciu_prev_nontax_supply</code> - Change in use (Non-Taxable supplies), </br><code>export_of_shg</code> - Export of second hand goods.",
+            "type": "string"
+          },
+          "tax_authority_id": {
+            "description": "ID of the tax authority. Tax authority depends on the location of the customer. For example, if the customer is located in NY, then the tax authority is NY tax authority.",
+            "type": "string"
+          },
+          "tax_authority_name": {
+            "description": "Name of the Tax Authority",
+            "type": "string"
+          },
+          "is_value_added": {
+            "description": "Check if Tax is Value Added",
+            "type": "boolean"
+          },
+          "is_default_tax": {
+            "description": "Check is Tax is default",
+            "type": "boolean"
+          },
+          "is_editable": {
+            "description": "Check if tax is editable",
+            "type": "boolean"
+          },
+          "output_tax_account_name": {
+            "type": "string"
+          },
+          "purchase_tax_account_name": {
+            "type": "string"
+          },
+          "tax_account_id": {
+            "type": "string"
+          },
+          "purchase_tax_account_id": {
+            "description": "ID of the tax account, in case of withholding tax.",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "page_context": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "description": "Number of pages",
+          "type": "integer"
+        },
+        "per_page": {
+          "description": "Per page values",
+          "type": "integer"
+        },
+        "has_more_page": {
+          "description": "Check if has more pages",
+          "type": "boolean"
+        },
+        "report_name": {
+          "description": "The report name",
+          "type": "string"
+        },
+        "applied_filter": {
+          "description": "The filer applied for sorting",
+          "type": "string"
+        },
+        "sort_column": {
+          "description": "Sort taxes.Allowed Values: <code>tax_name</code>, <code>taxes</code>, <code>date</code>, <code> due_date</code>, <code>total</code>, <code>balance</code> and  <code>created_time</code>",
+          "type": "string"
+        },
+        "sort_order": {
+          "description": "The order for sorting",
+          "type": "string"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

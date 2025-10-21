@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_project API Request (QUICKBOOKS)",
+  "description": "Schema for create_project - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string",
+      "description": "Unique identifier (for updates only)"
+    },
+    "SyncToken": {
+      "type": "string",
+      "description": "Version number (required for updates)"
+    },
+    "Name": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "Class name (required)"
+    },
+    "SubClass": {
+      "type": "boolean",
+      "description": "Is sub-class"
+    },
+    "ParentRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        }
+      },
+      "description": "Parent class (if SubClass=true)"
+    },
+    "FullyQualifiedName": {
+      "type": "string",
+      "description": "Full hierarchical name"
+    },
+    "Active": {
+      "type": "boolean",
+      "description": "Is active"
+    }
+  },
+  "required": [
+    "Name"
+  ],
+  "additionalProperties": false
+}

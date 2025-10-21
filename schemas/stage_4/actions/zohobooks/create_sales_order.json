@@ -1,0 +1,349 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_sales_order API Request Body",
+  "description": "JSON Schema for create_sales_order action - extracted from OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "description": "ID of the customer to whom the sales order has to be created.",
+      "type": "string"
+    },
+    "currency_id": {
+      "description": "ID of the Currency in Sales Order",
+      "type": "string"
+    },
+    "contact_persons": {
+      "description": "Array of contact person(s) for whom sales order has to be sent.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "date": {
+      "description": "The date, the sales order is created.",
+      "type": "string"
+    },
+    "shipment_date": {
+      "description": "Shipping date of sales order.",
+      "type": "string"
+    },
+    "custom_fields": {
+      "description": "Custom fields for a sales order.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "customfield_id": {
+            "description": "ID of the Custom Field",
+            "type": "integer",
+            "format": "int64"
+          },
+          "value": {
+            "description": "Value of the Custom Field",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "place_of_supply": {
+      "description": "Place where the goods/services are supplied to. (If not given, <code>place of contact</code> given for the contact will be taken)<br/>Supported codes for UAE emirates are : </br>Abu Dhabi - <code>AB</code>,</br>Ajman - <code>AJ</code>,</br>Dubai - <code>DU</code>,</br>Fujairah - <code>FU</code>,</br>Ras al-Khaimah - <code>RA</code>,</br>Sharjah - <code>SH</code>,</br>Umm al-Quwain - <code>UM</code><br/>Supported codes for the GCC countries are : </br>United Arab Emirates - <code>AE</code>,</br>Saudi Arabia - <code>SA</code>,</br>Bahrain - <code>BH</code>,</br>Kuwait - <code>KW</code>,</br>Oman - <code>OM</code>,</br>Qatar - <code>QA</code>.",
+      "type": "string"
+    },
+    "salesperson_id": {
+      "description": "ID of the salesperson",
+      "type": "string"
+    },
+    "merchant_id": {
+      "description": "ID of the merchant",
+      "type": "string"
+    },
+    "gst_treatment": {
+      "description": "Choose whether the contact is GST registered/unregistered/consumer/overseas. Allowed values are <code> business_gst </code> , <code> business_none </code> , <code> overseas </code> , <code> consumer </code>.",
+      "type": "string"
+    },
+    "gst_no": {
+      "description": "15 digit GST identification number of the customer.",
+      "type": "string"
+    },
+    "is_inclusive_tax": {
+      "description": "Used to specify whether the line item rates are inclusive or exclusive of tax.",
+      "type": "boolean"
+    },
+    "location_id": {
+      "description": "Location ID",
+      "type": "string"
+    },
+    "line_items": {
+      "description": "Line items of a sales order.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_order": {
+            "type": "integer"
+          },
+          "item_id": {
+            "description": "ID of the item.",
+            "type": "string"
+          },
+          "rate": {
+            "description": "Rate of the line item.",
+            "type": "number",
+            "format": "double"
+          },
+          "name": {
+            "description": "Name of the line item.",
+            "type": "string"
+          },
+          "description": {
+            "description": "Description of the line item.",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "Quantity of the line item.",
+            "type": "number",
+            "format": "double"
+          },
+          "product_type": {
+            "description": "Enter <code>goods</code> or <code>services</code> .<br/><b>For SouthAfrica Edition:</b> <code>service</code>, <code>goods</code>, <code>capital_service</code> and <code>capital_goods</code>",
+            "type": "string"
+          },
+          "hsn_or_sac": {
+            "description": "Add HSN/SAC code for your goods/services",
+            "type": "string"
+          },
+          "sat_item_key_code": {
+            "description": "Add SAT Item Key Code for your goods/services. Download the <a href= http://omawww.sat.gob.mx/tramitesyservicios/Paginas/documentos/catCFDI_V_4_07122022.xls  >CFDI Catalogs.</a>",
+            "type": "string"
+          },
+          "unitkey_code": {
+            "description": "Add SAT Unit Key Code for your goods/services. Download the <a href= http://omawww.sat.gob.mx/tramitesyservicios/Paginas/documentos/catCFDI_V_4_07122022.xls  >CFDI Catalogs.</a>",
+            "type": "string"
+          },
+          "location_id": {
+            "description": "Location ID",
+            "type": "string"
+          },
+          "discount": {
+            "description": "Discount applied to the sales order. It can be either in % or in amount. e.g. 12.5% or 190.",
+            "type": "string"
+          },
+          "tax_id": {
+            "description": "ID of the tax or tax group applied",
+            "type": "string"
+          },
+          "tds_tax_id": {
+            "description": "ID of the TDS tax or TDS tax group applied",
+            "type": "string"
+          },
+          "tags": {
+            "description": "Filter all your reports based on the tag",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tag_id": {
+                  "description": "ID of the reporting tag",
+                  "type": "string"
+                },
+                "tag_option_id": {
+                  "description": "ID of the reporting tag's option",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "unit": {
+            "description": "Unit of the line item e.g. kgs, Nos.",
+            "type": "string"
+          },
+          "item_custom_fields": {
+            "description": "Custom fields for a sales order items.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "customfield_id": {
+                  "description": "ID of the Custom Field",
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "value": {
+                  "description": "Value of the Custom Field",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "tax_exemption_id": {
+            "description": "ID of the tax exemption applied",
+            "type": "string"
+          },
+          "tax_exemption_code": {
+            "description": "Code of Tax Exemption that is applied",
+            "type": "string"
+          },
+          "tax_treatment_code": {
+            "description": "Specify reason for using out of scope.</br>Supported values for <b>UAE</b> are <code>uae_same_tax_group</code>, <code>uae_reimbursed_expense</code> and <code>uae_others</code>.</br> Supported values for <b>Bahrain</b> are <code>bahrain_same_tax_group</code>, <code>bahrain_transfer_of_concern</code>, <code>bahrain_disbursement</code>, <code>bahrain_head_to_branch_transaction</code>, <code>bahrain_warranty_repair_services</code> and <code>bahrain_others</code>.</br>Supported values for <b>Saudi Arabia</b> are <code>ksa_pvt_health</code>, <code>ksa_pvt_edu</code>, <code>ksa_reimbursed_expense</code> and <code>ksa_house_sales</code>.",
+            "type": "string"
+          },
+          "avatax_exempt_no": {
+            "description": "Exemption certificate number of the customer.",
+            "type": "string"
+          },
+          "avatax_use_code": {
+            "description": "Used to group like customers for exemption purposes. It is a custom value that links customers to a tax rule.",
+            "type": "string"
+          },
+          "project_id": {
+            "description": "ID of the project",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "notes": {
+      "description": "Notes for this Sales Order",
+      "type": "string"
+    },
+    "terms": {
+      "type": "string"
+    },
+    "billing_address_id": {
+      "description": "ID of the Billing Address",
+      "type": "string"
+    },
+    "shipping_address_id": {
+      "description": "ID of the Shipping Address",
+      "type": "string"
+    },
+    "crm_owner_id": {
+      "type": "string"
+    },
+    "crm_custom_reference_id": {
+      "type": "string"
+    },
+    "vat_treatment": {
+      "description": "(Optional) VAT treatment for the sales order. VAT treatment denotes the location of the customer, if the customer resides in UK then the VAT treatment is <code>uk</code>. If the customer is in an EU country & VAT registered, you are resides in Northen Ireland and purchasing Goods then his VAT treatment is <code>eu_vat_registered</code> and if he resides outside the UK then his VAT treatment is <code>overseas</code>(For Pre Brexit, this can be split as <code>eu_vat_registered</code>, <code>eu_vat_not_registered</code> and <code>non_eu</code>).",
+      "type": "string"
+    },
+    "tax_treatment": {
+      "description": "VAT treatment for the sales order.Allowed Values: <code>vat_registered</code>,<code>vat_not_registered</code>,<code>gcc_vat_not_registered</code>,<code>gcc_vat_registered</code>,<code>non_gcc</code>.</br><code>dz_vat_registered</code> and <code>dz_vat_not_registered</code> supported only for <b>UAE</b>.</b></br><code>home_country_mexico</code>,<code>border_region_mexico</code>,<code>non_mexico</code> supported only for <b>MX</b>. <br/><b>For Kenya Edition:</b> <code>vat_registered</code> ,<code>vat_not_registered</code> ,<code>non_kenya</code>(A business that is located outside Kenya).<br/><b>For SouthAfrica Edition:</b> <code>vat_registered</code>, <code>vat_not_registered</code>, <code>overseas</code>(A business that is located outside SouthAfrica).",
+      "type": "string"
+    },
+    "is_reverse_charge_applied": {
+      "description": "(Required if customer tax treatment is <code>vat_registered</code>)<br/>Used to specify whether the transaction is applicable for Domestic Reverse Charge (DRC) or not.",
+      "type": "boolean"
+    },
+    "salesorder_number": {
+      "description": "Mandatory if auto number generation is disabled.",
+      "type": "string"
+    },
+    "reference_number": {
+      "description": "Reference Number of the Sales Order.",
+      "type": "string"
+    },
+    "is_update_customer": {
+      "description": "Boolean to update billing address of customer.",
+      "type": "boolean"
+    },
+    "discount": {
+      "description": "Discount applied to the sales order. It can be either in % or in amount. e.g. 12.5% or 190.",
+      "type": "string"
+    },
+    "exchange_rate": {
+      "description": "Exchange rate of the currency.",
+      "type": "number",
+      "format": "double"
+    },
+    "salesperson_name": {
+      "description": "Name of the sales person.",
+      "type": "string"
+    },
+    "notes_default": {
+      "description": "Default Notes for the Sales Order",
+      "type": "string"
+    },
+    "terms_default": {
+      "description": "Default Terms of the Sales Order",
+      "type": "string"
+    },
+    "tax_id": {
+      "description": "Tax ID for the Sales Order.",
+      "type": "string"
+    },
+    "tax_authority_id": {
+      "description": "ID of the tax authority. Tax authority depends on the location of the customer.",
+      "type": "string"
+    },
+    "tax_exemption_id": {
+      "description": "ID of the tax exemption applied",
+      "type": "string"
+    },
+    "tax_authority_name": {
+      "description": "Tax Authority's name.",
+      "type": "string"
+    },
+    "tax_exemption_code": {
+      "description": "Code of Tax Exemption that is applied",
+      "type": "string"
+    },
+    "avatax_exempt_no": {
+      "description": "Exemption certificate number of the customer.",
+      "type": "string"
+    },
+    "avatax_use_code": {
+      "description": "Used to group like customers for exemption purposes. It is a custom value that links customers to a tax rule.",
+      "type": "string"
+    },
+    "shipping_charge": {
+      "type": "number",
+      "format": "double"
+    },
+    "adjustment": {
+      "type": "number",
+      "format": "double"
+    },
+    "delivery_method": {
+      "type": "string"
+    },
+    "estimate_id": {
+      "description": "ID of the estimate associated with the Sales Order",
+      "type": "string"
+    },
+    "is_discount_before_tax": {
+      "description": "Used to specify how the discount has to applied. Either before or after the calculation of tax.",
+      "type": "boolean"
+    },
+    "discount_type": {
+      "description": "How the discount is specified. Allowed values are entity_level or item_level. Allowed Values: <code>entity_level</code> and <code>item_level</code>.",
+      "type": "string"
+    },
+    "adjustment_description": {
+      "type": "string"
+    },
+    "pricebook_id": {
+      "type": "string"
+    },
+    "template_id": {
+      "description": "ID of the pdf template.",
+      "type": "string"
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "zcrm_potential_id": {
+      "type": "string"
+    },
+    "zcrm_potential_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "customer_id"
+  ],
+  "additionalProperties": false
+}

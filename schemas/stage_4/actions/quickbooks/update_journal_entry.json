@@ -1,0 +1,126 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "update_journal_entry API Request (QUICKBOOKS)",
+  "description": "Schema for update_journal_entry - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string"
+    },
+    "SyncToken": {
+      "type": "string"
+    },
+    "DocNumber": {
+      "type": "string",
+      "maxLength": 21
+    },
+    "TxnDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "Line": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "DetailType": {
+            "type": "string",
+            "enum": [
+              "JournalEntryLineDetail"
+            ]
+          },
+          "Amount": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Amount (required)"
+          },
+          "JournalEntryLineDetail": {
+            "type": "object",
+            "properties": {
+              "PostingType": {
+                "type": "string",
+                "enum": [
+                  "Debit",
+                  "Credit"
+                ],
+                "description": "Posting type (required)"
+              },
+              "AccountRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "description": "Account (required)"
+              },
+              "Entity": {
+                "type": "object",
+                "properties": {
+                  "Type": {
+                    "type": "string",
+                    "enum": [
+                      "Customer",
+                      "Vendor",
+                      "Employee"
+                    ]
+                  },
+                  "EntityRef": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "description": "Customer/Vendor/Employee (optional)"
+              },
+              "ClassRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "description": "Class (optional)"
+              }
+            },
+            "description": "Journal entry details (required)"
+          },
+          "Description": {
+            "type": "string",
+            "maxLength": 4000
+          }
+        }
+      },
+      "description": "Line items - must balance (required)"
+    },
+    "PrivateNote": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "TotalAmt": {
+      "type": "number",
+      "format": "decimal",
+      "description": "Total amount (sum of debits or credits)"
+    },
+    "Adjustment": {
+      "type": "boolean",
+      "description": "Is adjustment entry"
+    }
+  },
+  "required": [
+    "Line"
+  ],
+  "additionalProperties": false
+}

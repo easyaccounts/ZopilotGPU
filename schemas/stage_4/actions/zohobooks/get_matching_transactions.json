@@ -1,0 +1,68 @@
+{
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    },
+    "matching_transactions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "transaction_id": {
+            "description": "ID of the Transaction",
+            "type": "string"
+          },
+          "date": {
+            "description": "Transaction date.",
+            "type": "string"
+          },
+          "transaction_type": {
+            "description": "Type of the transaction. <br> <strong>Allowed transaction types</strong> : deposit, refund(*Supported only in Credit Card accounts), transfer_fund, card_payment, sales_without_invoices, expense_refund, owner_contribution, interest_income, other_income, owner_drawings, sales_return <br> <strong>Note:</strong> You will not be able to create the following module-specific transaction types under Bank Transaction endpoints :<div> <a href=\"#Expenses\">Expense</a>, <a href=\"#Vendor-Payments\">Vendor Advance/Vendor Payment/Bill Payment</a>, <a href=\"#Vendor-Credits_Refund_a_vendor_credit\">Vendor Credit Refund</a>, <a href=\"#Vendor-Payments_Refund_an_excess_vendor_payment\">Vendor Payment Refund</a>, <a href=\"#Customer-Payments\">Customer Advance/Customer Payment</a>, <a href=\"#Credit-Notes_Refund_credit_note\">Credit Note Refund</a>, <a href=\"#Customer-Payments_Refund_an_excess_customer_payment\">Payment Refund</a>. Hence, refer them in their repective modules.</div>",
+            "type": "string"
+          },
+          "reference_number": {
+            "description": "Reference Number of the transaction",
+            "type": "string"
+          },
+          "amount": {
+            "description": "Amount of the transaction",
+            "type": "number",
+            "format": "double"
+          },
+          "debit_or_credit": {
+            "description": "Indicates if transaction is Credit or Debit",
+            "type": "string"
+          },
+          "transaction_number": {
+            "description": "Number of the transaction",
+            "type": "string"
+          },
+          "is_paid_via_print_check": {
+            "description": "Is the entity paid via print check",
+            "type": "boolean",
+            "x-node_available_in": [
+              "us",
+              "ca"
+            ],
+            "x-node_unavailable_in": []
+          },
+          "contact_name": {
+            "description": "Name of the Contact",
+            "type": "string"
+          },
+          "is_best_match": {
+            "description": "Check if the transaction is the best match",
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "get_matching_transactions API Request (ZOHOBOOKS)",
+  "description": "Schema for get_matching_transactions - extracted from zohobooks OpenAPI spec (corrected path: components.schemas.get-matching-transactions-response)"
+}

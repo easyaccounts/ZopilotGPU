@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_projects API Request (ZOHOBOOKS)",
+  "description": "Schema for list_projects - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string"
+          },
+          "project_name": {
+            "description": "Name of the project. <code>Max-length [100]</code>",
+            "type": "string"
+          },
+          "customer_id": {
+            "description": "Search projects by customer id.",
+            "type": "string"
+          },
+          "customer_name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "billing_type": {
+            "description": "The way you bill your customer. Allowed Values: <code>fixed_cost_for_project</code>, <code>based_on_project_hours</code>, <code>based_on_staff_hours</code> and <code>based_on_task_hours</code>",
+            "type": "string"
+          },
+          "rate": {
+            "type": "number",
+            "format": "float"
+          },
+          "created_time": {
+            "type": "string"
+          },
+          "has_attachment": {
+            "type": "boolean"
+          },
+          "total_hours": {
+            "type": "string"
+          },
+          "billable_hours": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "page_context": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "format": "double"
+          },
+          "per_page": {
+            "type": "number",
+            "format": "double"
+          },
+          "report_name": {
+            "type": "string"
+          },
+          "has_more_page": {
+            "type": "boolean"
+          },
+          "sort_order": {
+            "type": "string"
+          },
+          "sort_column": {
+            "description": "Sort projects. Allowed Values: <code>project_name</code>, <code>customer_name</code>, <code>rate</code> and <code>created_time</code>",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

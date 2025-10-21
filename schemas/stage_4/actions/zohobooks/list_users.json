@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_users API Request (ZOHOBOOKS)",
+  "description": "Schema for list_users - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    },
+    "users": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "role_id": {
+            "type": "string"
+          },
+          "name": {
+            "description": "name of the user",
+            "type": "string"
+          },
+          "email": {
+            "description": "email address of the user",
+            "type": "string"
+          },
+          "user_role": {
+            "description": "Role to be assigned. Allowed Values: <code>staff</code>, <code>admin</code> and <code>timesheetstaff</code>.",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "is_current_user": {
+            "type": "boolean"
+          },
+          "photo_url": {
+            "type": "string"
+          },
+          "is_customer_segmented": {
+            "type": "boolean"
+          },
+          "is_vendor_segmented": {
+            "type": "boolean"
+          },
+          "user_type": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "page_context": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "number",
+          "format": "double"
+        },
+        "per_page": {
+          "type": "number",
+          "format": "double"
+        },
+        "has_more_page": {
+          "type": "boolean"
+        },
+        "report_name": {
+          "type": "string"
+        },
+        "sort_column": {
+          "type": "string"
+        },
+        "sort_order": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "delete_time_entry API Request (QUICKBOOKS)",
+  "description": "Schema for delete_time_entry - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string"
+    },
+    "SyncToken": {
+      "type": "string"
+    },
+    "TxnDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of time activity"
+    },
+    "NameOf": {
+      "type": "string",
+      "enum": [
+        "Employee",
+        "Vendor"
+      ],
+      "description": "Type of resource (required)"
+    },
+    "EmployeeRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "description": "Employee (if NameOf=Employee)"
+    },
+    "VendorRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "description": "Vendor (if NameOf=Vendor)"
+    },
+    "CustomerRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "description": "Customer (for billable time)"
+    },
+    "ItemRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "description": "Service item"
+    },
+    "ClassRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "description": "Class"
+    },
+    "StartTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Start time"
+    },
+    "EndTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "End time"
+    },
+    "Hours": {
+      "type": "integer",
+      "description": "Hours worked"
+    },
+    "Minutes": {
+      "type": "integer",
+      "description": "Minutes worked"
+    },
+    "BreakHours": {
+      "type": "integer",
+      "description": "Break hours"
+    },
+    "BreakMinutes": {
+      "type": "integer",
+      "description": "Break minutes"
+    },
+    "HourlyRate": {
+      "type": "number",
+      "format": "decimal",
+      "description": "Hourly rate"
+    },
+    "BillableStatus": {
+      "type": "string",
+      "enum": [
+        "Billable",
+        "NotBillable",
+        "HasBeenBilled"
+      ],
+      "description": "Billable status"
+    },
+    "Taxable": {
+      "type": "boolean",
+      "description": "Is taxable"
+    },
+    "Description": {
+      "type": "string",
+      "maxLength": 4000,
+      "description": "Description of work performed"
+    }
+  },
+  "required": [
+    "NameOf"
+  ],
+  "additionalProperties": false
+}

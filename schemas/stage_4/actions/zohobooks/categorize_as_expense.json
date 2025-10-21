@@ -1,0 +1,318 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "categorize_as_expense API Request (ZOHOBOOKS)",
+  "description": "Schema for categorize_as_expense - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "account_id": {
+      "description": "Mandatory Account id for which transactions are to be listed.",
+      "type": "string"
+    },
+    "paid_through_account_id": {
+      "description": "ID of the credit/ bank account the payment is made.",
+      "type": "string"
+    },
+    "date": {
+      "description": "Transaction date.",
+      "type": "string"
+    },
+    "tax_id": {
+      "description": "ID of the tax or tax group applied",
+      "type": "string"
+    },
+    "amount": {
+      "description": "Amount of the transaction",
+      "type": "number",
+      "format": "double"
+    },
+    "project_id": {
+      "description": "ID of the project associated with the expense.",
+      "type": "string"
+    },
+    "tax_exemption_code": {
+      "description": "Code of the Tax Exemption",
+      "type": "string"
+    },
+    "tax_exemption_id": {
+      "description": "ID of the Tax Exemption",
+      "type": "string"
+    },
+    "is_inclusive_tax": {
+      "description": "Check if transaction is tax Inclusive",
+      "type": "boolean"
+    },
+    "is_billable": {
+      "description": "A boolean value to specify if the expense is billable.",
+      "type": "boolean"
+    },
+    "reference_number": {
+      "description": "Reference Number of the transaction",
+      "type": "string"
+    },
+    "description": {
+      "description": "A brief description about the transaction.",
+      "type": "string"
+    },
+    "customer_id": {
+      "description": "ID of the customer or vendor.",
+      "type": "string"
+    },
+    "zp_project_id": {
+      "description": "ID of the Project",
+      "type": "integer",
+      "format": "int64"
+    },
+    "zp_project_name": {
+      "description": "Name of the Project",
+      "type": "string"
+    },
+    "zp_client_id": {
+      "description": "ID of client",
+      "type": "integer",
+      "format": "int64"
+    },
+    "vendor_id": {
+      "description": "ID of the Vendor",
+      "type": "string"
+    },
+    "vehicle_id": {
+      "description": "ID of the Vehicle",
+      "type": "string"
+    },
+    "mileage_unit": {
+      "description": "Unit of Mileage",
+      "type": "string"
+    },
+    "mileage_rate": {
+      "description": "Mileage Rate to be Applied",
+      "type": "number",
+      "format": "double"
+    },
+    "can_reclaim_vat_on_mileage": {
+      "description": "Check if VAT can be reclaimed on mileage",
+      "type": "boolean"
+    },
+    "fuel_type": {
+      "description": "Type of Fuel Used. Allowed Values : <code>petrol</code>, <code>lpg</code>, <code>diesel</code>",
+      "type": "string"
+    },
+    "engine_capacity_range": {
+      "description": "Type of Fuel Used. Allowed Values : <code>less_than_1400cc</code>, <code>between_1401cc_and_1600cc</code>, <code>between_1601cc_and_2000cc</code> and <code>more_than_2000cc</code>",
+      "type": "string"
+    },
+    "employee_id": {
+      "description": "ID of the Employee",
+      "type": "integer",
+      "format": "int64"
+    },
+    "mileage_type": {
+      "description": "Type of Mileage. Allowed Values : <code>gmaps</code>,<code>imaps</code>,<code>gps</code>,<code>odometer</code>,<code>wmaps</code>,<code>manual</code>,<code>non_mileage</code> and <code>per_diem</code>",
+      "type": "string"
+    },
+    "expense_type": {
+      "description": "Type of Expense",
+      "type": "string"
+    },
+    "distance": {
+      "description": "Distance Covered",
+      "type": "number",
+      "format": "double"
+    },
+    "start_reading": {
+      "description": "Start Reading of the Odometer",
+      "type": "string"
+    },
+    "end_reading": {
+      "description": "End Reading of the Odometer",
+      "type": "string"
+    },
+    "currency_id": {
+      "description": "The currency ID involved in the transaction.",
+      "type": "string"
+    },
+    "custom_fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "description": "Index of the custom field",
+            "type": "integer"
+          },
+          "value": {
+            "description": "Value of the Custom Field",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tag_id": {
+            "description": "ID of the Tag",
+            "type": "integer",
+            "format": "int64"
+          },
+          "tag_option_id": {
+            "description": "Id of the Tag Option",
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
+    "documents": {
+      "description": "List of files to be attached to a particular transaction.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "file_name": {
+            "description": "Name of the attached file."
+          },
+          "document_id": {
+            "description": "Unique ID of the attached file."
+          }
+        }
+      }
+    },
+    "exchange_rate": {
+      "description": "The foreign currency exchange rate value.",
+      "type": "integer"
+    },
+    "recurring_expense_id": {
+      "description": "ID of the Recurring Expense",
+      "type": "integer",
+      "format": "int64"
+    },
+    "vat_treatment": {
+      "description": "VAT treatment for the bank transaction. VAT treatment denotes the location of the customer or vendor. If the customer or vendor resides in the UK then the VAT treatment is <code>uk</code>. If the customer or vendor is in an EU country & VAT registered, you are resides in Northen Ireland and purchasing/selling Goods then his VAT treatment is <code>eu_vat_registered</code>. And, if he resides outside the UK then his VAT treatment is <code>overseas</code>.",
+      "type": "string"
+    },
+    "tax_treatment": {
+      "description": "VAT treatment for the bank transaction.Choose whether the contact falls under: <code>vat_registered</code>,<code>vat_not_registered</code>,<code>gcc_vat_not_registered</code>,<code>gcc_vat_registered</code>,<code>non_gcc</code>.</br><code>dz_vat_registered</code> and <code>dz_vat_not_registered</code> are supported only for <b>UAE</b>.<br/><b>For Kenya Edition:</b> <code>vat_registered</code> ,<code>vat_not_registered</code> ,<code>non_kenya</code>(A business that is located outside Kenya).<br/><b>For SouthAfrica Edition:</b> <code>vat_registered</code>, <code>vat_not_registered</code>, <code>overseas</code>(A business that is located outside SouthAfrica).",
+      "type": "string"
+    },
+    "acquisition_vat_id": {
+      "description": "(Optional) This is the ID of the tax applied in case this is an EU - goods purchase or expense and acquisition VAT needs to be reported.",
+      "type": "string"
+    },
+    "reverse_charge_vat_id": {
+      "description": "(Optional) This is the ID of the tax applied in case this is a non UK - service purchase or expense and reverse charge VAT needs to be reported.",
+      "type": "string"
+    },
+    "is_update_customer": {
+      "description": "Check if Customer should be updated",
+      "type": "boolean"
+    },
+    "product_type": {
+      "description": "Type of the transaction. This denotes whether the transaction line item is to be treated as goods or as a service. Allowed Values: <br/> <b>For UK and Europe: </b><code>digital_service</code>, <code>goods</code> and <code>service</code>.<br/><b>For SouthAfrica Edition:</b> <code>service</code>, <code>goods</code>, <code>capital_service</code> and <code>capital_goods</code>",
+      "type": "string"
+    },
+    "taxes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tax_name": {
+            "description": "Name of the Tax",
+            "type": "string"
+          },
+          "tax_amount": {
+            "description": "Amount of Tax",
+            "type": "number",
+            "format": "double"
+          },
+          "tax_id": {
+            "description": "ID of the tax or tax group applied",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "reason": {
+      "description": "Reason",
+      "type": "string"
+    },
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "line_item_id": {
+            "description": "ID of the Line Item",
+            "type": "integer",
+            "format": "int64"
+          },
+          "account_id": {
+            "description": "Mandatory Account id for which transactions are to be listed.",
+            "type": "string"
+          },
+          "description": {
+            "description": "A brief description about the transaction.",
+            "type": "string"
+          },
+          "amount": {
+            "description": "Amount of the transaction",
+            "type": "number",
+            "format": "double"
+          },
+          "tax_id": {
+            "description": "ID of the tax or tax group applied",
+            "type": "string"
+          },
+          "item_order": {
+            "description": "Order of the Item",
+            "type": "integer"
+          },
+          "product_type": {
+            "description": "Type of the transaction. This denotes whether the transaction line item is to be treated as goods or as a service. Allowed Values: <br/> <b>For UK and Europe: </b><code>digital_service</code>, <code>goods</code> and <code>service</code>.<br/><b>For SouthAfrica Edition:</b> <code>service</code>, <code>goods</code>, <code>capital_service</code> and <code>capital_goods</code>",
+            "type": "string"
+          },
+          "acquisition_vat_id": {
+            "description": "(Optional) This is the ID of the tax applied in case this is an EU - goods purchase or expense and acquisition VAT needs to be reported.",
+            "type": "string"
+          },
+          "reverse_charge_vat_id": {
+            "description": "(Optional) This is the ID of the tax applied in case this is a non UK - service purchase or expense and reverse charge VAT needs to be reported.",
+            "type": "string"
+          },
+          "tax_exemption_code": {
+            "description": "Code of the Tax Exemption",
+            "type": "string"
+          },
+          "tax_exemption_id": {
+            "description": "ID of the Tax Exemption",
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tag_id": {
+                  "description": "ID of the Tag",
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "tag_option_id": {
+                  "description": "Id of the Tag Option",
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "zcrm_potential_id": {
+      "type": "integer",
+      "format": "int64"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,160 @@
+{
+  "type": "object",
+  "required": [
+    "Line",
+    "CustomerRef"
+  ],
+  "properties": {
+    "Id": {
+      "type": "string"
+    },
+    "SyncToken": {
+      "type": "string"
+    },
+    "DocNumber": {
+      "type": "string",
+      "maxLength": 21
+    },
+    "TxnDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "CustomerRef": {
+      "description": "Customer (required)",
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "DepositToAccountRef": {
+      "type": "object",
+      "description": "Circular reference: #/components/schemas/ReferenceType"
+    },
+    "PaymentMethodRef": {
+      "type": "object",
+      "description": "Circular reference: #/components/schemas/ReferenceType"
+    },
+    "Line": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "DetailType": {
+            "type": "string",
+            "enum": [
+              "SalesItemLineDetail"
+            ]
+          },
+          "Amount": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "SalesItemLineDetail": {
+            "type": "object",
+            "properties": {
+              "ItemRef": {
+                "type": "object",
+                "description": "Circular reference: #/components/schemas/ReferenceType"
+              },
+              "Qty": {
+                "type": "number",
+                "format": "decimal"
+              },
+              "UnitPrice": {
+                "type": "number",
+                "format": "decimal"
+              }
+            }
+          },
+          "Description": {
+            "type": "string",
+            "maxLength": 4000
+          }
+        }
+      },
+      "description": "Line items (required)"
+    },
+    "BillAddr": {
+      "type": "object",
+      "properties": {
+        "Line1": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "City": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "CountrySubDivisionCode": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "PostalCode": {
+          "type": "string",
+          "maxLength": 30
+        }
+      }
+    },
+    "ShipAddr": {
+      "type": "object",
+      "description": "Circular reference: #/components/schemas/PhysicalAddress"
+    },
+    "PaymentRefNum": {
+      "type": "string",
+      "maxLength": 21
+    },
+    "TotalAmt": {
+      "type": "number",
+      "format": "decimal"
+    },
+    "Balance": {
+      "type": "number",
+      "format": "decimal",
+      "description": "Balance (should be 0 for sales receipts)"
+    },
+    "CustomerMemo": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      }
+    },
+    "PrivateNote": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "PrintStatus": {
+      "type": "string",
+      "enum": [
+        "NeedToPrint",
+        "PrintComplete"
+      ]
+    },
+    "EmailStatus": {
+      "type": "string",
+      "enum": [
+        "NotSet",
+        "NeedToSend",
+        "EmailSent"
+      ]
+    },
+    "ShipDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "TrackingNum": {
+      "type": "string",
+      "maxLength": 41
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "update_sales_order API Request (QUICKBOOKS)",
+  "description": "Schema for update_sales_order - extracted from quickbooks OpenAPI spec"
+}

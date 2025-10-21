@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "record_payment_made API Request (ZOHOBOOKS)",
+  "description": "Schema for record_payment_made - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "vendor_id": {
+      "description": "ID of the vendor associated with the Vendor Payment.",
+      "type": "string"
+    },
+    "bills": {
+      "description": "Individual bill payment details as array.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "bill_payment_id": {
+            "description": "ID of the Bill Payment",
+            "type": "string"
+          },
+          "bill_id": {
+            "description": "ID of the bill the payment is to be applied.",
+            "type": "string"
+          },
+          "amount_applied": {
+            "description": "Amount applied to the bill.",
+            "type": "number",
+            "format": "double"
+          },
+          "tax_amount_withheld": {
+            "description": "Tax Amount Withheld during Bill Payment",
+            "type": "number",
+            "format": "double"
+          }
+        }
+      }
+    },
+    "date": {
+      "description": "Date the payment is made.",
+      "type": "string"
+    },
+    "exchange_rate": {
+      "description": "Exchange rate of the currency.",
+      "type": "number",
+      "format": "double"
+    },
+    "amount": {
+      "description": "Total Amount of Vendor Payment",
+      "type": "number",
+      "format": "double"
+    },
+    "paid_through_account_id": {
+      "description": "ID of the cash/ bank account from which the payment is made.",
+      "type": "string"
+    },
+    "payment_mode": {
+      "description": "Mode of Vendor Payment",
+      "type": "string"
+    },
+    "description": {
+      "description": "Description for the Vendor Payment recorded.",
+      "type": "string"
+    },
+    "reference_number": {
+      "description": "Reference number for the Vendor Payment recorded.",
+      "type": "string"
+    },
+    "check_details": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "is_paid_via_print_check": {
+      "description": "Check if the Bill Payment is paid Via Print Check Option",
+      "type": "boolean"
+    },
+    "location_id": {
+      "description": "Location ID",
+      "type": "string"
+    },
+    "custom_fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "description": "Index of the Custom Field",
+            "type": "integer"
+          },
+          "value": {
+            "description": "Value for the Custom Field",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "amount"
+  ],
+  "additionalProperties": false
+}

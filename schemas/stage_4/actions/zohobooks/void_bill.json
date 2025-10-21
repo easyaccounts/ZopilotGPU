@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "void_bill API Request (ZOHOBOOKS)",
+  "description": "Schema for void_bill - extracted from zohobooks OpenAPI spec (corrected path: components.schemas.void-a-bill-response)"
+}

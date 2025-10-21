@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "categorize_as_customer_payment API Request (ZOHOBOOKS)",
+  "description": "Schema for categorize_as_customer_payment - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "description": "ID of the customer or vendor.",
+      "type": "string"
+    },
+    "retainerinvoice_id": {
+      "description": "ID of the Retainer Invoice",
+      "type": "integer",
+      "format": "int64"
+    },
+    "invoices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "invoice_payment_id": {
+            "description": "ID of the Invoice Payment",
+            "type": "integer",
+            "format": "int64"
+          },
+          "invoice_id": {
+            "description": "ID of the Invoice",
+            "type": "integer",
+            "format": "int64"
+          },
+          "amount_applied": {
+            "description": "Amount applied to the Entity",
+            "type": "number",
+            "format": "double"
+          },
+          "tax_amount_withheld": {
+            "type": "number",
+            "format": "double"
+          },
+          "discount_amount": {
+            "description": "Amount of discount in the Invoice",
+            "type": "number",
+            "format": "double"
+          }
+        }
+      }
+    },
+    "payment_mode": {
+      "description": "Mode of payment for the transaction. (not applicable for transfer_fund, card_payment, owner_drawings). Ex:cash, cheque, etc.,",
+      "type": "string"
+    },
+    "description": {
+      "description": "A brief description about the transaction.",
+      "type": "string"
+    },
+    "reference_number": {
+      "description": "Reference Number of the transaction",
+      "type": "string"
+    },
+    "exchange_rate": {
+      "description": "The foreign currency exchange rate value.",
+      "type": "integer"
+    },
+    "amount": {
+      "description": "Amount of the transaction",
+      "type": "number",
+      "format": "double"
+    },
+    "bank_charges": {
+      "description": "Bank Charges applied to the transaction",
+      "type": "number",
+      "format": "double"
+    },
+    "account_id": {
+      "description": "Mandatory Account id for which transactions are to be listed.",
+      "type": "string"
+    },
+    "custom_fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "description": "Index of the custom field",
+            "type": "integer"
+          },
+          "value": {
+            "description": "Value of the Custom Field",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "documents": {
+      "description": "List of files to be attached to a particular transaction.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "file_name": {
+            "description": "Name of the attached file."
+          },
+          "document_id": {
+            "description": "Unique ID of the attached file."
+          }
+        }
+      }
+    },
+    "date": {
+      "description": "Transaction date.",
+      "type": "string"
+    },
+    "template_id": {
+      "description": "ID of the template",
+      "type": "integer",
+      "format": "int64"
+    },
+    "contact_persons": {
+      "description": "Array of contact person(s) for whom invoice has to be sent.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

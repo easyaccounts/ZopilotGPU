@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "update_fixed_asset API Request (ZOHOBOOKS)",
+  "description": "Schema for update_fixed_asset - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "asset_name": {
+      "description": "Enter the name of the fixed asset.",
+      "type": "string"
+    },
+    "fixed_asset_type_id": {
+      "description": "Associate the fixed asset with a fixed asset type by specifying fixed asset type id.",
+      "type": "string"
+    },
+    "asset_account_id": {
+      "description": "Enter the account id to track the fixed asset.",
+      "type": "string"
+    },
+    "expense_account_id": {
+      "description": "Enter the account id to track the expenses associated with the asset’s depreciation.The available account types are <b>Expense</b>  and <b>Other Expense</b>",
+      "type": "string"
+    },
+    "depreciation_account_id": {
+      "description": "Enter the account id to track the asset’s depreciation over time.",
+      "type": "string"
+    },
+    "depreciation_method": {
+      "description": "Enter the depreciation method for your asset.The available methods are: <code>declining_method</code> and <code>straight_line</code>. <br/><b>For US and GLobal Edition:</b> <code>declining_method</code>, <code>straight_line</code>, <code>200_declining_method</code> and <code>150_declining_method</code>",
+      "type": "string"
+    },
+    "depreciation_frequency": {
+      "description": "Enter the frequency of depreciation. The available frequencies are: <code>yearly</code> and <code>monthly</code>",
+      "type": "string"
+    },
+    "depreciation_percentage": {
+      "description": "Enter the depreciation percentage only if the entered depreciation method is a declining method. The entered percentage should be within the range of 0 to 100",
+      "type": "number",
+      "format": "double"
+    },
+    "total_life": {
+      "description": "Enter the total life of the asset (in months)",
+      "type": "number"
+    },
+    "salvage_value": {
+      "description": "Enter the remaining amount of the asset after its useful life or the value after it’s fully depreciated",
+      "type": "string",
+      "format": "double"
+    },
+    "depreciation_start_date": {
+      "description": "Enter the depreciation start date of the asset",
+      "type": "string"
+    },
+    "description": {
+      "description": "Description of the asset",
+      "type": "string"
+    },
+    "asset_cost": {
+      "description": "Enter the purchase cost of the asset",
+      "type": "number",
+      "format": "double"
+    },
+    "computation_type": {
+      "description": "Enter the computation types of assets. The available types are: <code>prorata_basis</code> and <code>no_prorata</code>",
+      "type": "string"
+    },
+    "warranty_expiry_date": {
+      "description": "Enter the warranty expiration date of the asset",
+      "type": "string"
+    },
+    "asset_purchase_date": {
+      "description": "Enter the Purchase date of the asset",
+      "type": "string"
+    },
+    "serial_no": {
+      "description": "serial number of the asset",
+      "type": "string"
+    },
+    "dep_start_value": {
+      "description": "Enter the value from which depreciation will be calculated.",
+      "type": "number",
+      "format": "double"
+    },
+    "notes": {
+      "description": "Provide notes for the asset, if required",
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tag_id": {
+            "description": "ID of the tag",
+            "type": "string"
+          },
+          "tag_option_id": {
+            "description": "Option ID of the tag",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "custom_fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "customfield_id": {
+            "description": "ID of the Custom Field",
+            "type": "string"
+          },
+          "value": {
+            "description": "Value of the Custom Field",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "asset_name",
+    "fixed_asset_type_id",
+    "asset_account_id",
+    "asset_cost",
+    "asset_purchase_date"
+  ],
+  "additionalProperties": false
+}

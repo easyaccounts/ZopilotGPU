@@ -1,0 +1,500 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "write_off_invoice API Request (QUICKBOOKS)",
+  "description": "Schema for write_off_invoice - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string",
+      "description": "Unique identifier (for updates only)"
+    },
+    "SyncToken": {
+      "type": "string",
+      "description": "Version number for optimistic locking (required for updates)"
+    },
+    "DocNumber": {
+      "type": "string",
+      "description": "Invoice number",
+      "maxLength": 21
+    },
+    "TxnDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Transaction date"
+    },
+    "DueDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Due date for payment"
+    },
+    "CustomerRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        }
+      }
+    },
+    "CustomerMemo": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      }
+    },
+    "BillAddr": {
+      "type": "object",
+      "properties": {
+        "Id": {
+          "type": "string"
+        },
+        "Line1": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "Line2": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "Line3": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "Line4": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "Line5": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "City": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "Country": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "CountrySubDivisionCode": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "State/Province code"
+        },
+        "PostalCode": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "Lat": {
+          "type": "string",
+          "description": "Latitude"
+        },
+        "Long": {
+          "type": "string",
+          "description": "Longitude"
+        }
+      }
+    },
+    "ShipAddr": {
+      "type": "object",
+      "properties": {
+        "Id": {
+          "type": "string"
+        },
+        "Line1": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "Line2": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "Line3": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "Line4": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "Line5": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "City": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "Country": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "CountrySubDivisionCode": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "State/Province code"
+        },
+        "PostalCode": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "Lat": {
+          "type": "string",
+          "description": "Latitude"
+        },
+        "Long": {
+          "type": "string",
+          "description": "Longitude"
+        }
+      }
+    },
+    "Line": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "DetailType"
+        ],
+        "properties": {
+          "Id": {
+            "type": "string"
+          },
+          "LineNum": {
+            "type": "integer",
+            "description": "Line number for ordering"
+          },
+          "Description": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "Amount": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Line total amount"
+          },
+          "DetailType": {
+            "type": "string",
+            "enum": [
+              "SalesItemLineDetail",
+              "GroupLineDetail",
+              "DescriptionOnly",
+              "DiscountLineDetail",
+              "SubTotalLineDetail"
+            ]
+          },
+          "SalesItemLineDetail": {
+            "type": "object",
+            "required": [
+              "ItemRef"
+            ],
+            "properties": {
+              "ItemRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "Unique identifier"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Display name"
+                  }
+                }
+              },
+              "ClassRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "Unique identifier"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Display name"
+                  }
+                }
+              },
+              "UnitPrice": {
+                "type": "number",
+                "format": "decimal"
+              },
+              "Qty": {
+                "type": "number",
+                "format": "decimal"
+              },
+              "TaxCodeRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "Unique identifier"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Display name"
+                  }
+                }
+              },
+              "ServiceDate": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          },
+          "DiscountLineDetail": {
+            "type": "object",
+            "properties": {
+              "PercentBased": {
+                "type": "boolean"
+              },
+              "DiscountPercent": {
+                "type": "number",
+                "format": "decimal"
+              },
+              "DiscountAccountRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "Unique identifier"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Display name"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "TxnTaxDetail": {
+      "type": "object",
+      "properties": {
+        "TxnTaxCodeRef": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "string",
+              "description": "Unique identifier"
+            },
+            "name": {
+              "type": "string",
+              "description": "Display name"
+            }
+          }
+        },
+        "TotalTax": {
+          "type": "number",
+          "format": "decimal"
+        },
+        "TaxLine": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "Amount": {
+                "type": "number",
+                "format": "decimal"
+              },
+              "DetailType": {
+                "type": "string",
+                "enum": [
+                  "TaxLineDetail"
+                ]
+              },
+              "TaxLineDetail": {
+                "type": "object",
+                "properties": {
+                  "TaxRateRef": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "type": "string",
+                        "description": "Unique identifier"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Display name"
+                      }
+                    }
+                  },
+                  "PercentBased": {
+                    "type": "boolean"
+                  },
+                  "TaxPercent": {
+                    "type": "number",
+                    "format": "decimal"
+                  },
+                  "NetAmountTaxable": {
+                    "type": "number",
+                    "format": "decimal"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "SalesTermRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        }
+      }
+    },
+    "ShipMethodRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        }
+      }
+    },
+    "ShipDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "TrackingNum": {
+      "type": "string",
+      "maxLength": 41
+    },
+    "ClassRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        }
+      }
+    },
+    "PrintStatus": {
+      "type": "string",
+      "enum": [
+        "NeedToPrint",
+        "PrintComplete"
+      ]
+    },
+    "EmailStatus": {
+      "type": "string",
+      "enum": [
+        "NotSet",
+        "NeedToSend",
+        "EmailSent"
+      ]
+    },
+    "BillEmail": {
+      "type": "object",
+      "properties": {
+        "Address": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 100
+        }
+      }
+    },
+    "BillEmailCc": {
+      "type": "object",
+      "properties": {
+        "Address": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 100
+        }
+      }
+    },
+    "BillEmailBcc": {
+      "type": "object",
+      "properties": {
+        "Address": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 100
+        }
+      }
+    },
+    "Deposit": {
+      "type": "number",
+      "format": "decimal",
+      "description": "Deposit amount applied"
+    },
+    "Balance": {
+      "type": "number",
+      "format": "decimal",
+      "description": "Balance due (calculated)"
+    },
+    "HomeBalance": {
+      "type": "number",
+      "format": "decimal",
+      "description": "Balance in home currency"
+    },
+    "TotalAmt": {
+      "type": "number",
+      "format": "decimal",
+      "description": "Total amount (required if not calculated)"
+    },
+    "ApplyTaxAfterDiscount": {
+      "type": "boolean",
+      "description": "If true, tax calculated after discount"
+    },
+    "CurrencyRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        }
+      }
+    },
+    "ExchangeRate": {
+      "type": "number",
+      "format": "decimal",
+      "description": "Exchange rate for foreign currency"
+    },
+    "PrivateNote": {
+      "type": "string",
+      "maxLength": 4000,
+      "description": "Internal note (not visible to customer)"
+    },
+    "AllowOnlineACHPayment": {
+      "type": "boolean"
+    },
+    "AllowOnlineCreditCardPayment": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "Line",
+    "CustomerRef"
+  ],
+  "additionalProperties": false
+}

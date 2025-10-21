@@ -1,0 +1,384 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_recurring_invoice API Request (ZOHOBOOKS)",
+  "description": "Schema for create_recurring_invoice - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "recurrence_name": {
+      "description": "Unique name for the recurring profile given by the user. Max-length [100]",
+      "type": "string"
+    },
+    "reference_number": {
+      "description": "The Order number of the Recurring Invoice.",
+      "type": "string"
+    },
+    "customer_id": {
+      "description": "Customer ID of the customer for whom the recurring invoice is raised.",
+      "type": "string"
+    },
+    "currency_id": {
+      "description": "The currenct id of the currency",
+      "type": "string"
+    },
+    "contact_persons": {
+      "description": "Contact Persons associated with the recurring invoice.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "place_of_supply": {
+      "description": "Place where the goods/services are supplied to. (If not given, <code>place of contact</code> given for the contact will be taken)<br/>Supported codes for UAE emirates are : </br>Abu Dhabi - <code>AB</code>,</br>Ajman - <code>AJ</code>,</br>Dubai - <code>DU</code>,</br>Fujairah - <code>FU</code>,</br>Ras al-Khaimah - <code>RA</code>,</br>Sharjah - <code>SH</code>,</br>Umm al-Quwain - <code>UM</code><br/>Supported codes for the GCC countries are : </br>United Arab Emirates - <code>AE</code>,</br>Saudi Arabia - <code>SA</code>,</br>Bahrain - <code>BH</code>,</br>Kuwait - <code>KW</code>,</br>Oman - <code>OM</code>,</br>Qatar - <code>QA</code>.",
+      "type": "string"
+    },
+    "vat_treatment": {
+      "description": "(Optional) VAT treatment for the invoices. VAT treatment denotes the location of the customer, if the customer resides in UK then the VAT treatment is <code>uk</code>. If the customer is in an EU country & VAT registered, you are resides in Northen Ireland and selling Goods then his VAT treatment is <code>eu_vat_registered</code>, if he resides outside of the UK then his VAT treatment is <code>overseas</code> (For Pre Brexit, this can be split as <code>eu_vat_registered</code>, <code>eu_vat_not_registered</code> and <code>non_eu</code>).",
+      "type": "string"
+    },
+    "gst_treatment": {
+      "description": "Choose whether the contact is GST registered/unregistered/consumer/overseas. Allowed values are <code> business_gst </code> , <code> business_none </code> , <code> overseas </code> , <code> consumer </code>.",
+      "type": "string"
+    },
+    "tax_treatment": {
+      "description": "Choose whether the vat treatment for the contact falls under: <code>vat_registered</code>,<code>vat_not_registered</code>,<code>gcc_vat_not_registered</code>,<code>gcc_vat_registered</code>,<code>non_gcc</code>.</br><code>dz_vat_registered</code> and <code>dz_vat_not_registered</code> supported only for <b>UAE</b>.</br><code>home_country_mexico</code>,<code>border_region_mexico</code>,<code>non_mexico</code> supported only for <b>MX</b>. <br/><b>For Kenya Edition:</b> <code>vat_registered</code> ,<code>vat_not_registered</code> ,<code>non_kenya</code>(A business that is located outside Kenya).<br/><b>For SouthAfrica Edition:</b> <code>vat_registered</code>, <code>vat_not_registered</code>, <code>overseas</code>(A business that is located outside SouthAfrica).",
+      "type": "string"
+    },
+    "is_reverse_charge_applied": {
+      "description": "(Required if customer tax treatment is <code>vat_registered</code>)<br/>Used to specify whether the transaction is applicable for Domestic Reverse Charge (DRC) or not.",
+      "type": "boolean"
+    },
+    "cfdi_usage": {
+      "description": "Choose CFDI Usage.</br>Allowed values: <code>acquisition_of_merchandise</code>, <code>return_discount_bonus</code>, <code>general_expense</code>, <code>buildings</code>, <code>furniture_office_equipment</code>, <code>transport_equipment</code>, <code>computer_equipmentdye_molds_tools</code>, <code>telephone_communication</code>, <code>satellite_communication</code>, <code>other_machinery_equipment</code>, <code>hospital_expense</code>, <code>medical_expense_disability</code>, <code>funeral_expense</code>, <code>donation</code>, <code>interest_mortage_loans</code>, <code>contribution_sar</code>, <code>medical_expense_insurance_pormium</code>, <code>school_transportation_expense</code>, <code>deposit_saving_account</code>, <code>payment_educational_service</code>, <code>no_tax_effect</code>, <code>payment</code>, <code>payroll</code>.",
+      "type": "string"
+    },
+    "allow_partial_payments": {
+      "description": "Choose <code>false</code> for PPU-Single Payments and <code>true</code> for PPD-Installment Payments",
+      "type": "boolean"
+    },
+    "gst_no": {
+      "description": "15 digit GST identification number of the customer.",
+      "type": "string"
+    },
+    "start_date": {
+      "description": "The date on which the recurring invoice starts.",
+      "type": "string"
+    },
+    "end_date": {
+      "description": "The date on which the recurring invoice expires.",
+      "type": "string"
+    },
+    "recurrence_frequency": {
+      "description": "The frequency of time interval at which the invoice is to be generated.",
+      "type": "string",
+      "enum": [
+        "weeks"
+      ]
+    },
+    "repeat_every": {
+      "description": "The period between every recurrency frequency.",
+      "type": "integer"
+    },
+    "location_id": {
+      "description": "Location ID",
+      "type": "string"
+    },
+    "line_items": {
+      "description": "Line items of an invoice.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "line_item_id": {
+            "description": "The line item id",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "Quantity of the item included.",
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "description": "The name of the line item. max-length [100]",
+            "type": "string"
+          },
+          "item_total": {
+            "description": "Total rate raised by this item. This would be the multiplicative product of item price and quantity.",
+            "type": "number",
+            "format": "double"
+          },
+          "product_type": {
+            "description": "Enter <code>goods</code> or <code>services</code> .<br/><b>For SouthAfrica Edition:</b> <code>service</code>, <code>goods</code>, <code>capital_service</code> and <code>capital_goods</code>",
+            "type": "string"
+          },
+          "hsn_or_sac": {
+            "description": "Add HSN/SAC code for your goods/services",
+            "type": "string"
+          },
+          "sat_item_key_code": {
+            "description": "Add SAT Item Key Code for your goods/services. Download the <a href= http://omawww.sat.gob.mx/tramitesyservicios/Paginas/documentos/catCFDI_V_4_07122022.xls  >CFDI Catalogs.</a>",
+            "type": "string"
+          },
+          "unitkey_code": {
+            "description": "Add SAT Unit Key Code for your goods/services. Download the <a href= http://omawww.sat.gob.mx/tramitesyservicios/Paginas/documentos/catCFDI_V_4_07122022.xls  >CFDI Catalogs.</a>",
+            "type": "string"
+          },
+          "tags": {
+            "description": "Filter all your reports based on the tag",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tag_id": {
+                  "description": "ID of the reporting tag",
+                  "type": "string"
+                },
+                "tag_option_id": {
+                  "description": "ID of the reporting tag's option",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "location_id": {
+            "description": "Location ID",
+            "type": "string"
+          },
+          "tax_id": {
+            "description": "ID of the tax or tax group associated to the recurring invoice."
+          },
+          "tds_tax_id": {
+            "description": "ID of the TDS tax or TDS tax group associated to the recurring invoice.",
+            "type": "string"
+          },
+          "tax_treatment_code": {
+            "description": "Specify reason for using out of scope.</br>Supported values for UAE are <code>uae_same_tax_group</code>, <code>uae_reimbursed_expense</code> and <code>uae_others</code>.</br> Supported values for Bahrain are <code>bahrain_same_tax_group</code>, <code>bahrain_transfer_of_concern</code>, <code>bahrain_disbursement</code>, <code>bahrain_head_to_branch_transaction</code>, <code>bahrain_warranty_repair_services</code> and <code>bahrain_others</code>.</br>Supported values for Saudi Arabia are <code>ksa_pvt_health</code>, <code>ksa_pvt_edu</code>, <code>ksa_reimbursed_expense</code> and <code>ksa_house_sales</code>.",
+            "type": "string"
+          },
+          "project_id": {
+            "description": "ID of the project",
+            "type": "string"
+          },
+          "header_name": {
+            "description": "Name of the item header",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tax_id": {
+      "description": "ID of the tax or tax group associated to the recurring invoice."
+    },
+    "custom_fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "description": "Value of the custom field.",
+            "type": "string"
+          },
+          "label": {
+            "description": "Label of the custom field.",
+            "type": "string"
+          },
+          "data_type": {
+            "description": "Data type of the custom field.",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "email": {
+      "description": "Email address of the customer.",
+      "type": "string"
+    },
+    "billing_address": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "description": "Billing address for the invoice",
+          "type": "string"
+        },
+        "street2": {
+          "type": "string"
+        },
+        "city": {
+          "description": "City of the customer’s billing address.",
+          "type": "string"
+        },
+        "state": {
+          "description": "State of the customer’s billing address.",
+          "type": "string"
+        },
+        "zip": {
+          "description": "Zip code of the customer’s billing address.",
+          "type": "string"
+        },
+        "country": {
+          "description": "Country of the customer’s billing address.",
+          "type": "string"
+        },
+        "fax": {
+          "description": "Customer's fax number.",
+          "type": "string"
+        }
+      }
+    },
+    "shipping_address": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "description": "Billing address for the invoice",
+          "type": "string"
+        },
+        "city": {
+          "description": "City of the customer’s billing address.",
+          "type": "string"
+        },
+        "state": {
+          "description": "State of the customer’s billing address.",
+          "type": "string"
+        },
+        "zip": {
+          "description": "Zip code of the customer’s billing address.",
+          "type": "string"
+        },
+        "country": {
+          "description": "Country of the customer’s billing address.",
+          "type": "string"
+        },
+        "fax": {
+          "description": "Customer's fax number.",
+          "type": "string"
+        }
+      }
+    },
+    "avatax_use_code": {
+      "description": "Used to group like customers for exemption purposes. It is a custom value that links customers to a tax rule. Select from Avalara [standard codes][1] or enter a custom code. Max-length [25]",
+      "type": "string"
+    },
+    "avatax_exempt_no": {
+      "description": "Exemption certificate number of the customer. Max-length [25]",
+      "type": "string"
+    },
+    "template_id": {
+      "description": "Unique ID of the recurring invoice template.",
+      "type": "string"
+    },
+    "payment_terms": {
+      "description": "Payment terms in days. E.g: 15,30,60. Invoice due date will be calculated based on this.",
+      "type": "integer"
+    },
+    "payment_terms_label": {
+      "description": "Used to overridethe default payment terms label. Default value for 15 days is \"Next 15 days\".",
+      "type": "string"
+    },
+    "tax_authority_id": {
+      "description": "Unique ID of the tax authority. Tax authority depends on the location of the customer. For example, if the customer is located in NY, then the tax authority is NY tax authority.",
+      "type": "string"
+    },
+    "tax_exemption_id": {
+      "description": "Unique ID of the tax exemption.",
+      "type": "string"
+    },
+    "exchange_rate": {
+      "description": "Exchange rate for the currency associated with the customer.",
+      "type": "string"
+    },
+    "payment_options": {
+      "type": "object",
+      "properties": {
+        "payment_gateways": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "configured": {
+                "description": "Boolean check to see if a payment gateway ahs been configured",
+                "type": "boolean"
+              },
+              "additional_field1": {
+                "description": "Paypal payment method. Allowed Values: <code>standard</code> and <code>adaptive</code>",
+                "type": "string"
+              },
+              "gateway_name": {
+                "description": "Name of the payment gateway associated with the invoice. E.g. paypal, stripe.Allowed Values: <code>paypal</code>, <code>authorize_net</code>, <code>payflow_pro</code>, <code>stripe</code>, <code>2checkout</code> and <code>braintree</code>",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "discount": {
+      "description": "Discount applied to the invoice. It can be either in % or in amount. E.g: 12.5% or 190.",
+      "type": "string"
+    },
+    "is_discount_before_tax": {
+      "description": "Used to specify how the discount has to applied. Either before or after the calculation of tax.",
+      "type": "boolean"
+    },
+    "discount_type": {
+      "description": "How the discount is specified. Allowed values: <code>entity_level</code> and <code>item_level</code>.",
+      "type": "string"
+    },
+    "is_inclusive_tax": {
+      "description": "Used to specify whether the line item rates are inclusive or exclusive of tax.",
+      "type": "boolean"
+    },
+    "item_id": {
+      "description": "Unique string generated for the item for which invoice is to be sent.",
+      "type": "string"
+    },
+    "name": {
+      "description": "The name of the line item. max-length [100]",
+      "type": "string"
+    },
+    "description": {
+      "description": "A small description about the item. Max-length [2000]",
+      "type": "string"
+    },
+    "rate": {
+      "description": "Rate of the line item.",
+      "type": "number",
+      "format": "double"
+    },
+    "quantity": {
+      "description": "Quantity of the item included.",
+      "type": "integer",
+      "format": "int32"
+    },
+    "unit": {
+      "description": "Unit of the line item. E.g: kgs, Nos.",
+      "type": "string"
+    },
+    "avatax_tax_code": {
+      "description": "A tax code is a unique label used to group items together.",
+      "type": "string"
+    },
+    "salesperson_name": {
+      "description": "Name of the sales person",
+      "type": "string"
+    },
+    "shipping_charge": {
+      "description": "Shipping charges applied to the invoice.",
+      "type": "number",
+      "format": "double"
+    },
+    "adjustment": {
+      "description": "Adjustments made to the invoice.",
+      "type": "number",
+      "format": "double"
+    },
+    "adjustment_description": {
+      "description": "Customize the adjustment description. E.g: Rounding off.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "recurrence_name",
+    "customer_id",
+    "recurrence_frequency"
+  ],
+  "additionalProperties": false
+}

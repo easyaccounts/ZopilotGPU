@@ -1,0 +1,338 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "refund_vendor_payment API Request (QUICKBOOKS)",
+  "description": "Request schema for creating or updating a vendor credit",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string",
+      "description": "Unique identifier for the vendor credit (read-only for create, required for update)"
+    },
+    "VendorRef": {
+      "type": "object",
+      "description": "Reference to the vendor",
+      "required": [
+        "value"
+      ],
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Vendor ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Vendor name (read-only)"
+        }
+      }
+    },
+    "APAccountRef": {
+      "type": "object",
+      "description": "Reference to the AP account",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Account ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Account name (read-only)"
+        }
+      }
+    },
+    "Line": {
+      "type": "array",
+      "description": "Line items for the vendor credit",
+      "items": {
+        "type": "object",
+        "properties": {
+          "Id": {
+            "type": "string",
+            "description": "Line ID"
+          },
+          "DetailType": {
+            "type": "string",
+            "enum": [
+              "AccountBasedExpenseLineDetail",
+              "ItemBasedExpenseLineDetail"
+            ],
+            "description": "Type of line detail"
+          },
+          "Amount": {
+            "type": "number",
+            "format": "double",
+            "description": "Line amount"
+          },
+          "Description": {
+            "type": "string",
+            "description": "Line description"
+          },
+          "AccountBasedExpenseLineDetail": {
+            "type": "object",
+            "description": "Account-based expense line details",
+            "properties": {
+              "AccountRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "Account ID"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Account name (read-only)"
+                  }
+                }
+              },
+              "BillableStatus": {
+                "type": "string",
+                "enum": [
+                  "Billable",
+                  "NotBillable",
+                  "HasBeenBilled"
+                ],
+                "description": "Billable status"
+              },
+              "TaxCodeRef": {
+                "type": "object",
+                "description": "Tax code reference",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "Tax code ID"
+                  }
+                }
+              },
+              "ClassRef": {
+                "type": "object",
+                "description": "Class/department reference",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "Class ID"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Class name (read-only)"
+                  }
+                }
+              },
+              "CustomerRef": {
+                "type": "object",
+                "description": "Customer reference for billable expenses",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "Customer ID"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Customer name (read-only)"
+                  }
+                }
+              }
+            }
+          },
+          "ItemBasedExpenseLineDetail": {
+            "type": "object",
+            "description": "Item-based expense line details",
+            "properties": {
+              "ItemRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "Item ID"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Item name (read-only)"
+                  }
+                }
+              },
+              "Qty": {
+                "type": "number",
+                "format": "double",
+                "description": "Quantity"
+              },
+              "UnitPrice": {
+                "type": "number",
+                "format": "double",
+                "description": "Unit price"
+              },
+              "BillableStatus": {
+                "type": "string",
+                "enum": [
+                  "Billable",
+                  "NotBillable",
+                  "HasBeenBilled"
+                ],
+                "description": "Billable status"
+              },
+              "TaxCodeRef": {
+                "type": "object",
+                "description": "Tax code reference",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "Tax code ID"
+                  }
+                }
+              },
+              "ClassRef": {
+                "type": "object",
+                "description": "Class/department reference",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "Class ID"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Class name (read-only)"
+                  }
+                }
+              },
+              "CustomerRef": {
+                "type": "object",
+                "description": "Customer reference for billable expenses",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "Customer ID"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Customer name (read-only)"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "TxnDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Transaction date (YYYY-MM-DD)"
+    },
+    "DocNumber": {
+      "type": "string",
+      "description": "Reference/document number"
+    },
+    "PrivateNote": {
+      "type": "string",
+      "description": "Private note (internal use)"
+    },
+    "Memo": {
+      "type": "string",
+      "description": "Memo visible on transaction"
+    },
+    "CurrencyRef": {
+      "type": "object",
+      "description": "Currency reference",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Currency code (e.g., USD)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Currency name (read-only)"
+        }
+      }
+    },
+    "ExchangeRate": {
+      "type": "number",
+      "format": "double",
+      "description": "Exchange rate for foreign currency"
+    },
+    "DepartmentRef": {
+      "type": "object",
+      "description": "Department reference",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Department ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Department name (read-only)"
+        }
+      }
+    },
+    "TxnTaxDetail": {
+      "type": "object",
+      "description": "Transaction tax details",
+      "properties": {
+        "TxnTaxCodeRef": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "string",
+              "description": "Tax code ID"
+            }
+          }
+        },
+        "TotalTax": {
+          "type": "number",
+          "format": "double",
+          "description": "Total tax amount"
+        },
+        "TaxLine": {
+          "type": "array",
+          "description": "Tax line details",
+          "items": {
+            "type": "object",
+            "properties": {
+              "Amount": {
+                "type": "number",
+                "format": "double",
+                "description": "Tax amount"
+              },
+              "DetailType": {
+                "type": "string",
+                "enum": [
+                  "TaxLineDetail"
+                ]
+              },
+              "TaxLineDetail": {
+                "type": "object",
+                "properties": {
+                  "TaxRateRef": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "type": "string",
+                        "description": "Tax rate ID"
+                      }
+                    }
+                  },
+                  "PercentBased": {
+                    "type": "boolean",
+                    "description": "Whether tax is percent-based"
+                  },
+                  "TaxPercent": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Tax percentage"
+                  },
+                  "NetAmountTaxable": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "Net amount subject to tax"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "VendorRef",
+    "Line"
+  ],
+  "additionalProperties": false
+}

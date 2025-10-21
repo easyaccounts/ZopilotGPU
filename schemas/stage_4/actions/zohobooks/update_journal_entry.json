@@ -1,0 +1,176 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "update_journal_entry API Request (ZOHOBOOKS)",
+  "description": "Schema for update_journal_entry - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "journal_date": {
+      "description": "Date on which the journal to be recorded.",
+      "type": "string"
+    },
+    "reference_number": {
+      "description": "Reference number for the journal.",
+      "type": "string"
+    },
+    "notes": {
+      "description": "Notes for the journal.",
+      "type": "string"
+    },
+    "journal_type": {
+      "description": "Type of the Journal. Allowed values: <code> Cash </code> and  <code> Both </code>.",
+      "type": "string"
+    },
+    "vat_treatment": {
+      "description": "(Optional) VAT treatment for the journals. VAT treatment denotes the location of the customer, if the customer resides in UK then the VAT treatment is <code>uk</code>. If the customer is in an EU country & VAT registered, you are resides in Northen Ireland and selling Goods then his VAT treatment is <code>eu_vat_registered</code>, if he resides outside of the UK then his VAT treatment is <code>overseas</code> (For Pre Brexit, this can be split as <code>eu_vat_registered</code>, <code>eu_vat_not_registered</code> and <code>non_eu</code>).",
+      "type": "string"
+    },
+    "include_in_vat_return": {
+      "description": "Check if Journal should be included in VAT Return",
+      "type": "boolean"
+    },
+    "product_type": {
+      "description": "Type of the journal. This denotes whether the journal is to be treated as goods or service. Allowed Values: <code> digital_service</code>, <code>goods</code> and <code>service</code>.",
+      "type": "string"
+    },
+    "is_bas_adjustment": {
+      "description": "Check if Journal is created for BAS Adjustment",
+      "type": "boolean"
+    },
+    "currency_id": {
+      "description": "ID of the Currency Associated with the Journal",
+      "type": "string"
+    },
+    "exchange_rate": {
+      "description": "Exchange Rate between the Currencies",
+      "type": "number",
+      "format": "double"
+    },
+    "location_id": {
+      "description": "Location ID",
+      "type": "string"
+    },
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "amount",
+          "debit_or_credit"
+        ],
+        "properties": {
+          "account_id": {
+            "description": "ID of account for which journals to be recorded.",
+            "type": "string"
+          },
+          "customer_id": {
+            "description": "ID of the Customer/Vendor",
+            "type": "string"
+          },
+          "line_id": {
+            "description": "ID of the Line",
+            "type": "string"
+          },
+          "description": {
+            "description": "Description that can be given at the line item level.",
+            "type": "string"
+          },
+          "tax_exemption_id": {
+            "description": "ID of the Tax Exemption",
+            "type": "string"
+          },
+          "tax_authority_id": {
+            "description": "ID of the Tax Authority",
+            "type": "string"
+          },
+          "tax_exemption_type": {
+            "description": "Type of the Tax Exemption. Allowed Values : <code>customer</code> and <code>item</code>",
+            "type": "string"
+          },
+          "tax_exemption_code": {
+            "description": "Code of the Tax Exemption",
+            "type": "string"
+          },
+          "tax_authority_name": {
+            "description": "Name of the Tax Authority",
+            "type": "string"
+          },
+          "tax_id": {
+            "description": "ID of the tax.",
+            "type": "string"
+          },
+          "amount": {
+            "description": "Amount to be recorded for the journal.",
+            "type": "number",
+            "format": "double"
+          },
+          "debit_or_credit": {
+            "description": "Whether the accounts needs to be debited or credited. Allowed Values: <code>debit</code> and <code>credit</code>.",
+            "type": "string"
+          },
+          "acquisition_vat_id": {
+            "description": "(Optional) This is the ID of the tax applied in case this is an EU - goods journal and acquisition VAT needs to be reported.",
+            "type": "string"
+          },
+          "reverse_charge_vat_id": {
+            "description": "(Optional) This is the ID of the tax applied in case this is a non UK - service journal and reverse charge VAT needs to be reported.",
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tag_id": {
+                  "description": "ID of the Tag",
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "tag_option_id": {
+                  "description": "ID of the Tag Option",
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            }
+          },
+          "location_id": {
+            "description": "Location ID",
+            "type": "string"
+          },
+          "project_id": {
+            "description": "ID of the Project",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tax_exemption_code": {
+      "description": "Code of the Tax Exemption",
+      "type": "string"
+    },
+    "tax_exemption_type": {
+      "description": "Type of the Tax Exemption. Allowed Values : <code>customer</code> and <code>item</code>",
+      "type": "string"
+    },
+    "custom_fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "customfield_id": {
+            "description": "ID of the Custom Field",
+            "type": "string"
+          },
+          "value": {
+            "description": "Value of the Custom Field",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "journal_date"
+  ],
+  "additionalProperties": false
+}

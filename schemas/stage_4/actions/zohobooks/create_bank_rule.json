@@ -1,0 +1,100 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_bank_rule API Request (ZOHOBOOKS)",
+  "description": "Schema for create_bank_rule - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "rule_name": {
+      "description": "Name of the Rule",
+      "type": "string"
+    },
+    "target_account_id": {
+      "description": "The account on which the rule has to be applied.",
+      "type": "integer",
+      "format": "int64"
+    },
+    "apply_to": {
+      "description": "Rule applies to either deposits or withdrawals for bank accounts and to refunds or charges for credit card account. Allowed Values : <code>withdrawals</code>, <code>deposits</code>, <code>refunds</code> and <code>charges</code>.",
+      "type": "string"
+    },
+    "criteria_type": {
+      "description": "Specifies whether all the criteria have to be satisfied or not. Allowed Values : <code>and</code> and <code>or</code>",
+      "type": "string"
+    },
+    "criterion": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "description": "Field involved in the Criteria",
+            "type": "string"
+          },
+          "comparator": {
+            "description": "Comparator used in Criteria",
+            "type": "string"
+          },
+          "value": {
+            "description": "Value to be compared with",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "record_as": {
+      "description": "Record transaction based on value specified in apply_to node. For bank accounts: If apply_to is deposits: sales_without_invoices, transfer_fund, interest_income, other_income, expense_refund, deposit. If apply_to is withdrawals: expense, transfer_fund, card_payment, owner_drawings. For credit_card accounts: If apply_to is refunds: card_payment, transfer_fund, expense_refund, refund. If apply_to is charges: expense, transfer_fund. Allowed Values: <code>expense</code>, <code>deposit</code>, <code>refund</code>, <code>transfer_fund</code>, <code>card_payment</code>, <code>sales_without_invoices</code>, <code>expense_refund</code>, <code>interest_income</code>, <code>other_income</code> and <code>owner_drawings</code>",
+      "type": "string"
+    },
+    "account_id": {
+      "description": "Account which is involved in the rule with the target account.",
+      "type": "integer",
+      "format": "int64"
+    },
+    "customer_id": {
+      "description": "ID of the customer.(Applicable for sales_without_invoices,deposit, expense)",
+      "type": "integer",
+      "format": "int64"
+    },
+    "tax_id": {
+      "description": "Tax ID involved in the transaction.",
+      "type": "string"
+    },
+    "reference_number": {
+      "description": "Specifies if Reference number is manual or generated from the statement. Allowed Values: <code>manual</code> and <code>from_statement</code>",
+      "type": "string"
+    },
+    "vat_treatment": {
+      "description": "(Optional) VAT treatment for the bank rules. VAT treatment denotes the location of the customer, if the customer resides in UK then the VAT treatment is <code>uk</code>. If the customer is in an EU country & VAT registered, you are resides in Northen Ireland and selling/purchasing Goods then his VAT treatment is <code>eu_vat_registered</code>, if he resides outside of the UK then his VAT treatment is <code>overseas</code> (For Pre Brexit, this can be split as <code>eu_vat_registered</code>, <code>eu_vat_not_registered</code> and <code>non_eu</code>).",
+      "type": "string"
+    },
+    "tax_treatment": {
+      "description": "VAT treatment for the bank transaction.Choose whether the contact falls under: <code>vat_registered</code>,<code>vat_not_registered</code>,<code>gcc_vat_not_registered</code>,<code>gcc_vat_registered</code>,<code>non_gcc</code>.</br><code>dz_vat_registered</code> and <code>dz_vat_not_registered</code> are supported only for <b>UAE</b>.<br/><b>For Kenya Edition:</b> <code>vat_registered</code> ,<code>vat_not_registered</code> ,<code>non_kenya</code>(A business that is located outside Kenya).<br/><b>For SouthAfrica Edition:</b> <code>vat_registered</code>, <code>vat_not_registered</code>, <code>overseas</code>(A business that is located outside SouthAfrica).",
+      "type": "string"
+    },
+    "is_reverse_charge_applied": {
+      "description": "(Required if customer tax treatment is <code>vat_registered</code>)<br/>Used to specify whether the transaction is applicable for Domestic Reverse Charge (DRC) or not.",
+      "type": "boolean"
+    },
+    "product_type": {
+      "description": "Product Type associated with the Rule. Allowed values:<br/> <b>For UK and Europe: </b><code>digital_service</code>, <code>goods</code> and <code>service</code>.<br/><b>For SouthAfrica Edition:</b> <code>service</code>, <code>goods</code>, <code>capital_service</code> and <code>capital_goods</code>.",
+      "type": "string"
+    },
+    "tax_authority_id": {
+      "description": "ID of the Tax Authority Associated with the Rule",
+      "type": "string"
+    },
+    "tax_exemption_id": {
+      "description": "ID of the Tax Exemption Associated with the Rule",
+      "type": "string"
+    }
+  },
+  "required": [
+    "rule_name",
+    "target_account_id",
+    "apply_to",
+    "criteria_type",
+    "criterion",
+    "record_as"
+  ],
+  "additionalProperties": false
+}

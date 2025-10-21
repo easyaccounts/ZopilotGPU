@@ -1,0 +1,213 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_invoices API Request (ZOHOBOOKS)",
+  "description": "Schema for list_invoices - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    },
+    "invoices": {
+      "description": "The invoices created by the user",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "invoice_id": {
+            "description": "ID of the invoice",
+            "type": "string"
+          },
+          "ach_payment_initiated": {
+            "type": "boolean"
+          },
+          "customer_name": {
+            "description": "The name of the customer. Max-length [100]",
+            "type": "string"
+          },
+          "customer_id": {
+            "description": "ID of the customer the invoice has to be created.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Search invoices by invoice status.Allowed Values: <code>sent</code>, <code>draft</code>, <code>overdue</code>, <code>paid</code>, <code>void</code>, <code>unpaid</code>, <code>partially_paid</code> and <code>viewed</code>",
+            "type": "string"
+          },
+          "invoice_number": {
+            "description": "Search invoices by invoice number.Variants: <code>invoice_number_startswith</code> and <code>invoice_number_contains</code>. Max-length [100]",
+            "type": "string"
+          },
+          "reference_number": {
+            "description": "The reference number of the invoice",
+            "type": "string"
+          },
+          "date": {
+            "description": "Search invoices by invoice date. Default date format is yyyy-mm-dd.<code> Variants: date_start, date_end, date_before and date_after</code>.",
+            "type": "string"
+          },
+          "due_date": {
+            "description": "Search invoices by due date. Default date format is yyyy-mm-dd. <code> Variants: due_date_start, due_date_end, due_date_before and due_date_after </code>",
+            "type": "string"
+          },
+          "due_days": {
+            "description": "Specifies the number of day in which the invoice would become overdue",
+            "type": "string"
+          },
+          "currency_id": {
+            "description": "The currency id of the currency",
+            "type": "string"
+          },
+          "schedule_time": {
+            "type": "string"
+          },
+          "currency_code": {
+            "description": "The currency code in which the invoice is created.",
+            "type": "string"
+          },
+          "is_viewed_by_client": {
+            "type": "boolean"
+          },
+          "has_attachment": {
+            "type": "boolean"
+          },
+          "client_viewed_time": {
+            "type": "string"
+          },
+          "total": {
+            "description": "The total amount to be paid",
+            "type": "string"
+          },
+          "balance": {
+            "description": "The unpaid amount",
+            "type": "string"
+          },
+          "created_time": {
+            "description": "The time of creation of the invoices",
+            "type": "string"
+          },
+          "last_modified_time": {
+            "type": "string"
+          },
+          "is_emailed": {
+            "description": "Boolean check to see if the mail has been sent",
+            "type": "boolean"
+          },
+          "reminders_sent": {
+            "description": "The no of reminders sent",
+            "type": "integer"
+          },
+          "last_reminder_sent_date": {
+            "description": "The date the last email was sent",
+            "type": "string"
+          },
+          "payment_expected_date": {
+            "description": "The expected date of payment",
+            "type": "string"
+          },
+          "last_payment_date": {
+            "description": "The last payment date of the invoice",
+            "type": "string"
+          },
+          "custom_fields": {
+            "description": "Custom fields for an invoice.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "customfield_id": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "value": {
+                  "description": "Value of the Custom Field",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "documents": {
+            "type": "string"
+          },
+          "location_id": {
+            "description": "Location ID",
+            "type": "string"
+          },
+          "location_name": {
+            "description": "Name of the location",
+            "type": "string"
+          },
+          "salesperson_id": {
+            "type": "string"
+          },
+          "salesperson_name": {
+            "description": "Name of the salesperson. Max-length [200]",
+            "type": "string"
+          },
+          "shipping_charge": {
+            "description": "Shipping charges applied to the invoice. Max-length [100]",
+            "type": "string"
+          },
+          "adjustment": {
+            "description": "Adjustments made to the invoice.",
+            "type": "number",
+            "format": "double"
+          },
+          "write_off_amount": {
+            "description": "The write off amount",
+            "type": "number",
+            "format": "float"
+          },
+          "exchange_rate": {
+            "description": "Exchange rate of the currency.",
+            "type": "number",
+            "format": "float"
+          }
+        }
+      }
+    },
+    "page_context": {
+      "description": "The context of a particular page.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "description": "Number of pages",
+            "type": "integer"
+          },
+          "per_page": {
+            "description": "Per page values",
+            "type": "integer"
+          },
+          "has_more_page": {
+            "description": "Check if has more pages",
+            "type": "boolean"
+          },
+          "report_name": {
+            "description": "The report name",
+            "type": "string"
+          },
+          "applied_filter": {
+            "description": "The filer applied for sorting",
+            "type": "string"
+          },
+          "sort_column": {
+            "description": "Sort invoices.Allowed Values: <code>customer_name</code>, <code>invoice_number</code>, <code>date</code>, <code> due_date</code>, <code>total</code>, <code>balance</code> and  <code>created_time</code>",
+            "type": "string"
+          },
+          "sort_order": {
+            "description": "The order for sorting",
+            "type": "string"
+          },
+          "response_option": {
+            "description": "Transaction total count",
+            "type": "integer"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "get_invoice API Request (QUICKBOOKS)",
+  "description": "Schema for get_invoice - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "additionalProperties": false
+}

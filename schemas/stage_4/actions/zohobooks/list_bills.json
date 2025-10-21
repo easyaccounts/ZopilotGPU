@@ -1,0 +1,143 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_bills API Request (ZOHOBOOKS)",
+  "description": "Schema for list_bills - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    },
+    "bills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "bill_id": {
+            "description": "ID of the Bill",
+            "type": "string"
+          },
+          "vendor_id": {
+            "description": "ID of the vendor the bill has to be created.",
+            "type": "string"
+          },
+          "vendor_name": {
+            "description": "Name of the Vendor",
+            "type": "string"
+          },
+          "status": {
+            "description": "Status of the Bill",
+            "type": "string"
+          },
+          "bill_number": {
+            "description": "The bill number.",
+            "type": "string"
+          },
+          "reference_number": {
+            "description": "Reference Number of the entity",
+            "type": "string"
+          },
+          "date": {
+            "description": "The date the bill was created. [yyyy-mm-dd]",
+            "type": "string"
+          },
+          "due_date": {
+            "description": "Date bill is due.",
+            "type": "string"
+          },
+          "due_days": {
+            "type": "string"
+          },
+          "currency_id": {
+            "description": "ID of the Currency",
+            "type": "string"
+          },
+          "currency_code": {
+            "description": "Code of the Currency",
+            "type": "string"
+          },
+          "price_precision": {
+            "description": "Precision for the values",
+            "type": "integer"
+          },
+          "exchange_rate": {
+            "description": "Exchange rate of the currency.",
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "description": "Total of the Bill",
+            "type": "integer"
+          },
+          "balance": {
+            "description": "Balance in the Bill",
+            "type": "integer"
+          },
+          "location_id": {
+            "description": "Location ID",
+            "type": "string"
+          },
+          "location_name": {
+            "description": "Name of the location",
+            "type": "string"
+          },
+          "created_time": {
+            "description": "Created time of the bill",
+            "type": "string"
+          },
+          "last_modified_time": {
+            "description": "Last Modified Time of the Bill",
+            "type": "string"
+          },
+          "attachment_name": {
+            "description": "Name of the Attachment",
+            "type": "string"
+          },
+          "has_attachment": {
+            "description": "Check if Bill hase Attachment",
+            "type": "boolean"
+          },
+          "is_tds_applied": {
+            "description": "Check if TDS is applied",
+            "type": "boolean"
+          },
+          "is_abn_quoted": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "page_context": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer"
+        },
+        "per_page": {
+          "type": "integer"
+        },
+        "has_more_page": {
+          "type": "boolean"
+        },
+        "report_name": {
+          "description": "Name of the report",
+          "type": "string"
+        },
+        "applied_filter": {
+          "description": "Filter that is applied",
+          "type": "string"
+        },
+        "sort_column": {
+          "description": "Sort bills. Allowed Values: <code>vendor_name</code>, <code>bill_number</code>, <code>date</code>, <code>due_date</code>, <code>total</code>, <code>balance</code> and <code>created_time</code>.",
+          "type": "string"
+        },
+        "sort_order": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

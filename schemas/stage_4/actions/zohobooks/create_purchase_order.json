@@ -1,0 +1,314 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_purchase_order API Request (ZOHOBOOKS)",
+  "description": "Schema for create_purchase_order - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "vendor_id": {
+      "description": "ID of the vendor the purchase order has to be created.",
+      "type": "string"
+    },
+    "currency_id": {
+      "description": "ID of the Currency",
+      "type": "string"
+    },
+    "contact_persons": {
+      "description": "Array of contact person(s) for whom purchase order has to be sent.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "purchaseorder_number": {
+      "description": "Mandatory if auto number generation is disabled.",
+      "type": "string"
+    },
+    "gst_treatment": {
+      "description": "Choose whether the contact is GST registered/unregistered/consumer/overseas. Allowed values are <code> business_gst </code> , <code> business_none </code> , <code> overseas </code> , <code> consumer </code>.",
+      "type": "string"
+    },
+    "tax_treatment": {
+      "description": "VAT treatment for the purchase order. Choose whether the vendor falls under: <code>vat_registered</code>,<code>vat_not_registered</code>,<code>gcc_vat_not_registered</code>,<code>gcc_vat_registered</code>,<code>non_gcc</code>.</br><code>dz_vat_registered</code> and <code>dz_vat_not_registered</code> are supported only for <b>UAE</b>.</b></br><code>home_country_mexico</code>,<code>border_region_mexico</code>,<code>non_mexico</code> supported only for <b>MX</b>.<br/><b>For Kenya Edition:</b> <code>vat_registered</code> ,<code>vat_not_registered</code> ,<code>non_kenya</code>(A business that is located outside Kenya).<br/><b>For SouthAfrica Edition:</b> <code>vat_registered</code>, <code>vat_not_registered</code>, <code>overseas</code>(A business that is located outside SouthAfrica)."
+    },
+    "gst_no": {
+      "description": "15 digit GST identification number of the vendor.",
+      "type": "string"
+    },
+    "source_of_supply": {
+      "description": "Place from where the goods/services are supplied. (If not given, <code>place of contact</code> given for the contact will be taken)",
+      "type": "string"
+    },
+    "destination_of_supply": {
+      "description": "Place where the goods/services are supplied to. (If not given, organisation's home state will be taken)",
+      "type": "string"
+    },
+    "place_of_supply": {
+      "description": "The place of supply is where a transaction is considered to have occurred for VAT purposes. For the supply of goods, the place of supply is the location of the goods when the supply occurs. For the supply of services, the place of supply should be where the supplier is established. (If not given, <code>place of contact</code> given for the contact will be taken)<br/>Supported codes for UAE emirates are : </br>Abu Dhabi - <code>AB</code>,</br>Ajman - <code>AJ</code>,</br>Dubai - <code>DU</code>,</br>Fujairah - <code>FU</code>,</br>Ras al-Khaimah - <code>RA</code>,</br>Sharjah - <code>SH</code>,</br>Umm al-Quwain - <code>UM</code>.<br/>Supported codes for the GCC countries are : </br>United Arab Emirates - <code>AE</code>,</br>Saudi Arabia - <code>SA</code>,</br>Bahrain - <code>BH</code>,</br>Kuwait - <code>KW</code>,</br>Oman - <code>OM</code>,</br>Qatar - <code>QA</code>.",
+      "type": "string"
+    },
+    "pricebook_id": {
+      "description": "Enter pricebook ID",
+      "type": "string"
+    },
+    "reference_number": {
+      "description": "Reference number of purchase order.",
+      "type": "string"
+    },
+    "billing_address_id": {
+      "description": "ID of the Billing Address",
+      "type": "integer",
+      "format": "int64"
+    },
+    "crm_owner_id": {
+      "description": "ID of the CRM Owner",
+      "type": "string"
+    },
+    "crm_custom_reference_id": {
+      "description": "ID of CRM Custom Reference",
+      "type": "integer",
+      "format": "int64"
+    },
+    "template_id": {
+      "description": "ID of the pdf template associated with the purchase order.",
+      "type": "string"
+    },
+    "date": {
+      "description": "The date the purchase order is created.",
+      "type": "string"
+    },
+    "delivery_date": {
+      "description": "Date of delivery of the purchase order",
+      "type": "string"
+    },
+    "due_date": {
+      "description": "Delivery date of purchase order.",
+      "type": "string"
+    },
+    "exchange_rate": {
+      "description": "Exchange rate of the currency.",
+      "type": "number",
+      "format": "double"
+    },
+    "discount": {
+      "description": "Discount to be applied on Purchase Order.",
+      "type": "string"
+    },
+    "discount_account_id": {
+      "description": "Account ID for the discount amount.",
+      "type": "string"
+    },
+    "is_discount_before_tax": {
+      "description": "Discount applied before or after applying tax.",
+      "type": "boolean"
+    },
+    "is_inclusive_tax": {
+      "description": "Used to specify whether the line item rates are inclusive or exclusive of tax.",
+      "type": "boolean"
+    },
+    "notes": {
+      "description": "Delivery note for vendor.",
+      "type": "string"
+    },
+    "notes_default": {
+      "description": "Default notes for purchase order",
+      "type": "string"
+    },
+    "terms": {
+      "description": "Terms for the purchase order",
+      "type": "string"
+    },
+    "terms_default": {
+      "description": "Default terms for Purchase Orders",
+      "type": "string"
+    },
+    "ship_via": {
+      "description": "Shipment Preference",
+      "type": "string"
+    },
+    "delivery_org_address_id": {
+      "description": "ID of the Delivery Address",
+      "type": "string"
+    },
+    "delivery_customer_id": {
+      "description": "ID of the Customer associated with the Purchase Order",
+      "type": "string"
+    },
+    "attention": {
+      "description": "Delivery contact person.",
+      "type": "string"
+    },
+    "vat_treatment": {
+      "description": "(Optional) VAT treatment for the purchase order. VAT treatment denotes the location of the vendor, if the vendor resides in UK then the VAT treatment is <code>uk</code>. If the vendor is in an EU country & VAT registered, you are resides in Northen Ireland and purchasing Goods then his VAT treatment is <code>eu_vat_registered</code> and if he resides outside the UK then his VAT treatment is <code>overseas</code>(For Pre Brexit, this can be split as <code>eu_vat_registered</code>, <code>eu_vat_not_registered</code> and <code>non_eu</code>).",
+      "type": "string"
+    },
+    "is_update_customer": {
+      "description": "Check if customer should be updated",
+      "type": "string"
+    },
+    "salesorder_id": {
+      "description": "ID of the Sales Order",
+      "type": "integer",
+      "format": "int64"
+    },
+    "location_id": {
+      "description": "Location ID",
+      "type": "string"
+    },
+    "line_items": {
+      "description": "Line items of purchase order.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "description": "ID of the item.",
+            "type": "string"
+          },
+          "account_id": {
+            "description": "ID of the account, the line item is associated with.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the line item.",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "unit": {
+            "description": "Unit of the line item e.g. kgs, Nos.",
+            "type": "string"
+          },
+          "location_id": {
+            "description": "Location ID",
+            "type": "string"
+          },
+          "hsn_or_sac": {
+            "description": "HSN or SAC Code for the Item",
+            "type": "string"
+          },
+          "reverse_charge_tax_id": {
+            "description": "Enter reverse charge tax ID",
+            "type": "string"
+          },
+          "rate": {
+            "description": "Rate of the line item.",
+            "type": "number",
+            "format": "double"
+          },
+          "quantity": {
+            "description": "Quantity of the line item.",
+            "type": "string"
+          },
+          "item_order": {
+            "description": "Order of the items in Purhcase Order",
+            "type": "integer"
+          },
+          "tax_id": {
+            "type": "string"
+          },
+          "tds_tax_id": {
+            "type": "string"
+          },
+          "tax_treatment_code": {
+            "description": "Specify reason for using out of scope.</br>Supported values for <b>UAE</b> are <code>uae_same_tax_group</code>, <code>uae_reimbursed_expense</code> and <code>uae_others</code>.</br> Supported values for <b>Bahrain</b> are <code>bahrain_same_tax_group</code>, <code>bahrain_transfer_of_concern</code>, <code>bahrain_disbursement</code>, <code>bahrain_head_to_branch_transaction</code>, <code>bahrain_warranty_repair_services</code> and <code>bahrain_others</code>.</br> Supported values for <b>KSA</b> are <code>ksa_reimbursed_expense</code>.",
+            "type": "string"
+          },
+          "tax_exemption_code": {
+            "description": "Code of the Tax Exemption",
+            "type": "string"
+          },
+          "tax_exemption_id": {
+            "description": "ID of the Tax Exemption",
+            "type": "string"
+          },
+          "acquisition_vat_id": {
+            "description": "ID of the VAT Acquistion",
+            "type": "string"
+          },
+          "reverse_charge_vat_id": {
+            "description": "ID of the Reverse Charge",
+            "type": "string"
+          },
+          "item_custom_fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "description": "Index of the Custom Field",
+                  "type": "integer"
+                },
+                "value": {
+                  "description": "Value of the Custom Field",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tag_id": {
+                  "description": "ID of the Tag",
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "tag_option_id": {
+                  "description": "Id of the Tag Option",
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            }
+          },
+          "project_id": {
+            "description": "ID of the project",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "custom_fields": {
+      "description": "Custom fields for purchase order.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "customfield_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "value": {
+            "description": "Value of the Custom Field",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "document_id": {
+            "description": "ID of the Document",
+            "type": "integer",
+            "format": "int64"
+          },
+          "file_name": {
+            "description": "Name of the file",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "vendor_id",
+    "line_items"
+  ],
+  "additionalProperties": false
+}

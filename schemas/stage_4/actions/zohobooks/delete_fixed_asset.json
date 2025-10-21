@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "delete_fixed_asset API Request (ZOHOBOOKS)",
+  "description": "Schema for delete_fixed_asset - extracted from zohobooks OpenAPI spec (corrected path: components.schemas.delete-a-fixed-asset-response)"
+}

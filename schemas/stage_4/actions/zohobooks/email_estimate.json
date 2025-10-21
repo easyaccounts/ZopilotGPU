@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "email_estimate API Request (ZOHOBOOKS)",
+  "description": "Schema for email_estimate - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "send_from_org_email_id": {
+      "description": "Boolean to trigger the email from the organization's email address",
+      "type": "boolean"
+    },
+    "to_mail_ids": {
+      "description": "Array of email address of the recipients.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cc_mail_ids": {
+      "description": "Array of email address of the recipients to be cced.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "subject": {
+      "description": "Subject of an email has to be sent.",
+      "type": "string"
+    },
+    "body": {
+      "description": "Body of an email has to be sent.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "to_mail_ids"
+  ],
+  "additionalProperties": false
+}

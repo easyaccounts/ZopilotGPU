@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_vendor_credit_refunds API Request (ZOHOBOOKS)",
+  "description": "Schema for list_vendor_credit_refunds - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    },
+    "vendor_credit_refunds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "vendor_credit_refund_id": {
+            "description": "ID of the Vendor Credit Refund",
+            "type": "string"
+          },
+          "vendor_credit_id": {
+            "description": "ID of the Vendor Credit",
+            "type": "string"
+          },
+          "date": {
+            "description": "Date of the Vendor Credit Refund",
+            "type": "string"
+          },
+          "refund_mode": {
+            "description": "Mode of Refund",
+            "type": "string"
+          },
+          "reference_number": {
+            "description": "Reference number for the refund recorded.",
+            "type": "string"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "vendor_credit_number": {
+            "description": "Number of the Vendor Credit",
+            "type": "string"
+          },
+          "customer_name": {
+            "description": "Vendor associated with the Entity",
+            "type": "string"
+          },
+          "description": {
+            "description": "Description of the Vendor Credit Refund",
+            "type": "string"
+          },
+          "amount_bcy": {
+            "description": "Refund Amount in Base Currency",
+            "type": "number",
+            "format": "double"
+          },
+          "amount_fcy": {
+            "description": "Refund Amount in Foreign Currency",
+            "type": "number",
+            "format": "double"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

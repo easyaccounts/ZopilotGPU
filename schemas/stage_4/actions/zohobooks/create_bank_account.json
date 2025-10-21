@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_bank_account API Request (ZOHOBOOKS)",
+  "description": "Schema for create_bank_account - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "account_name": {
+      "description": "Name of the account",
+      "type": "string"
+    },
+    "account_type": {
+      "description": "Type of the account",
+      "type": "string"
+    },
+    "account_number": {
+      "description": "Number associated with the Bank Account",
+      "type": "string"
+    },
+    "account_code": {
+      "description": "Code of the Account",
+      "type": "string"
+    },
+    "currency_id": {
+      "description": "ID of the Currency associated with the Account",
+      "type": "string"
+    },
+    "currency_code": {
+      "description": "Code of the currency associated with the Bank Account",
+      "type": "string"
+    },
+    "description": {
+      "description": "Description of the Account",
+      "type": "string"
+    },
+    "bank_name": {
+      "description": "Name of the Bank",
+      "type": "string"
+    },
+    "routing_number": {
+      "description": "Routing Number of the Account",
+      "type": "string"
+    },
+    "is_primary_account": {
+      "description": "Check if the Account is Primary Account in Zoho Books",
+      "type": "boolean"
+    },
+    "is_paypal_account": {
+      "description": "Check if the Account is Paypal Account",
+      "type": "boolean"
+    },
+    "paypal_type": {
+      "description": "The type of Payment for the Paypal Account. Allowed Values : <code>standard</code> and <code>adaptive</code>",
+      "type": "string"
+    },
+    "paypal_email_address": {
+      "description": "Email Address of the Paypal account.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "account_name",
+    "account_type"
+  ],
+  "additionalProperties": false
+}

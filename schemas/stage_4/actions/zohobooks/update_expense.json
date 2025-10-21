@@ -1,0 +1,242 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "update_expense API Request (ZOHOBOOKS)",
+  "description": "Schema for update_expense - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "account_id": {
+      "description": "ID of the expense account.",
+      "type": "string"
+    },
+    "date": {
+      "description": "Date of the expense",
+      "type": "string"
+    },
+    "amount": {
+      "description": "Amount of the Expense.",
+      "type": "number",
+      "format": "double"
+    },
+    "tax_id": {
+      "type": "string"
+    },
+    "source_of_supply": {
+      "description": "Place from where the goods/services are supplied. (If not given, <code>place of contact</code> given for the contact will be taken)",
+      "type": "string"
+    },
+    "destination_of_supply": {
+      "description": "Place where the goods/services are supplied to. (If not given, organisation's home state will be taken)",
+      "type": "string"
+    },
+    "place_of_supply": {
+      "description": "The place of supply is where a transaction is considered to have occurred for VAT purposes. For the supply of goods, the place of supply is the location of the goods when the supply occurs. For the supply of services, the place of supply should be where the supplier is established. (If not given, <code>place of contact</code> given for the contact will be taken)<br/>Supported codes for UAE emirates are : </br>Abu Dhabi - <code>AB</code>,</br>Ajman - <code>AJ</code>,</br>Dubai - <code>DU</code>,</br>Fujairah - <code>FU</code>,</br>Ras al-Khaimah - <code>RA</code>,</br>Sharjah - <code>SH</code>,</br>Umm al-Quwain - <code>UM</code>.<br/>Supported codes for the GCC countries are : </br>United Arab Emirates - <code>AE</code>,</br>Saudi Arabia - <code>SA</code>,</br>Bahrain - <code>BH</code>,</br>Kuwait - <code>KW</code>,</br>Oman - <code>OM</code>,</br>Qatar - <code>QA</code>.",
+      "type": "string"
+    },
+    "hsn_or_sac": {
+      "description": "Add HSN/SAC code for your goods/services",
+      "type": "string"
+    },
+    "gst_no": {
+      "description": "15 digit GST identification number of the vendor.",
+      "type": "string"
+    },
+    "reverse_charge_tax_id": {
+      "description": "ID of the reverse charge tax",
+      "type": "string"
+    },
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "line_item_id": {
+            "type": "string"
+          },
+          "account_id": {
+            "description": "ID of the expense account.",
+            "type": "string"
+          },
+          "description": {
+            "description": "Description of the expense. Max-length [100]",
+            "type": "string"
+          },
+          "amount": {
+            "description": "Amount of the Expense.",
+            "type": "number",
+            "format": "double"
+          },
+          "tax_id": {
+            "type": "string"
+          },
+          "item_order": {
+            "type": "string"
+          },
+          "product_type": {
+            "description": "Type of the expense. This denotes whether the expense is to be treated as a goods or service or capital asset purchase. Allowed Values:<br/> <b>For UK: </b><code>digital_service</code>, <code>goods</code> and <code>service</code>.<br/><b>For SouthAfrica Edition:</b> <code>service</code>, <code>goods</code>, <code>capital_service</code> and <code>capital_goods</code>",
+            "type": "string"
+          },
+          "acquisition_vat_id": {
+            "description": "This is the ID of the tax applied in case this is an EU - goods expense and acquisition VAT needs to be reported.",
+            "type": "string"
+          },
+          "reverse_charge_vat_id": {
+            "description": "This is the ID of the tax applied in case this is a non UK - service expense and reverse charge VAT needs to be reported.",
+            "type": "string"
+          },
+          "reverse_charge_tax_id": {
+            "description": "ID of the reverse charge tax",
+            "type": "string"
+          },
+          "tax_exemption_code": {
+            "description": "Enter tax exemption code",
+            "type": "string"
+          },
+          "tax_exemption_id": {
+            "description": "Enter tax exemption ID",
+            "type": "string"
+          },
+          "location_id": {
+            "description": "Location ID",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "location_id": {
+      "description": "Location ID",
+      "type": "string"
+    },
+    "taxes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tax_id": {
+            "type": "string"
+          },
+          "tax_amount": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      }
+    },
+    "is_inclusive_tax": {
+      "type": "boolean"
+    },
+    "is_billable": {
+      "type": "boolean"
+    },
+    "reference_number": {
+      "description": "Reference number of the expense. Max-length [100]",
+      "type": "string"
+    },
+    "description": {
+      "description": "Description of the expense. Max-length [100]",
+      "type": "string"
+    },
+    "customer_id": {
+      "description": "ID of the expense account.",
+      "type": "string"
+    },
+    "currency_id": {
+      "type": "string"
+    },
+    "exchange_rate": {
+      "type": "number",
+      "format": "double"
+    },
+    "project_id": {
+      "description": "ID of the project associated with the customer.",
+      "type": "string"
+    },
+    "mileage_type": {
+      "type": "string"
+    },
+    "vat_treatment": {
+      "description": "VAT treatment for the expense. VAT treatment denotes the location of the vendor, if the vendor resides in UK then the VAT treatment is <code>uk</code>. If the vendor is in an EU country & VAT registered, you are resides in Northen Ireland and purchasing Goods then his VAT treatment is <code>eu_vat_registered</code> and if he resides outside the UK then his VAT treatment is <code>overseas</code> (For Pre Brexit, this can be split as <code>eu_vat_registered</code>, <code>eu_vat_not_registered</code> and <code>non_eu</code>).",
+      "type": "string"
+    },
+    "tax_treatment": {
+      "description": "VAT treatment for the expense .Choose whether the contact falls under: <code>vat_registered</code>,<code>vat_not_registered</code>,<code>gcc_vat_not_registered</code>,<code>gcc_vat_registered</code>,<code>non_gcc</code>.</br><code>dz_vat_registered</code> and <code>dz_vat_not_registered</code> are supported only for <b>UAE</b>. <br/><b>For Kenya Edition:</b> <code>vat_registered</code> ,<code>vat_not_registered</code> ,<code>non_kenya</code>(A business that is located outside Kenya).<br/><b>For SouthAfrica Edition:</b> <code>vat_registered</code>, <code>vat_not_registered</code>, <code>overseas</code>(A business that is located outside SouthAfrica).",
+      "type": "string"
+    },
+    "product_type": {
+      "description": "Type of the expense. This denotes whether the expense is to be treated as a goods or service or capital asset purchase. Allowed Values:<br/> <b>For UK: </b><code>digital_service</code>, <code>goods</code> and <code>service</code>.<br/><b>For SouthAfrica Edition:</b> <code>service</code>, <code>goods</code>, <code>capital_service</code> and <code>capital_goods</code>",
+      "type": "string"
+    },
+    "acquisition_vat_id": {
+      "description": "This is the ID of the tax applied in case this is an EU - goods expense and acquisition VAT needs to be reported.",
+      "type": "string"
+    },
+    "reverse_charge_vat_id": {
+      "description": "This is the ID of the tax applied in case this is a non UK - service expense and reverse charge VAT needs to be reported.",
+      "type": "string"
+    },
+    "start_reading": {
+      "description": "Start reading of odometer when creating a mileage expense where <code>mileage_type</code> is <code>odometer</code>.",
+      "type": "number",
+      "format": "double"
+    },
+    "end_reading": {
+      "description": "End reading of odometer when creating a mileage expense where <code>mileage_type</code> is <code>odometer</code>.",
+      "type": "number",
+      "format": "double"
+    },
+    "distance": {
+      "description": "Distance travelled for a particular mileage expense where <code>mileage_type</code> is <code>manual</code>",
+      "type": "string"
+    },
+    "mileage_unit": {
+      "description": "Unit of the distance travelled. Allowed Values: <code>km</code> and <code>mile</code>",
+      "type": "string"
+    },
+    "mileage_rate": {
+      "description": "Mileage rate for a particular mileage expense.",
+      "type": "number",
+      "format": "double"
+    },
+    "employee_id": {
+      "description": "ID of the employee who has submitted this mileage expense.",
+      "type": "string"
+    },
+    "vehicle_type": {
+      "description": "Vehicle type for a particular mileage expense. Allowed Values: <code>car</code>, <code>van</code>, <code>motorcycle</code> and <code>bike</code>",
+      "type": "string"
+    },
+    "can_reclaim_vat_on_mileage": {
+      "description": "To specify if tax can be reclaimed for this mileage expense.",
+      "type": "string"
+    },
+    "fuel_type": {
+      "description": "Fuel type for a particular mileage expense. Allowed Values: <code>petrol</code>, <code>lpg</code> and <code>diesel</code>",
+      "type": "string"
+    },
+    "engine_capacity_range": {
+      "description": "Engine capacity range for a particular mileage expense. Allowed Values: <code>less_than_1400cc</code>, <code>between_1400cc_and_1600cc</code>, <code>between_1600cc_and_2000cc</code> and <code>more_than_2000cc</code>",
+      "type": "string"
+    },
+    "paid_through_account_id": {
+      "description": "Search expenses by paid through account id.",
+      "type": "string"
+    },
+    "vendor_id": {
+      "description": "ID of the vendor the expense is made.",
+      "type": "string"
+    },
+    "custom_fields": {
+      "description": "Custom fields for an expense.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "date",
+    "account_id",
+    "amount",
+    "paid_through_account_id"
+  ],
+  "additionalProperties": false
+}

@@ -130,11 +130,38 @@ RUN echo "✅ All dependency versions verified!" && \
 
 # Copy application code
 COPY app/ ./app/
+COPY schemas/ ./schemas/
 COPY *.py ./
 COPY start.sh ./
 
 # Create necessary directories
 RUN mkdir -p /app/models /app/temp /app/logs
+
+# Verify schemas are present (228 action-specific schemas for Outlines)
+RUN echo "============================================================" && \
+    echo "VERIFICATION: Checking Outlines Schemas" && \
+    echo "============================================================" && \
+    python -c "from pathlib import Path; \
+        schemas_dir = Path('/app/schemas'); \
+        stage1 = list(schemas_dir.glob('stage_1/*.json')); \
+        stage2_5 = list(schemas_dir.glob('stage_2_5/*.json')); \
+        stage4_generic = list(schemas_dir.glob('stage_4/*.json')); \
+        stage4_qb = list(schemas_dir.glob('stage_4/actions/quickbooks/*.json')); \
+        stage4_zoho = list(schemas_dir.glob('stage_4/actions/zohobooks/*.json')); \
+        print(f'✅ Stage 1 schemas: {len(stage1)}'); \
+        print(f'✅ Stage 2.5 schemas: {len(stage2_5)}'); \
+        print(f'✅ Stage 4 generic schemas: {len(stage4_generic)}'); \
+        print(f'✅ Stage 4 QuickBooks action schemas: {len(stage4_qb)}'); \
+        print(f'✅ Stage 4 Zoho Books action schemas: {len(stage4_zoho)}'); \
+        total_action_schemas = len(stage4_qb) + len(stage4_zoho); \
+        print(f'✅ Total action-specific schemas: {total_action_schemas}'); \
+        assert len(stage1) >= 1, 'Missing Stage 1 schema!'; \
+        assert len(stage2_5) >= 1, 'Missing Stage 2.5 schema!'; \
+        assert len(stage4_generic) >= 1, 'Missing Stage 4 generic schema!'; \
+        assert len(stage4_qb) >= 144, f'Missing QuickBooks schemas! Found {len(stage4_qb)}, need 144'; \
+        assert len(stage4_zoho) >= 84, f'Missing Zoho Books schemas! Found {len(stage4_zoho)}, need 84'; \
+        print(f'✅ All schemas verified! Ready for Outlines integration')" && \
+    echo "============================================================"
 
 # NOTE: Models are NOT baked into image for efficiency
 # Instead, use one of these approaches:

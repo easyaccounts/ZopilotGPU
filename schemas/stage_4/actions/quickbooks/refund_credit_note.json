@@ -1,0 +1,171 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "refund_credit_note API Request (QUICKBOOKS)",
+  "description": "Schema for refund_credit_note - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string"
+    },
+    "SyncToken": {
+      "type": "string"
+    },
+    "DocNumber": {
+      "type": "string",
+      "maxLength": 21
+    },
+    "TxnDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "CustomerRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "description": "Customer (required)"
+    },
+    "DepositToAccountRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "description": "Bank account to refund from (required)"
+    },
+    "Line": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "DetailType": {
+            "type": "string",
+            "enum": [
+              "SalesItemLineDetail"
+            ]
+          },
+          "Amount": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "SalesItemLineDetail": {
+            "type": "object",
+            "properties": {
+              "ItemRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              },
+              "Qty": {
+                "type": "number",
+                "format": "decimal"
+              },
+              "UnitPrice": {
+                "type": "number",
+                "format": "decimal"
+              }
+            }
+          },
+          "Description": {
+            "type": "string",
+            "maxLength": 4000
+          }
+        }
+      },
+      "description": "Line items (required)"
+    },
+    "BillAddr": {
+      "type": "object",
+      "properties": {
+        "Line1": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "City": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "CountrySubDivisionCode": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "PostalCode": {
+          "type": "string",
+          "maxLength": 30
+        }
+      }
+    },
+    "PaymentRefNum": {
+      "type": "string",
+      "maxLength": 21
+    },
+    "PaymentMethodRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "TotalAmt": {
+      "type": "number",
+      "format": "decimal"
+    },
+    "Balance": {
+      "type": "number",
+      "format": "decimal"
+    },
+    "CustomerMemo": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      }
+    },
+    "PrivateNote": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "PrintStatus": {
+      "type": "string",
+      "enum": [
+        "NeedToPrint",
+        "PrintComplete"
+      ]
+    },
+    "EmailStatus": {
+      "type": "string",
+      "enum": [
+        "NotSet",
+        "NeedToSend",
+        "EmailSent"
+      ]
+    }
+  },
+  "required": [
+    "Line",
+    "CustomerRef",
+    "DepositToAccountRef"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,129 @@
+{
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    },
+    "bankaccount": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "description": "ID of the Bank/Credit Card account",
+          "type": "string"
+        },
+        "account_name": {
+          "description": "Name of the account",
+          "type": "string"
+        },
+        "account_code": {
+          "description": "Code of the Account",
+          "type": "string"
+        },
+        "currency_id": {
+          "description": "ID of the Currency associated with the Account",
+          "type": "string"
+        },
+        "currency_code": {
+          "description": "Code of the currency associated with the Bank Account",
+          "type": "string"
+        },
+        "currency_symbol": {
+          "description": "Symbol of the Currency associated with the Account",
+          "type": "string"
+        },
+        "price_precision": {
+          "description": "Precision of the Price Values",
+          "type": "integer"
+        },
+        "account_type": {
+          "description": "Type of the account",
+          "type": "string"
+        },
+        "account_number": {
+          "description": "Number associated with the Bank Account",
+          "type": "string"
+        },
+        "uncategorized_transactions": {
+          "description": "Number of uncategorized transactions",
+          "type": "integer"
+        },
+        "total_unprinted_checks": {
+          "description": "Number of unprinted checks.",
+          "type": "integer"
+        },
+        "is_active": {
+          "description": "Check if Account is Active",
+          "type": "boolean"
+        },
+        "is_feeds_subscribed": {
+          "description": "Check is feeds are subscribed",
+          "type": "boolean"
+        },
+        "is_feeds_active": {
+          "description": "Check if feeds are active",
+          "type": "boolean"
+        },
+        "balance": {
+          "description": "Balance present in the account",
+          "type": "number",
+          "format": "double"
+        },
+        "bank_balance": {
+          "description": "Balance present in the Bank",
+          "type": "integer"
+        },
+        "bcy_balance": {
+          "description": "Balance in Base Currency",
+          "type": "number",
+          "format": "double"
+        },
+        "bank_name": {
+          "description": "Name of the Bank",
+          "type": "string"
+        },
+        "routing_number": {
+          "description": "Routing Number of the Account",
+          "type": "string"
+        },
+        "is_primary_account": {
+          "description": "Check if the Account is Primary Account in Zoho Books",
+          "type": "boolean"
+        },
+        "is_paypal_account": {
+          "description": "Check if the Account is Paypal Account",
+          "type": "boolean"
+        },
+        "description": {
+          "description": "Description of the Account",
+          "type": "string"
+        },
+        "refresh_status_code": {
+          "description": "Refresh Status Code of the Bank",
+          "type": "string"
+        },
+        "feeds_last_refresh_date": {
+          "description": "Last Refreshed Date of the Feeds",
+          "type": "string"
+        },
+        "service_id": {
+          "description": "Service ID of the Account",
+          "type": "string"
+        },
+        "is_system_account": {
+          "description": "Check if the account is a system account",
+          "type": "boolean"
+        },
+        "is_show_warning_for_feeds_refresh": {
+          "description": "Check if warning should be shown for refreshing Bank Feeds",
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "get_bank_account API Request (ZOHOBOOKS)",
+  "description": "Schema for get_bank_account - extracted from zohobooks OpenAPI spec (corrected path: components.schemas.create-a-bank-account-response)"
+}

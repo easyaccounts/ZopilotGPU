@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_retainer_invoices API Request (QUICKBOOKS)",
+  "description": "Schema for list_retainer_invoices - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "additionalProperties": false
+}

@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_contacts API Request (ZOHOBOOKS)",
+  "description": "Schema for list_contacts - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    },
+    "contacts": {
+      "description": "The list of all contacts.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "contact_id": {
+            "description": "ID of the contact",
+            "type": "string"
+          },
+          "contact_name": {
+            "description": "Display Name of the contact. Max-length [200]",
+            "type": "string"
+          },
+          "company_name": {
+            "description": "Company Name of the contact. Max-length [200]",
+            "type": "string"
+          },
+          "contact_type": {
+            "description": "Contact type of the contact",
+            "type": "string"
+          },
+          "status": {
+            "description": "The status of the contact.",
+            "type": "string"
+          },
+          "payment_terms": {
+            "description": "Net payment term for the customer.",
+            "type": "integer"
+          },
+          "payment_terms_label": {
+            "description": "Label for the paymet due details.",
+            "type": "string"
+          },
+          "currency_id": {
+            "description": "Currency ID of the customer's currency.",
+            "type": "string"
+          },
+          "currency_code": {
+            "description": "Currency code of the currency in which the customer wants to pay. If currency_code is not specified here, the currency chosen in your Zoho Subscriptions organization will be used for billing. currency_id and currency_symbol are set automatically in accordance to the currency_code.",
+            "type": "string"
+          },
+          "outstanding_receivable_amount": {
+            "description": "defintion unavailable",
+            "type": "integer"
+          },
+          "unused_credits_receivable_amount": {
+            "description": "defintion unavailable",
+            "type": "integer"
+          },
+          "first_name": {
+            "description": "Max-length [100]",
+            "type": "string"
+          },
+          "last_name": {
+            "description": "Max-length [100]",
+            "type": "string"
+          },
+          "email": {
+            "description": "Email address of the contact person.",
+            "type": "string"
+          },
+          "phone": {
+            "description": "Search contacts by phone number of the contact person. Variants: <code>phone_startswith</code> and <code>phone_contains</code>",
+            "type": "string"
+          },
+          "mobile": {
+            "description": "Search contacts by mobile number of the contact person.",
+            "type": "string"
+          },
+          "created_time": {
+            "description": "Time at which the contact was created.",
+            "type": "string"
+          },
+          "last_modified_time": {
+            "description": "Time at which the contact was modified",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "page_context": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "description": "Number of pages",
+          "type": "integer"
+        },
+        "per_page": {
+          "description": "Per page values",
+          "type": "integer"
+        },
+        "has_more_page": {
+          "description": "Check if has more pages",
+          "type": "boolean"
+        },
+        "applied_filter": {
+          "description": "The filer applied",
+          "type": "string"
+        },
+        "sort_column": {
+          "description": "Param Description.Allowed Values: <code>contact_person_id</code>",
+          "type": "string"
+        },
+        "sort_order": {
+          "description": "The order for sorting",
+          "type": "string"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

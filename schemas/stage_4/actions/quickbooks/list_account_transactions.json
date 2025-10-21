@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_account_transactions API Request (QUICKBOOKS)",
+  "description": "Schema for list_account_transactions - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "additionalProperties": false
+}

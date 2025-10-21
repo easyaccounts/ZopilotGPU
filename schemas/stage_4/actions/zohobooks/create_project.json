@@ -1,0 +1,137 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_project API Request (ZOHOBOOKS)",
+  "description": "Schema for create_project - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "project_name": {
+      "description": "Name of the project. <code>Max-length [100]</code>",
+      "type": "string"
+    },
+    "customer_id": {
+      "description": "ID of the customer.",
+      "type": "string"
+    },
+    "currency_id": {
+      "type": "string"
+    },
+    "description": {
+      "description": "Project description. <code>Max-length [500]</code>",
+      "type": "string"
+    },
+    "billing_type": {
+      "description": "The way you bill your customer. Allowed Values: <code>fixed_cost_for_project</code>, <code>based_on_project_hours</code>, <code>based_on_staff_hours</code> and <code>based_on_task_hours</code>",
+      "type": "string"
+    },
+    "rate": {
+      "description": "Hourly rate for a task.",
+      "type": "string"
+    },
+    "budget_type": {
+      "description": "The way you budget. Allowed Values: <code>total_project_cost</code>, <code>total_project_hours</code>, <code>hours_per_task</code> and <code>hours_per_staff</code>",
+      "type": "string"
+    },
+    "budget_hours": {
+      "description": "Task budget hours",
+      "type": "string"
+    },
+    "budget_amount": {
+      "description": "Give value, if you are estimating total project revenue budget.",
+      "type": "string"
+    },
+    "cost_budget_amount": {
+      "description": "Budgeted Cost to complete this project",
+      "type": "number",
+      "format": "double"
+    },
+    "user_id": {
+      "description": "ID of the user to be added to the project.",
+      "type": "string"
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "task_name"
+        ],
+        "properties": {
+          "task_name": {
+            "description": "Name of the task. <code>Max-length [100]</code>",
+            "type": "string"
+          },
+          "description": {
+            "description": "Task description. <code>Max-length [500]</code>",
+            "type": "string"
+          },
+          "rate": {
+            "description": "Hourly rate of a task.",
+            "type": "string"
+          },
+          "budget_hours": {
+            "description": "Task budgeting.",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "users": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "description": "ID of the user to be added to the project.",
+            "type": "string"
+          },
+          "is_current_user": {
+            "type": "boolean"
+          },
+          "user_name": {
+            "description": "Name of the user. <code>Max-length [200]</code>",
+            "type": "string"
+          },
+          "email": {
+            "description": "Email of the user. <code>Max-length [100]</code>",
+            "type": "string"
+          },
+          "user_role": {
+            "description": "Role to be assigned. Allowed Values: <code>staff</code>, <code>admin</code> and <code>timesheetstaff</code>",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "rate": {
+            "description": "Hourly rate for a task.",
+            "type": "string"
+          },
+          "budget_hours": {
+            "description": "Task budget hours",
+            "type": "string"
+          },
+          "total_hours": {
+            "type": "string"
+          },
+          "billed_hours": {
+            "type": "string"
+          },
+          "un_billed_hours": {
+            "type": "string"
+          },
+          "cost_rate": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "project_name",
+    "customer_id",
+    "billing_type",
+    "user_id"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_time_entries API Request (ZOHOBOOKS)",
+  "description": "Schema for list_time_entries - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    },
+    "time_entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "time_entry_id": {
+            "type": "string"
+          },
+          "project_id": {
+            "description": "Search time entries by project_id.",
+            "type": "string"
+          },
+          "project_name": {
+            "type": "string"
+          },
+          "customer_id": {
+            "description": "Search projects by customer id.",
+            "type": "string"
+          },
+          "customer_name": {
+            "type": "string"
+          },
+          "task_id": {
+            "description": "ID of the task.",
+            "type": "string"
+          },
+          "task_name": {
+            "type": "string"
+          },
+          "user_id": {
+            "description": "Search time entries by user_id.",
+            "type": "string"
+          },
+          "is_current_user": {
+            "type": "boolean"
+          },
+          "user_name": {
+            "type": "string"
+          },
+          "log_date": {
+            "description": "Date on which the user spent on the task. <code>Date-Format [HH:mm]</code>",
+            "type": "string"
+          },
+          "begin_time": {
+            "type": "string"
+          },
+          "end_time": {
+            "type": "string"
+          },
+          "log_time": {
+            "type": "string"
+          },
+          "is_billable": {
+            "type": "boolean"
+          },
+          "billed_status": {
+            "type": "string"
+          },
+          "invoice_id": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "timer_started_at": {
+            "type": "string"
+          },
+          "timer_duration_in_minutes": {
+            "type": "string"
+          },
+          "created_time": {
+            "type": "string"
+          },
+          "cost_rate": {
+            "description": "Hourly cost rate",
+            "type": "number",
+            "format": "double"
+          },
+          "cost_amount": {
+            "description": "Cost amount",
+            "type": "number",
+            "format": "double"
+          }
+        }
+      }
+    },
+    "page_context": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "format": "double"
+          },
+          "per_page": {
+            "type": "number",
+            "format": "double"
+          },
+          "report_name": {
+            "type": "string"
+          },
+          "has_more_page": {
+            "type": "boolean"
+          },
+          "sort_order": {
+            "type": "string"
+          },
+          "sort_column": {
+            "description": "Sort time entries. Allowed Values: <code>project_name</code>, <code>task_name</code>, <code>user_name</code>, <code>log_date</code>, <code>timer_started_at</code> and <code>customer_name</code>",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

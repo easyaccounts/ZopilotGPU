@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_payment_refunds API Request (QUICKBOOKS)",
+  "description": "Schema for list_payment_refunds - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "additionalProperties": false
+}

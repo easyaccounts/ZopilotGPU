@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "add_invoice_attachment API Request (QUICKBOOKS)",
+  "description": "Schema for add_invoice_attachment - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string"
+    },
+    "SyncToken": {
+      "type": "string"
+    },
+    "FileName": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "File name"
+    },
+    "Note": {
+      "type": "string",
+      "maxLength": 2000,
+      "description": "Note about the attachment"
+    },
+    "Category": {
+      "type": "string",
+      "enum": [
+        "Image",
+        "Signature",
+        "Contact_Photo",
+        "Receipt",
+        "Document",
+        "Sound",
+        "Other"
+      ],
+      "description": "Category of attachment"
+    },
+    "ContentType": {
+      "type": "string",
+      "description": "MIME type"
+    },
+    "PlaceName": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "Location"
+    },
+    "AttachableRef": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "EntityRef": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "IncludeOnSend": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "References to linked entities"
+    },
+    "Lat": {
+      "type": "string",
+      "description": "Latitude"
+    },
+    "Long": {
+      "type": "string",
+      "description": "Longitude"
+    },
+    "Tag": {
+      "type": "string",
+      "maxLength": 256,
+      "description": "Tag for categorization"
+    },
+    "FileAccessUri": {
+      "type": "string",
+      "description": "URI to access file"
+    },
+    "Size": {
+      "type": "integer",
+      "description": "File size in bytes"
+    },
+    "ThumbnailFileAccessUri": {
+      "type": "string",
+      "description": "URI to access thumbnail"
+    },
+    "TempDownloadUri": {
+      "type": "string",
+      "description": "Temporary download URI"
+    },
+    "ThumbnailTempDownloadUri": {
+      "type": "string",
+      "description": "Temporary thumbnail download URI"
+    }
+  },
+  "additionalProperties": false
+}

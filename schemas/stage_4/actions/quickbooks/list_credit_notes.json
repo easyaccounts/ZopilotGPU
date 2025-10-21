@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_credit_notes API Request (QUICKBOOKS)",
+  "description": "Schema for list_credit_notes - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "additionalProperties": false
+}

@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_tax API Request (ZOHOBOOKS)",
+  "description": "Schema for create_tax - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "tax_name": {
+      "description": "Name of the Tax",
+      "type": "string"
+    },
+    "tax_percentage": {
+      "description": "Number of Percentage Taxable.",
+      "type": "number",
+      "format": "double"
+    },
+    "tax_type": {
+      "description": "Type to determine whether it is a simple or compound tax. <code>Allowed Values: tax and compound_tax</code>",
+      "type": "string"
+    },
+    "tax_factor": {
+      "description": "Type of Tax Factor. Allowed values: <code>rate</code>, <code>share</code>",
+      "type": "string"
+    },
+    "tax_specific_type": {
+      "description": "Type of Tax For <b>Indian</b> Edition. Allowed Values : <code>igst</code> ,<code>cgst</code> ,<code>sgst</code> ,<code>nil</code>, <code> cess </code>.</br>Type of Tax for <b>Mexico</b> Edition. Allowed Values : <code>isr</code>, <code>iva</code>, <code>ieps</code>.</br>Type of Tax for <b>South Africa</b> Edition. Allowed Values : </br><code>soa_less_than_28d</code> - Supply of accommodation not exceeding 28 days, </br><code>soa_more_than_28d</code> - Supply of accommodation exceeding than 28 days, </br><code>ciu_prev_tax_supply</code> - Change in use (Taxable supplies), </br><code>ciu_prev_nontax_supply</code> - Change in use (Non-Taxable supplies), </br><code>export_of_shg</code> - Export of second hand goods.",
+      "type": "string"
+    },
+    "tax_authority_name": {
+      "description": "Name of the Tax Authority",
+      "type": "string"
+    },
+    "tax_authority_id": {
+      "description": "ID of the tax authority. Tax authority depends on the location of the customer. For example, if the customer is located in NY, then the tax authority is NY tax authority.",
+      "type": "string"
+    },
+    "country_code": {
+      "description": "Two letter country code for the EU country to which the tax belongs.",
+      "type": "string"
+    },
+    "purchase_tax_expense_account_id": {
+      "description": "Account ID in which Purchase Tax will be Computed",
+      "type": "integer",
+      "format": "int64"
+    },
+    "is_value_added": {
+      "description": "Check if Tax is Value Added",
+      "type": "boolean"
+    },
+    "update_recurring_invoice": {
+      "description": "Check if recurring invoice should be updated",
+      "type": "boolean"
+    },
+    "update_recurring_expense": {
+      "description": "Check if recurring expenses should be updated",
+      "type": "boolean"
+    },
+    "update_draft_invoice": {
+      "description": "Check if Draft Invoices should be updated",
+      "type": "boolean"
+    },
+    "update_recurring_bills": {
+      "description": "Check if Recurring Bills should be updated",
+      "type": "boolean"
+    },
+    "update_draft_so": {
+      "description": "Check if Draft Sales Orders should be updated",
+      "type": "boolean"
+    },
+    "update_subscription": {
+      "description": "Check if Subscriptions should be updated",
+      "type": "boolean"
+    },
+    "update_project": {
+      "description": "Check if Projects should be updated",
+      "type": "boolean"
+    },
+    "is_editable": {
+      "description": "Check if tax is editable",
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

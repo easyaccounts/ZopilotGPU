@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "get_item API Request (ZOHOBOOKS)",
+  "description": "Schema for get_item - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "item_id": {
+      "description": "ID of the item.",
+      "type": "string"
+    },
+    "name": {
+      "description": "Name of the item. Max-length [100]",
+      "type": "string"
+    },
+    "status": {
+      "description": "Status of the item. It can be <code>active</code> or <code>inactive</code>",
+      "type": "string"
+    },
+    "description": {
+      "description": "Description for the item. Max-length [2000]",
+      "type": "string"
+    },
+    "rate": {
+      "description": "Price of the item.",
+      "type": "number",
+      "format": "double"
+    },
+    "unit": {
+      "description": "If there is a measurement unit for the items you are adding.",
+      "type": "string"
+    },
+    "tax_id": {
+      "description": "ID of the tax to be associated to the item.",
+      "type": "string"
+    },
+    "purchase_tax_rule_id": {
+      "description": "Id of the purchase tax rule",
+      "type": "string"
+    },
+    "sales_tax_rule_id": {
+      "description": "Id of the sales tax rule",
+      "type": "string"
+    },
+    "tax_name": {
+      "type": "string"
+    },
+    "hsn_or_sac": {
+      "description": "HSN Code",
+      "type": "string"
+    },
+    "sat_item_key_code": {
+      "description": "Add SAT Item Key Code for your goods/services. Download the <a href= http://omawww.sat.gob.mx/tramitesyservicios/Paginas/documentos/catCFDI_V_4_07122022.xls  >CFDI Catalogs.</a>",
+      "type": "string"
+    },
+    "unitkey_code": {
+      "description": "Add Unit Key Code for your goods/services. Download the <a href= http://omawww.sat.gob.mx/tramitesyservicios/Paginas/documentos/catCFDI_V_4_07122022.xls  >CFDI Catalogs.</a>",
+      "type": "string"
+    },
+    "tax_percentage": {
+      "description": "Percent of the tax.",
+      "type": "string"
+    },
+    "tax_type": {
+      "description": "Type of the tax.",
+      "type": "string"
+    },
+    "sku": {
+      "description": "SKU value of item,should be unique throughout the product",
+      "type": "string"
+    },
+    "product_type": {
+      "description": "Specify the type of an item. Allowed values:<br/><code> goods</code> or <code> service</code> or <code> digital_service</code>. <br/><b>For SouthAfrica Edition:</b> <code>service</code>, <code>goods</code>, <code>capital_service</code> and <code>capital_goods</code>",
+      "type": "string"
+    },
+    "item_tax_preferences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tax_id": {
+            "description": "ID of the tax to be associated to the item.",
+            "type": "string"
+          },
+          "tax_specification": {
+            "description": "Set whether the tax type is intra/interstate",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "custom_fields": {
+      "description": "Custom fields for an item.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "customfield_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "value": {
+            "description": "Value of the Custom Field",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "locations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "location_id": {
+            "description": "Location ID",
+            "type": "string"
+          },
+          "location_name": {
+            "description": "Name of the location",
+            "type": "string"
+          },
+          "status": {
+            "description": "Status of the item. It can be <code>active</code> or <code>inactive</code>",
+            "type": "string"
+          },
+          "is_primary": {
+            "description": "Mention whether the item is primary or not",
+            "type": "boolean"
+          },
+          "location_stock_on_hand": {
+            "description": "Current available stock in your location.",
+            "type": "string"
+          },
+          "location_available_stock": {
+            "description": "Available stock in your location.",
+            "type": "string"
+          },
+          "location_actual_available_stock": {
+            "description": "Actual available stock in your location.",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

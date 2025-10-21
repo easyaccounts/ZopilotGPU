@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "email_purchase_order API Request (ZOHOBOOKS)",
+  "description": "Schema for email_purchase_order - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "send_from_org_email_id": {
+      "description": "Boolean to trigger the email from the organization's email address.",
+      "type": "boolean"
+    },
+    "from_address_id": {
+      "description": "ID of From Address of the Email Address",
+      "type": "integer",
+      "format": "int64"
+    },
+    "to_mail_ids": {
+      "description": "Array of email address of the recipients.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cc_mail_ids": {
+      "description": "Array of email address of the recipients to be cced.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "bcc_mail_ids": {
+      "description": "Array of email address of the recipients to be BCC ed.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "subject": {
+      "description": "Subject of the mail.",
+      "type": "string"
+    },
+    "body": {
+      "description": "Body of the mail",
+      "type": "string"
+    },
+    "mail_documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "document_id": {
+            "description": "ID of the Document",
+            "type": "integer",
+            "format": "int64"
+          },
+          "file_name": {
+            "description": "Name of the file",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "to_mail_ids",
+    "body"
+  ],
+  "additionalProperties": false
+}

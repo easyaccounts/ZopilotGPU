@@ -1,0 +1,138 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_estimates API Request (ZOHOBOOKS)",
+  "description": "Schema for list_estimates - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    },
+    "estimates": {
+      "description": "The list of all estimates",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "estimate_id": {
+            "description": "The  unique id of a particular estimate",
+            "type": "string"
+          },
+          "customer_name": {
+            "description": "Search estimates by customer name.Variants <code>customer_name_startswith</code> and <code>customer_name_contains</code>",
+            "type": "string"
+          },
+          "customer_id": {
+            "description": "Search estimates by customer id..",
+            "type": "string"
+          },
+          "status": {
+            "description": "Search estimates by status.Allowed Values<code>draft</code>, <code>sent</code>,<code> invoiced </code>, <code>accepted</code>, <code>declined</code> and <code>expired</code>",
+            "type": "string"
+          },
+          "estimate_number": {
+            "description": "Search estimates by estimate number.Variants<code>estimate_number_startswith</code> and <code>estimate_number_contains</code>",
+            "type": "string"
+          },
+          "reference_number": {
+            "description": "Search estimates by reference number.Variants <code>reference_number_startswith</code> and <code>reference_number_contains</code>",
+            "type": "string"
+          },
+          "date": {
+            "description": "Search estimates by estimate date.Variants <code>date_start</code>, <code>date_end</code>, <code>date_before</code> and <code>date_after</code>",
+            "type": "string"
+          },
+          "currency_id": {
+            "description": "The id of the customer",
+            "type": "string"
+          },
+          "currency_code": {
+            "description": "Currency code of the currency in which the customer wants to pay. If currency_code is not specified here, the currency chosen in your Zoho Subscriptions organization will be used for billing. currency_id and currency_symbol are set automatically in accordance to the currency_code.",
+            "type": "string"
+          },
+          "total": {
+            "description": "Search estimates by estimate total.Variants <code>total_less_than</code>, <code>total_less_equals</code>, <code>total_greater_than</code> and <code>total_greater_equals</code>",
+            "type": "number",
+            "format": "double"
+          },
+          "location_id": {
+            "description": "Location ID",
+            "type": "string"
+          },
+          "location_name": {
+            "description": "Name of the location.",
+            "type": "string"
+          },
+          "created_time": {
+            "description": "The time of creation of the estimates",
+            "type": "string"
+          },
+          "last_modified_time": {
+            "type": "string"
+          },
+          "accepted_date": {
+            "description": "The date of acceptance of the estimates",
+            "type": "string"
+          },
+          "declined_date": {
+            "description": "The date of declination of the estimates",
+            "type": "string"
+          },
+          "expiry_date": {
+            "description": "The date of expiration of the estimates",
+            "type": "string"
+          },
+          "has_attachment": {
+            "type": "boolean"
+          },
+          "is_viewed_by_client": {
+            "type": "boolean"
+          },
+          "client_viewed_time": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "page_context": {
+      "description": "The context of a particular page.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "description": "Number of pages",
+            "type": "integer"
+          },
+          "per_page": {
+            "description": "Per page values",
+            "type": "integer"
+          },
+          "has_more_page": {
+            "description": "Check if has more pages",
+            "type": "boolean"
+          },
+          "report_name": {
+            "description": "The report name",
+            "type": "string"
+          },
+          "applied_filter": {
+            "description": "The filer applied for sorting",
+            "type": "string"
+          },
+          "sort_column": {
+            "description": "Sort estimates.",
+            "type": "string"
+          },
+          "sort_order": {
+            "description": "The order for sorting",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

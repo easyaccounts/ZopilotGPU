@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_bank_account API Request (QUICKBOOKS)",
+  "description": "Schema for create_bank_account - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string",
+      "description": "Unique identifier (for updates only)"
+    },
+    "SyncToken": {
+      "type": "string",
+      "description": "Version number (required for updates)"
+    },
+    "Name": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "Account name"
+    },
+    "AccountType": {
+      "type": "string",
+      "enum": [
+        "Bank",
+        "Other Current Asset",
+        "Fixed Asset",
+        "Other Asset",
+        "Accounts Receivable",
+        "Equity",
+        "Expense",
+        "Other Expense",
+        "Cost of Goods Sold",
+        "Accounts Payable",
+        "Credit Card",
+        "Long Term Liability",
+        "Other Current Liability",
+        "Income",
+        "Other Income"
+      ],
+      "description": "Account type"
+    },
+    "AccountSubType": {
+      "type": "string",
+      "description": "Account subtype"
+    },
+    "AcctNum": {
+      "type": "string",
+      "maxLength": 7,
+      "description": "Account number"
+    },
+    "CurrentBalance": {
+      "type": "number",
+      "format": "decimal",
+      "description": "Current balance"
+    },
+    "Active": {
+      "type": "boolean",
+      "description": "Active status"
+    },
+    "Classification": {
+      "type": "string",
+      "enum": [
+        "Asset",
+        "Equity",
+        "Expense",
+        "Liability",
+        "Revenue"
+      ],
+      "description": "Classification"
+    },
+    "CurrencyRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        }
+      },
+      "description": "Currency reference"
+    },
+    "ParentRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        }
+      },
+      "description": "Parent account reference"
+    },
+    "Description": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "Account description"
+    }
+  },
+  "required": [
+    "Name",
+    "AccountType"
+  ],
+  "additionalProperties": false
+}

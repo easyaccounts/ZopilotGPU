@@ -1,0 +1,177 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_estimate API Request (QUICKBOOKS)",
+  "description": "Schema for create_estimate - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string"
+    },
+    "SyncToken": {
+      "type": "string"
+    },
+    "DocNumber": {
+      "type": "string",
+      "maxLength": 21
+    },
+    "TxnDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "ExpirationDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "CustomerRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "description": "Customer reference (required)"
+    },
+    "Line": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "DetailType": {
+            "type": "string",
+            "enum": [
+              "SalesItemLineDetail"
+            ]
+          },
+          "Amount": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "SalesItemLineDetail": {
+            "type": "object",
+            "properties": {
+              "ItemRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              },
+              "Qty": {
+                "type": "number",
+                "format": "decimal"
+              },
+              "UnitPrice": {
+                "type": "number",
+                "format": "decimal"
+              }
+            }
+          },
+          "Description": {
+            "type": "string",
+            "maxLength": 4000
+          }
+        }
+      },
+      "description": "Line items (required)"
+    },
+    "BillAddr": {
+      "type": "object",
+      "properties": {
+        "Line1": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "City": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "CountrySubDivisionCode": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "PostalCode": {
+          "type": "string",
+          "maxLength": 30
+        }
+      }
+    },
+    "ShipAddr": {
+      "type": "object",
+      "properties": {
+        "Line1": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "City": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "CountrySubDivisionCode": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "PostalCode": {
+          "type": "string",
+          "maxLength": 30
+        }
+      }
+    },
+    "CustomerMemo": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      }
+    },
+    "TotalAmt": {
+      "type": "number",
+      "format": "decimal"
+    },
+    "TxnStatus": {
+      "type": "string",
+      "enum": [
+        "Accepted",
+        "Closed",
+        "Pending",
+        "Rejected"
+      ]
+    },
+    "EmailStatus": {
+      "type": "string",
+      "enum": [
+        "NotSet",
+        "NeedToSend",
+        "EmailSent"
+      ]
+    },
+    "PrintStatus": {
+      "type": "string",
+      "enum": [
+        "NeedToPrint",
+        "PrintComplete"
+      ]
+    },
+    "AcceptedBy": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "AcceptedDate": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "Line",
+    "CustomerRef"
+  ],
+  "additionalProperties": false
+}

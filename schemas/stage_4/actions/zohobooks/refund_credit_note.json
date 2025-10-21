@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "refund_credit_note API Request (ZOHOBOOKS)",
+  "description": "Schema for refund_credit_note - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "date": {
+      "description": "The date on which credit note is raised. Format [yyyy-mm-dd]",
+      "type": "string"
+    },
+    "refund_mode": {
+      "description": "The method of refund.",
+      "type": "string"
+    },
+    "payment_form": {
+      "description": "Mode of Vendor Payment",
+      "type": "string"
+    },
+    "reference_number": {
+      "description": "Reference number generated for the payment. A string of your choice can also be used as the reference number. Max-Length [100]",
+      "type": "string"
+    },
+    "amount": {
+      "description": "Amount paid for the invoice.",
+      "type": "number",
+      "format": "double"
+    },
+    "exchange_rate": {
+      "description": "Exchange rate for the currency associated with the customer.",
+      "type": "string"
+    },
+    "from_account_id": {
+      "description": "The account from which credit note is refunded.",
+      "type": "string"
+    },
+    "description": {
+      "description": "A small description about the item.",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

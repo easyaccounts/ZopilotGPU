@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_expenses API Request (ZOHOBOOKS)",
+  "description": "Schema for list_expenses - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    },
+    "expenses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "expense_id": {
+            "type": "string"
+          },
+          "date": {
+            "description": "Date of the expense",
+            "type": "string"
+          },
+          "account_name": {
+            "type": "string"
+          },
+          "description": {
+            "description": "Description of the expense. Max-length [100]",
+            "type": "string"
+          },
+          "currency_id": {
+            "type": "string"
+          },
+          "currency_code": {
+            "type": "string"
+          },
+          "bcy_total": {
+            "type": "number",
+            "format": "double"
+          },
+          "bcy_total_without_tax": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "total_without_tax": {
+            "type": "number",
+            "format": "double"
+          },
+          "is_billable": {
+            "type": "boolean"
+          },
+          "reference_number": {
+            "description": "Reference number of the expense. Max-length [100]",
+            "type": "string"
+          },
+          "customer_id": {
+            "description": "ID of the expense account.",
+            "type": "string"
+          },
+          "customer_name": {
+            "description": "Name of the Custome for which expense is raised. Max-length [100]",
+            "type": "string"
+          },
+          "status": {
+            "description": "Expense status",
+            "type": "string"
+          },
+          "location_id": {
+            "description": "Location ID",
+            "type": "string"
+          },
+          "location_name": {
+            "description": "Name of the location.",
+            "type": "string"
+          },
+          "created_time": {
+            "type": "string"
+          },
+          "last_modified_time": {
+            "type": "string"
+          },
+          "expense_receipt_name": {
+            "type": "string"
+          },
+          "mileage_rate": {
+            "description": "Mileage rate for a particular mileage expense.",
+            "type": "number",
+            "format": "double"
+          },
+          "mileage_unit": {
+            "description": "Unit of the distance travelled. Allowed Values: <code>km</code> and <code>mile</code>",
+            "type": "string"
+          },
+          "expense_type": {
+            "type": "string"
+          },
+          "start_reading": {
+            "description": "Start reading of odometer when creating a mileage expense where <code>mileage_type</code> is <code>odometer</code>.",
+            "type": "number",
+            "format": "double"
+          },
+          "end_reading": {
+            "description": "End reading of odometer when creating a mileage expense where <code>mileage_type</code> is <code>odometer</code>.",
+            "type": "number",
+            "format": "double"
+          }
+        }
+      }
+    },
+    "page_context": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sort_column": {
+            "description": "Sort expenses.Allowed Values <code>date</code>, <code>account_name</code>, <code>total</code>, <code>bcy_total</code>, <code>reference_number</code>, <code>customer_name</code> and <code>created_time</code>",
+            "type": "string"
+          },
+          "filter_by": {
+            "description": "Filter expenses by expense status. Allowed Values <code>Status.All</code>, <code>Status.Billable</code>, <code>Status.Nonbillable</code>, <code>Status.Reimbursed</code>, <code>Status.Invoiced</code> and <code>Status.Unbilled</code>",
+            "type": "string"
+          },
+          "search_text": {
+            "description": "Search expenses by account name or description or <code>customer name</code>  or <code>vendor name</code>. Max-length [100]",
+            "type": "string"
+          },
+          "applied_filter": {
+            "type": "string"
+          },
+          "page": {
+            "type": "string"
+          },
+          "per_page": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

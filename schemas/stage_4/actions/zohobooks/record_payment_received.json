@@ -1,0 +1,122 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "record_payment_received API Request (ZOHOBOOKS)",
+  "description": "Schema for record_payment_received - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "description": "Customer ID of the customer involved in the payment.",
+      "type": "string"
+    },
+    "payment_mode": {
+      "description": "Mode through which payment is made. This can be <code>check</code>, <code>cash</code>, <code>creditcard</code>, <code>banktransfer</code>, <code>bankremittance</code>, <code>autotransaction</code> or <code>others</code>. Max-length [100]",
+      "type": "string"
+    },
+    "amount": {
+      "description": "Amount paid in the respective payment.",
+      "type": "number",
+      "format": "double"
+    },
+    "date": {
+      "description": "Date on which payment is made. Format [yyyy-mm-dd]",
+      "type": "string"
+    },
+    "reference_number": {
+      "description": "Reference number generated for the payment. A string of your choice can also be used as the reference number. Max-length [100]",
+      "type": "string"
+    },
+    "description": {
+      "description": "Description about the payment.",
+      "type": "string"
+    },
+    "invoices": {
+      "description": "List of invoices associated with the payment. Each invoice object contains <code>invoice_id</code>, <code>invoice_number</code>, <code>date</code>, <code>invoice_amount</code>, <code>amount_applied</code> and <code>balance_amount</code>.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "invoice_id": {
+            "description": "Invoice ID of the required invoice.",
+            "type": "string"
+          },
+          "amount_applied": {
+            "description": "Amount paid for the invoice.",
+            "type": "number",
+            "format": "double"
+          }
+        }
+      }
+    },
+    "exchange_rate": {
+      "description": "Exchange rate for the currency used in the invoices and customer's currency. The payment amount would be the multiplicative product of the original amount and the exchange rate.",
+      "type": "number",
+      "format": "double",
+      "default": 1
+    },
+    "payment_form": {
+      "description": "Mode of Vendor Payment",
+      "type": "string"
+    },
+    "bank_charges": {
+      "description": "Denotes any additional bank charges.",
+      "type": "number",
+      "format": "double"
+    },
+    "custom_fields": {
+      "description": "Additional fields for the payments.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "description": "Label of the custom field.",
+            "type": "string"
+          },
+          "value": {
+            "description": "Value of the custom field.",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "location_id": {
+      "description": "Location ID",
+      "type": "string"
+    },
+    "invoice_id": {
+      "description": "Invoice ID of the required invoice.",
+      "type": "string"
+    },
+    "amount_applied": {
+      "description": "Amount paid for the invoice.",
+      "type": "number",
+      "format": "double"
+    },
+    "tax_amount_withheld": {
+      "description": "Amount withheld for tax.",
+      "type": "number",
+      "format": "double"
+    },
+    "account_id": {
+      "description": "ID of the cash/bank account the payment has to be deposited.",
+      "type": "string"
+    },
+    "contact_persons": {
+      "description": "IDs of the contact personsthe thank you mail has to be triggered.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "customer_id",
+    "payment_mode",
+    "amount",
+    "invoices",
+    "date",
+    "invoice_id",
+    "amount_applied"
+  ],
+  "additionalProperties": false
+}

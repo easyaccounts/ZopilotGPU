@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_item API Request (QUICKBOOKS)",
+  "description": "Schema for create_item - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string",
+      "description": "Item ID (required for update)"
+    },
+    "SyncToken": {
+      "type": "string",
+      "description": "Version token (required for update)"
+    },
+    "Name": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "Item name"
+    },
+    "Type": {
+      "type": "string",
+      "enum": [
+        "Inventory",
+        "Service",
+        "NonInventory",
+        "Category"
+      ],
+      "description": "Item type"
+    },
+    "Description": {
+      "type": "string",
+      "maxLength": 4000,
+      "description": "Item description"
+    },
+    "Active": {
+      "type": "boolean",
+      "description": "Is active"
+    },
+    "Sku": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "SKU"
+    },
+    "UnitPrice": {
+      "type": "number",
+      "format": "decimal",
+      "description": "Unit price"
+    },
+    "IncomeAccountRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        }
+      },
+      "description": "Income account"
+    },
+    "ExpenseAccountRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        }
+      },
+      "description": "Expense account (for inventory items)"
+    },
+    "AssetAccountRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        }
+      },
+      "description": "Asset account (for inventory items)"
+    },
+    "TrackQtyOnHand": {
+      "type": "boolean",
+      "description": "Track quantity on hand"
+    },
+    "QtyOnHand": {
+      "type": "number",
+      "description": "Quantity on hand"
+    },
+    "InvStartDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Inventory start date"
+    }
+  },
+  "required": [
+    "Name",
+    "Type"
+  ],
+  "additionalProperties": false
+}

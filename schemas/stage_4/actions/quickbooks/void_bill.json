@@ -1,0 +1,142 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "void_bill API Request (QUICKBOOKS)",
+  "description": "Schema for void_bill - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string",
+      "description": "Bill ID (required for update)"
+    },
+    "SyncToken": {
+      "type": "string",
+      "description": "Version token (required for update)"
+    },
+    "DocNumber": {
+      "type": "string",
+      "maxLength": 21,
+      "description": "Bill number"
+    },
+    "TxnDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Transaction date"
+    },
+    "DueDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Due date"
+    },
+    "VendorRef": {
+      "type": "object",
+      "required": [
+        "value"
+      ],
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Vendor ID"
+        }
+      }
+    },
+    "Line": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "DetailType",
+          "Amount"
+        ],
+        "properties": {
+          "Id": {
+            "type": "string"
+          },
+          "LineNum": {
+            "type": "integer"
+          },
+          "Description": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "Amount": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "DetailType": {
+            "type": "string",
+            "enum": [
+              "AccountBasedExpenseLineDetail",
+              "ItemBasedExpenseLineDetail"
+            ]
+          },
+          "AccountBasedExpenseLineDetail": {
+            "type": "object",
+            "properties": {
+              "AccountRef": {
+                "type": "object",
+                "required": [
+                  "value"
+                ],
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              },
+              "ClassRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "ItemBasedExpenseLineDetail": {
+            "type": "object",
+            "properties": {
+              "ItemRef": {
+                "type": "object",
+                "required": [
+                  "value"
+                ],
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              },
+              "Qty": {
+                "type": "number"
+              },
+              "UnitPrice": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "APAccountRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        }
+      },
+      "description": "Accounts Payable account"
+    },
+    "PrivateNote": {
+      "type": "string",
+      "maxLength": 4000,
+      "description": "Internal note"
+    }
+  },
+  "required": [
+    "VendorRef",
+    "Line"
+  ],
+  "additionalProperties": false
+}

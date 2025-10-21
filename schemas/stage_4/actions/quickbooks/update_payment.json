@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "update_payment API Request (QUICKBOOKS)",
+  "description": "Schema for update_payment - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string",
+      "description": "Payment ID (required for update)"
+    },
+    "SyncToken": {
+      "type": "string",
+      "description": "Version token (required for update)"
+    },
+    "TxnDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Transaction date"
+    },
+    "CustomerRef": {
+      "type": "object",
+      "required": [
+        "value"
+      ],
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Customer ID"
+        }
+      }
+    },
+    "TotalAmt": {
+      "type": "number",
+      "format": "decimal",
+      "description": "Total payment amount"
+    },
+    "PaymentMethodRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        }
+      },
+      "description": "Payment method"
+    },
+    "DepositToAccountRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        }
+      },
+      "description": "Deposit to account"
+    },
+    "Line": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "Amount"
+        ],
+        "properties": {
+          "Amount": {
+            "type": "number"
+          },
+          "LinkedTxn": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "TxnId": {
+                  "type": "string"
+                },
+                "TxnType": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "PrivateNote": {
+      "type": "string",
+      "maxLength": 4000,
+      "description": "Internal note"
+    }
+  },
+  "required": [
+    "CustomerRef",
+    "TotalAmt"
+  ],
+  "additionalProperties": false
+}

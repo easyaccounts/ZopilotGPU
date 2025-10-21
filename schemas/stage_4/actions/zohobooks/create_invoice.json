@@ -1,0 +1,399 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_invoice API Request (ZOHOBOOKS)",
+  "description": "Schema for create_invoice - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "description": "ID of the customer the invoice has to be created.",
+      "type": "string"
+    },
+    "currency_id": {
+      "description": "The currency id of the currency",
+      "type": "string"
+    },
+    "contact_persons": {
+      "description": "Array of contact person(s) for whom invoice has to be sent.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "invoice_number": {
+      "description": "Search invoices by invoice number.Variants: <code>invoice_number_startswith</code> and <code>invoice_number_contains</code>. Max-length [100]",
+      "type": "string"
+    },
+    "place_of_supply": {
+      "description": "Place where the goods/services are supplied to. (If not given, <code>place of contact</code> given for the contact will be taken)<br/>Supported codes for UAE emirates are : </br>Abu Dhabi - <code>AB</code>,</br>Ajman - <code>AJ</code>,</br>Dubai - <code>DU</code>,</br>Fujairah - <code>FU</code>,</br>Ras al-Khaimah - <code>RA</code>,</br>Sharjah - <code>SH</code>,</br>Umm al-Quwain - <code>UM</code><br/>Supported codes for the GCC countries are : </br>United Arab Emirates - <code>AE</code>,</br>Saudi Arabia - <code>SA</code>,</br>Bahrain - <code>BH</code>,</br>Kuwait - <code>KW</code>,</br>Oman - <code>OM</code>,</br>Qatar - <code>QA</code>.",
+      "type": "string"
+    },
+    "vat_treatment": {
+      "description": "(Optional) VAT treatment for the invoices. VAT treatment denotes the location of the customer, if the customer resides in UK then the VAT treatment is <code>uk</code>. If the customer is in an EU country & VAT registered, you are resides in Northen Ireland and selling Goods then his VAT treatment is <code>eu_vat_registered</code>, if he resides outside of the UK then his VAT treatment is <code>overseas</code> (For Pre Brexit, this can be split as <code>eu_vat_registered</code>, <code>eu_vat_not_registered</code> and <code>non_eu</code>).",
+      "type": "string"
+    },
+    "tax_treatment": {
+      "description": "VAT treatment for the invoice .Choose whether the contact falls under: <code>vat_registered</code>,<code>vat_not_registered</code>,<code>gcc_vat_not_registered</code>,<code>gcc_vat_registered</code>,<code>non_gcc</code>.</br><code>dz_vat_registered</code> and <code>dz_vat_not_registered</code> supported only for <b>UAE</b>.</b></br><code>home_country_mexico</code>,<code>border_region_mexico</code>,<code>non_mexico</code> supported only for <b>MX</b>.<br/><b>For Kenya Edition:</b> <code>vat_registered</code> ,<code>vat_not_registered</code> ,<code>non_kenya</code>(A business that is located outside Kenya).<br/><b>For SouthAfrica Edition:</b> <code>vat_registered</code>, <code>vat_not_registered</code>, <code>overseas</code>(A business that is located outside SouthAfrica).",
+      "type": "string"
+    },
+    "is_reverse_charge_applied": {
+      "description": "(Required if customer tax treatment is <code>vat_registered</code>)<br/>Used to specify whether the transaction is applicable for Domestic Reverse Charge (DRC) or not.",
+      "type": "boolean"
+    },
+    "gst_treatment": {
+      "description": "Choose whether the contact is GST registered/unregistered/consumer/overseas. Allowed values are <code> business_gst </code> , <code> business_none </code> , <code> overseas </code> , <code> consumer </code>.",
+      "type": "string"
+    },
+    "gst_no": {
+      "description": "15 digit GST identification number of the customer.",
+      "type": "string"
+    },
+    "cfdi_usage": {
+      "description": "Choose CFDI Usage. Allowed values:</br><code>acquisition_of_merchandise</code>, <code>return_discount_bonus</code>, <code>general_expense</code>, <code>buildings</code>, <code>furniture_office_equipment</code>, <code>transport_equipment</code>, <code>computer_equipmentdye_molds_tools</code>, <code>telephone_communication</code>, <code>satellite_communication</code>, <code>other_machinery_equipment</code>, <code>hospital_expense</code>, <code>medical_expense_disability</code>, <code>funeral_expense</code>, <code>donation</code>, <code>interest_mortage_loans</code>, <code>contribution_sar</code>, <code>medical_expense_insurance_pormium</code>, <code>school_transportation_expense</code>, <code>deposit_saving_account</code>, <code>payment_educational_service</code>, <code>no_tax_effect</code>, <code>payment</code>, <code>payroll</code>.",
+      "type": "string"
+    },
+    "reference_number": {
+      "description": "The reference number of the invoice",
+      "type": "string"
+    },
+    "template_id": {
+      "description": "ID of the pdf template associated with the invoice.",
+      "type": "string"
+    },
+    "date": {
+      "description": "Search invoices by invoice date. Default date format is yyyy-mm-dd.<code> Variants: date_start, date_end, date_before and date_after</code>.",
+      "type": "string"
+    },
+    "payment_terms": {
+      "description": "Payment terms in days e.g. 15, 30, 60. Invoice due date will be calculated based on this. Max-length [100]",
+      "type": "integer"
+    },
+    "payment_terms_label": {
+      "description": "Used to override the default payment terms label. Default value for 15 days is \"Net 15 Days\". Max-length [100]",
+      "type": "string"
+    },
+    "due_date": {
+      "description": "Search invoices by due date. Default date format is yyyy-mm-dd. <code> Variants: due_date_start, due_date_end, due_date_before and due_date_after </code>",
+      "type": "string"
+    },
+    "discount": {
+      "description": "Discount applied to the invoice. It can be either in % or in amount. e.g. 12.5% or 190. Max-length [100]",
+      "type": "number",
+      "format": "float"
+    },
+    "is_discount_before_tax": {
+      "description": "Used to specify how the discount has to applied. Either before or after the calculation of tax.",
+      "type": "boolean"
+    },
+    "discount_type": {
+      "description": "How the discount is specified. Allowed values: <code>entity_level</code> and <code>item_level</code>.",
+      "type": "string"
+    },
+    "is_inclusive_tax": {
+      "description": "Used to specify whether the line item rates are inclusive or exclusivr of tax.",
+      "type": "boolean"
+    },
+    "exchange_rate": {
+      "description": "Exchange rate of the currency.",
+      "type": "number",
+      "format": "float"
+    },
+    "location_id": {
+      "description": "Location ID",
+      "type": "string"
+    },
+    "recurring_invoice_id": {
+      "description": "ID of the recurring invoice from which the invoice is created.",
+      "type": "string"
+    },
+    "invoiced_estimate_id": {
+      "description": "ID of the invoice from which the invoice is created.",
+      "type": "string"
+    },
+    "salesperson_name": {
+      "description": "Name of the salesperson. Max-length [200]",
+      "type": "string"
+    },
+    "custom_fields": {
+      "description": "Custom fields for an invoice.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "customfield_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "value": {
+            "description": "Value of the Custom Field",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "item_id"
+        ],
+        "properties": {
+          "item_id": {
+            "description": "Search invoices by item id.",
+            "type": "string"
+          },
+          "project_id": {
+            "description": "ID of the Project.",
+            "type": "string"
+          },
+          "time_entry_ids": {
+            "description": "IDs of the time entries associated with the project.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "product_type": {
+            "description": "Enter <code>goods</code> or <code>services</code> .<br/><b>For SouthAfrica Edition:</b> <code>service</code>, <code>goods</code>, <code>capital_service</code> and <code>capital_goods</code>",
+            "type": "string"
+          },
+          "hsn_or_sac": {
+            "description": "Add HSN/SAC code for your goods/services",
+            "type": "string"
+          },
+          "sat_item_key_code": {
+            "description": "Add SAT Item Key Code for your goods/services. Download the <a href= http://omawww.sat.gob.mx/tramitesyservicios/Paginas/documentos/catCFDI_V_4_07122022.xls  >CFDI Catalogs.</a>",
+            "type": "string"
+          },
+          "unitkey_code": {
+            "description": "Add SAT Unit Key Code for your goods/services. Download the <a href= http://omawww.sat.gob.mx/tramitesyservicios/Paginas/documentos/catCFDI_V_4_07122022.xls  >CFDI Catalogs.</a>",
+            "type": "string"
+          },
+          "location_id": {
+            "description": "Location ID",
+            "type": "string"
+          },
+          "expense_id": {
+            "type": "string",
+            "description": "Add billable expense id which needs to be convert to invoice"
+          },
+          "bill_id": {
+            "type": "string",
+            "description": "Add billable bill id which needs to be convert to invoice"
+          },
+          "bill_item_id": {
+            "type": "string",
+            "description": "Add billable bill item id which needs to be convert to invoice"
+          },
+          "expense_receipt_name": {
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the line item. Max-length [100]",
+            "type": "string"
+          },
+          "description": {
+            "description": "The description of the line items. Max-length [2000]",
+            "type": "string"
+          },
+          "item_order": {
+            "description": "The order of the line item_order",
+            "type": "integer"
+          },
+          "bcy_rate": {
+            "description": "base currency rate",
+            "type": "number",
+            "format": "float"
+          },
+          "rate": {
+            "description": "Rate of the line item.",
+            "type": "number",
+            "format": "double"
+          },
+          "quantity": {
+            "description": "The quantity of line item",
+            "type": "number",
+            "format": "float"
+          },
+          "unit": {
+            "description": "Unit of the line item e.g. kgs, Nos. Max-length [100]",
+            "type": "string"
+          },
+          "discount_amount": {
+            "description": "The discount amount on the line item",
+            "type": "number",
+            "format": "float"
+          },
+          "discount": {
+            "description": "Discount applied to the invoice. It can be either in % or in amount. e.g. 12.5% or 190. Max-length [100]",
+            "type": "number",
+            "format": "float"
+          },
+          "tags": {
+            "description": "Filter all your reports based on the tag",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tag_id": {
+                  "description": "ID of the reporting tag",
+                  "type": "string"
+                },
+                "tag_option_id": {
+                  "description": "ID of the reporting tag's option",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "tax_id": {
+            "description": "ID of the tax.",
+            "type": "string"
+          },
+          "tds_tax_id": {
+            "description": "ID of the TDS tax.",
+            "type": "string"
+          },
+          "tax_name": {
+            "description": "The name of the tax",
+            "type": "string"
+          },
+          "tax_type": {
+            "description": "The type of the tax",
+            "type": "string"
+          },
+          "tax_percentage": {
+            "description": "The  percentage of tax levied",
+            "type": "number",
+            "format": "float"
+          },
+          "tax_treatment_code": {
+            "description": "Specify reason for using out of scope.</br>Supported values for UAE are <code>uae_same_tax_group</code>, <code>uae_reimbursed_expense</code> and <code>uae_others</code>.</br> Supported values for Bahrain are <code>bahrain_same_tax_group</code>, <code>bahrain_transfer_of_concern</code>, <code>bahrain_disbursement</code>, <code>bahrain_head_to_branch_transaction</code>, <code>bahrain_warranty_repair_services</code> and <code>bahrain_others</code>.</br>Supported values for Saudi Arabia are <code>ksa_pvt_health</code>, <code>ksa_pvt_edu</code>, <code>ksa_reimbursed_expense</code> and <code>ksa_house_sales</code>.",
+            "type": "string"
+          },
+          "header_name": {
+            "description": "Name of the item header",
+            "type": "string"
+          },
+          "salesorder_item_id": {
+            "description": "ID of the sales order line item which is invoices.",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "payment_options": {
+      "description": "Payment options for the invoice, online payment gateways and bank accounts. Will be displayed in the pdf.",
+      "type": "object",
+      "properties": {
+        "payment_gateways": {
+          "description": "Online payment gateways through which payment can be made.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "configured": {
+                "description": "Boolean check to see if a payment gateway has been configured",
+                "type": "boolean"
+              },
+              "additional_field1": {
+                "description": "Paypal payment method. Allowed Values: <code>standard</code> and <code>adaptive</code>",
+                "type": "string"
+              },
+              "gateway_name": {
+                "description": "Name of the payment gateway associated with the invoice. E.g. paypal, stripe.Allowed Values: <code>paypal</code>, <code>authorize_net</code>, <code>payflow_pro</code>, <code>stripe</code>, <code>2checkout</code> and <code>braintree</code>",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "allow_partial_payments": {
+      "description": "Boolean to check if partial payments are allowed for the contact",
+      "type": "boolean"
+    },
+    "custom_body": {
+      "type": "string"
+    },
+    "custom_subject": {
+      "type": "string"
+    },
+    "notes": {
+      "description": "The notes added below expressing gratitude or for conveying some information.",
+      "type": "string"
+    },
+    "terms": {
+      "description": "The terms added below expressing gratitude or for conveying some information.",
+      "type": "string"
+    },
+    "shipping_charge": {
+      "description": "Shipping charges applied to the invoice. Max-length [100]",
+      "type": "string"
+    },
+    "adjustment": {
+      "description": "Adjustments made to the invoice.",
+      "type": "number",
+      "format": "double"
+    },
+    "adjustment_description": {
+      "description": "Customize the adjustment description. E.g. Rounding off.",
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "tax_authority_id": {
+      "description": "ID of the tax authority. Tax authority depends on the location of the customer. For example, if the customer is located in NY, then the tax authority is NY tax authority.",
+      "type": "string"
+    },
+    "tax_exemption_id": {
+      "description": "ID of the tax exemption.",
+      "type": "string"
+    },
+    "billing_address_id": {
+      "description": "This is the ID of the billing address you want to apply to the invoice. <code>Note:</code> You need to create a billing address with the address API and pass the address ID here.",
+      "type": "string"
+    },
+    "shipping_address_id": {
+      "description": "This is the ID of the shipping address you want to apply to the invoice. <code>Note:</code> You need to create a shipping address with the address API and pass the address ID here.",
+      "type": "string"
+    },
+    "avatax_use_code": {
+      "description": "Used to group like customers for exemption purposes. It is a custom value that links customers to a tax rule. Select from Avalara [standard codes][1] or enter a custom code. Max-length [25]",
+      "type": "string"
+    },
+    "avatax_exempt_no": {
+      "description": "Exemption certificate number of the customer. Max-length [25]",
+      "type": "string"
+    },
+    "tax_id": {
+      "description": "ID of the tax.",
+      "type": "string"
+    },
+    "expense_id": {
+      "type": "string",
+      "description": "Add billable expense id which needs to be convert to invoice"
+    },
+    "salesorder_item_id": {
+      "description": "ID of the sales order line item which is invoices.",
+      "type": "string"
+    },
+    "avatax_tax_code": {
+      "description": "A tax code is a unique label used to group Items (products, services, or charges) together. Refer the [link][2] for more deails. Max-length [25]",
+      "type": "string"
+    },
+    "time_entry_ids": {
+      "description": "IDs of the time entries associated with the project.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "customer_id",
+    "line_items"
+  ],
+  "additionalProperties": false
+}

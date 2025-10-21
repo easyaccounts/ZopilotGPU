@@ -37,10 +37,37 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from app.llama_utils import get_llama_processor
+from app.schema_loader import get_stage_2_5_schema, get_stage_1_schema, get_stage_4_schema
 
 # Import logging
 import logging
 logger = logging.getLogger(__name__)
+
+# Outlines for grammar-constrained generation (imported lazily to avoid startup overhead)
+_outlines_available = False
+_outlines_model = None
+_outlines_generators = {}
+
+def _init_outlines():
+    """Initialize Outlines library (lazy loading)."""
+    global _outlines_available, _outlines_model
+    
+    if _outlines_available:
+        return True
+    
+    try:
+        import outlines
+        from outlines import models, generate
+        logger.info("✅ [Outlines] Library loaded successfully")
+        _outlines_available = True
+        return True
+    except ImportError as e:
+        logger.warning(f"⚠️  [Outlines] Not available: {e}")
+        logger.warning("   Falling back to standard generation with JSON parsing")
+        return False
+    except Exception as e:
+        logger.error(f"❌ [Outlines] Initialization error: {e}")
+        return False
 
 
 def classify_stage1(prompt: str, context: Dict[str, Any], generation_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -89,6 +116,7 @@ def classify_stage1(prompt: str, context: Dict[str, Any], generation_config: Opt
     top_k = generation_config.get('top_k', 50)
     repetition_penalty = generation_config.get('repetition_penalty', 1.1)
     max_input_length = generation_config.get('max_input_length', 29491)
+    use_outlines = context.get('use_outlines', True) if context else True  # Default: try Outlines
     
     # Validate token limits (Mixtral max: 32768)
     if max_new_tokens > 32768:
@@ -99,10 +127,59 @@ def classify_stage1(prompt: str, context: Dict[str, Any], generation_config: Opt
         max_input_length = 32768
     
     logger.info(f"⚙️  [Stage 1] Generation config: max_new_tokens={max_new_tokens}, temp={temperature}, max_input={max_input_length}")
+    logger.info(f"[Stage 1] Outlines enabled: {use_outlines}")
     
     try:
         # Get model processor
         processor = get_llama_processor()
+        model = processor.model
+        tokenizer = processor.tokenizer
+        
+        # ============================================================================
+        # PRIORITY 1: Try Outlines grammar-constrained generation (if enabled)
+        # ============================================================================
+        if use_outlines and _init_outlines():
+            logger.info("🎯 [Stage 1] Attempting Outlines grammar-constrained generation...")
+            
+            # Load Stage 1 schema
+            schema = get_stage_1_schema()
+            
+            if schema:
+                # Build simple prompt without JSON instructions (Outlines handles structure)
+                simple_prompt = f"""<s>[INST] {prompt}
+
+[/INST]"""
+                
+                # Try Outlines generation
+                result = _generate_with_outlines(
+                    simple_prompt,
+                    schema,
+                    model,
+                    tokenizer,
+                    max_tokens=max_new_tokens
+                )
+                
+                if result:
+                    logger.info("✅ [Stage 1] Outlines generation successful!")
+                    logger.info(f"   Business relevant: {result.get('business_relevant')}")
+                    logger.info(f"   Selected action: {result.get('selected_action')}")
+                    logger.info(f"   Confidence: {result.get('confidence')}%")
+                    
+                    # Clear KV cache
+                    if hasattr(model, 'past_key_values'):
+                        model.past_key_values = None
+                    torch.cuda.empty_cache()
+                    
+                    return result
+                else:
+                    logger.warning("⚠️  [Stage 1] Outlines failed, falling back to standard generation...")
+            else:
+                logger.warning("⚠️  [Stage 1] Schema not loaded, falling back to standard generation...")
+        
+        # ============================================================================
+        # PRIORITY 2: Fallback to standard generation with JSON parsing
+        # ============================================================================
+        logger.info("🔄 [Stage 1] Using standard generation with JSON parsing...")
         
         # Build Mixtral-compatible prompt with instruction tags and STRONG JSON enforcement
         formatted_prompt = f"""<s>[INST] {prompt}
@@ -212,6 +289,51 @@ START IMMEDIATELY with opening brace.
         raise RuntimeError(f"Stage 1 classification failed: {str(e)}") from e
 
 
+def _generate_with_outlines(prompt: str, schema: Dict[str, Any], model, tokenizer, max_tokens: int = 2000) -> Optional[Dict[str, Any]]:
+    """
+    Generate structured output using Outlines grammar-constrained generation.
+    
+    Args:
+        prompt: The full prompt text
+        schema: JSON Schema dict
+        model: The transformer model
+        tokenizer: The tokenizer
+        max_tokens: Maximum tokens to generate
+    
+    Returns:
+        Parsed JSON dict or None if generation fails
+    """
+    try:
+        from outlines import models as outlines_models, generate
+        
+        logger.info("🎯 [Outlines] Starting grammar-constrained generation...")
+        gen_start = __import__('time').time()
+        
+        # Wrap model with Outlines (this is fast, ~10ms)
+        outlines_model = outlines_models.Transformers(model, tokenizer)
+        
+        # Create JSON generator with schema constraint
+        # This builds FSM (can take 300-800ms first time, then cached)
+        generator = generate.json(outlines_model, schema)
+        
+        # Generate - output is GUARANTEED to match schema
+        result = generator(prompt, max_tokens=max_tokens)
+        
+        gen_time = __import__('time').time() - gen_start
+        logger.info(f"✅ [Outlines] Generated valid JSON in {gen_time:.1f}s")
+        logger.info(f"   Result type: {type(result)}")
+        logger.info(f"   Result keys: {result.keys() if isinstance(result, dict) else 'N/A'}")
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"❌ [Outlines] Generation failed: {e}")
+        logger.error(f"   Error type: {type(e).__name__}")
+        import traceback
+        logger.error(f"   Traceback: {traceback.format_exc()}")
+        return None
+
+
 def classify_stage2_5_entity_extraction(prompt: str, context: Dict[str, Any], generation_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Stage 2.5: Entity Field Extraction (LLM-Powered)
@@ -276,7 +398,9 @@ def classify_stage2_5_entity_extraction(prompt: str, context: Dict[str, Any], ge
         max_input_length = generation_config.get('max_input_length', max_input_length)
     
     entity_types = context.get('entity_types', []) if context else []
+    use_outlines = context.get('use_outlines', True) if context else True  # Default: try Outlines
     logger.info(f"[Stage 2.5] Extracting fields for entity types: {entity_types}")
+    logger.info(f"[Stage 2.5] Outlines enabled: {use_outlines}")
     logger.info(f"[Stage 2.5] Config: max_tokens={max_new_tokens}, temp={temperature}, top_p={top_p}, top_k={top_k}")
     
     try:
@@ -284,6 +408,51 @@ def classify_stage2_5_entity_extraction(prompt: str, context: Dict[str, Any], ge
         processor = get_llama_processor()
         model = processor.model
         tokenizer = processor.tokenizer
+        
+        # ============================================================================
+        # PRIORITY 1: Try Outlines grammar-constrained generation (if enabled)
+        # ============================================================================
+        if use_outlines and _init_outlines():
+            logger.info("🎯 [Stage 2.5] Attempting Outlines grammar-constrained generation...")
+            
+            # Load Stage 2.5 schema
+            schema = get_stage_2_5_schema()
+            
+            if schema:
+                # Build simple prompt without JSON instructions (Outlines handles structure)
+                simple_prompt = f"""<s>[INST] {prompt}
+
+[/INST]"""
+                
+                # Try Outlines generation
+                result = _generate_with_outlines(
+                    simple_prompt,
+                    schema,
+                    model,
+                    tokenizer,
+                    max_tokens=max_new_tokens
+                )
+                
+                if result:
+                    logger.info("✅ [Stage 2.5] Outlines generation successful!")
+                    logger.info(f"   Entities extracted: {len(result.get('entities_to_resolve', []))}")
+                    logger.info(f"   Total entities: {result.get('extraction_metadata', {}).get('total_entities', 0)}")
+                    
+                    # Clear KV cache
+                    if hasattr(model, 'past_key_values'):
+                        model.past_key_values = None
+                    torch.cuda.empty_cache()
+                    
+                    return result
+                else:
+                    logger.warning("⚠️  [Stage 2.5] Outlines failed, falling back to standard generation...")
+            else:
+                logger.warning("⚠️  [Stage 2.5] Schema not loaded, falling back to standard generation...")
+        
+        # ============================================================================
+        # PRIORITY 2: Fallback to standard generation with JSON parsing
+        # ============================================================================
+        logger.info("🔄 [Stage 2.5] Using standard generation with JSON parsing...")
         
         # Build Mixtral-compatible prompt with STRONG JSON enforcement (same as Stage 1 & 4)
         formatted_prompt = f"""<s>[INST] {prompt}
@@ -507,11 +676,14 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
     """
     action_name = context.get('action', context.get('actions', ['unknown'])[0] if context.get('actions') else 'unknown')
     action_count = context.get('action_count', 1)
+    use_outlines = context.get('use_outlines', True) if context else True  # Default: try Outlines
     
     if action_count > 1:
         logger.info(f"🎯 [Stage 4] Starting BATCH field mapping for {action_count} actions")
     else:
         logger.info(f"🎯 [Stage 4] Starting field mapping for action: {action_name}")
+    
+    logger.info(f"[Stage 4] Outlines enabled: {use_outlines}")
     
     # Extract generation parameters with defaults (FIX: Increase temp from 0.05 to 0.1 for better JSON adherence)
     if generation_config is None:
@@ -537,6 +709,87 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
     try:
         # Get model processor
         processor = get_llama_processor()
+        model = processor.model
+        tokenizer = processor.tokenizer
+        
+        # ============================================================================
+        # PRIORITY 1: Try Outlines grammar-constrained generation (if enabled)
+        # ============================================================================
+        if use_outlines and _init_outlines():
+            logger.info("🎯 [Stage 4] Attempting Outlines grammar-constrained generation...")
+            
+            # Determine if batch and extract action names
+            is_batch = action_count > 1
+            
+            # Extract action name(s) from context for action-specific schemas
+            action_names = []
+            if context:
+                if is_batch and 'actions' in context:
+                    # Batch mode: extract from actions array
+                    action_names = [a.get('action_name') for a in context['actions'] if a.get('action_name')]
+                elif 'action_name' in context:
+                    # Single mode: direct action_name
+                    action_names = [context['action_name']]
+            
+            # Determine software (default to zohobooks)
+            software = context.get('software', 'zohobooks') if context else 'zohobooks'
+            if software.lower() in ['zoho-books', 'zoho books']:
+                software = 'zohobooks'
+            
+            # Try to use action-specific schema (only for single action)
+            schema = None
+            if not is_batch and len(action_names) == 1:
+                # Single action: use action-specific schema for maximum precision
+                action_name = action_names[0]
+                schema = get_stage_4_schema(is_batch=False, action_name=action_name, software=software)
+                if schema:
+                    logger.info(f"✅ [Stage 4] Using action-specific schema for '{action_name}'")
+            
+            # Fallback to generic batch/single schema
+            if not schema:
+                schema = get_stage_4_schema(is_batch=is_batch)
+                if is_batch:
+                    logger.info(f"[Stage 4] Using generic batch schema for {action_count} actions")
+                else:
+                    logger.info(f"[Stage 4] Using generic single schema")
+            
+            if schema:
+                # Build simple prompt without JSON instructions (Outlines handles structure)
+                simple_prompt = f"""<s>[INST] {prompt}
+
+[/INST]"""
+                
+                # Try Outlines generation
+                result = _generate_with_outlines(
+                    simple_prompt,
+                    schema,
+                    model,
+                    tokenizer,
+                    max_tokens=max_new_tokens
+                )
+                
+                if result:
+                    logger.info("✅ [Stage 4] Outlines generation successful!")
+                    if is_batch:
+                        logger.info(f"   Actions generated: {len(result.get('actions', []))}")
+                    else:
+                        logger.info(f"   Lookups required: {len(result.get('lookups_required', []))}")
+                    
+                    # Clear KV cache
+                    if hasattr(model, 'past_key_values'):
+                        model.past_key_values = None
+                    torch.cuda.empty_cache()
+                    
+                    return result
+                else:
+                    logger.warning("⚠️  [Stage 4] Outlines failed, falling back to standard generation...")
+            else:
+                logger.warning("⚠️  [Stage 4] Schema not loaded, falling back to standard generation...")
+        
+        # ============================================================================
+        # PRIORITY 2: Fallback to standard generation with JSON parsing
+        # ============================================================================
+        logger.info("🔄 [Stage 4] Using standard generation with JSON parsing...")
         
         # Build Mixtral-compatible prompt with JSON prefix forcing
         formatted_prompt = f"""<s>[INST] {prompt}

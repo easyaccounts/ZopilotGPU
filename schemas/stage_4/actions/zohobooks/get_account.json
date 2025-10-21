@@ -1,0 +1,104 @@
+{
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    },
+    "chart_of_account": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "description": "ID of the Account",
+          "type": "string"
+        },
+        "account_name": {
+          "description": "Name of the account",
+          "type": "string"
+        },
+        "account_code": {
+          "description": "Code Associated with the Account",
+          "type": "string"
+        },
+        "is_active": {
+          "description": "Check if account is Active or Inactive",
+          "type": "boolean"
+        },
+        "account_type": {
+          "description": "Type of the account. Allowed Values: <code>other_asset</code>, <code>other_current_asset</code>, <code>intangible_asset</code>, <code>right_to_use_asset</code>,<code>financial_asset</code>,<code>contingent_asset</code>,<code>contract_asset</code>,  <code>cash</code>, <code>bank</code>, <code>fixed_asset</code>, <code>other_current_liability</code>, <code>contract_liability</code> , <code>refund_liability</code>, <code>credit_card</code>, <code>long_term_liability</code>, <code>loans_and_borrowing</code> ,<code>lease_liability</code> ,<code>employee_benefit_liability</code> ,<code>contingent_liability</code> ,<code>financial_liability</code> , <code>other_liability</code>, <code>equity</code>, <code>income</code>,<code>finance_income</code> ,<code>other_comprehensive_income</code> , <code>other_income</code>, <code>expense</code>, <code>manufacturing_expense</code> ,<code>impairment_expense</code> ,<code>depreciation_expense</code> ,<code>employee_benefit_expense</code> ,<code>lease_expense</code> ,<code>finance_expense</code> ,<code>tax_expense</code> , <code>cost_of_goods_sold</code>, <code>other_expense</code>, <code>accounts_receivable</code> and <code>accounts_payable</code>.",
+          "type": "string"
+        },
+        "currency_id": {
+          "description": "ID of the account currency.",
+          "type": "string"
+        },
+        "currency_code": {
+          "description": "Code of the Currency Associated with the Account",
+          "type": "string"
+        },
+        "description": {
+          "description": "Description of the account",
+          "type": "string"
+        },
+        "is_system_account": {
+          "description": "Check if it is an System Account",
+          "type": "boolean"
+        },
+        "is_involved_in_transaction": {
+          "description": "Check if account is involved in transaction",
+          "type": "boolean"
+        },
+        "can_show_in_ze": {
+          "type": "boolean"
+        },
+        "include_in_vat_return": {
+          "description": "Boolean to include an account in VAT returns.",
+          "type": "boolean",
+          "x-node_available_in": [
+            "uk"
+          ],
+          "x-node_unavailable_in": []
+        },
+        "custom_fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "customfield_id": {
+                "description": "ID of the Custom Field",
+                "type": "string"
+              },
+              "value": {
+                "description": "Value of the Custom Field",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "parent_account_id": {
+          "description": "ID of the Parent Account",
+          "type": "string"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "created_time": {
+          "description": "Created Time associated with the Entity",
+          "type": "string"
+        },
+        "last_modified_time": {
+          "description": "Last Modified time associated with the entity",
+          "type": "string"
+        }
+      }
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "get_account API Request (ZOHOBOOKS)",
+  "description": "Schema for get_account - extracted from zohobooks OpenAPI spec (corrected path: components.schemas.create-an-account-response)"
+}

@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_time_entries API Request (QUICKBOOKS)",
+  "description": "Schema for list_time_entries - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "additionalProperties": false
+}

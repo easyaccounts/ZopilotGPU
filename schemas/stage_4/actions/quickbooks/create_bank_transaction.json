@@ -1,0 +1,147 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_bank_transaction API Request (QUICKBOOKS)",
+  "description": "Schema for create_bank_transaction - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "Id": {
+      "type": "string"
+    },
+    "SyncToken": {
+      "type": "string"
+    },
+    "TxnDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Transaction date"
+    },
+    "DepositToAccountRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "description": "Bank account to deposit to (required)"
+    },
+    "Line": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "DetailType": {
+            "type": "string",
+            "enum": [
+              "DepositLineDetail"
+            ]
+          },
+          "Amount": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "DepositLineDetail": {
+            "type": "object",
+            "properties": {
+              "AccountRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "description": "Income/asset account"
+              },
+              "ClassRef": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "description": "Class (optional)"
+              },
+              "Entity": {
+                "type": "object",
+                "properties": {
+                  "Type": {
+                    "type": "string",
+                    "enum": [
+                      "Customer",
+                      "Vendor",
+                      "Employee"
+                    ]
+                  },
+                  "EntityRef": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "Description": {
+            "type": "string",
+            "maxLength": 4000
+          }
+        }
+      },
+      "description": "Deposit line items (required)"
+    },
+    "TotalAmt": {
+      "type": "number",
+      "format": "decimal",
+      "description": "Total amount"
+    },
+    "PrivateNote": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "CashBack": {
+      "type": "object",
+      "properties": {
+        "AccountRef": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "description": "Cash back account"
+        },
+        "Amount": {
+          "type": "number",
+          "format": "decimal",
+          "description": "Cash back amount"
+        },
+        "Memo": {
+          "type": "string"
+        }
+      },
+      "description": "Cash back details"
+    }
+  },
+  "required": [
+    "Line",
+    "DepositToAccountRef"
+  ],
+  "additionalProperties": false
+}

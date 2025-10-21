@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_journals API Request (QUICKBOOKS)",
+  "description": "Schema for list_journals - extracted from quickbooks OpenAPI spec",
+  "type": "object",
+  "additionalProperties": false
+}

@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "list_vendor_credits API Request (ZOHOBOOKS)",
+  "description": "Schema for list_vendor_credits - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer"
+    },
+    "message": {
+      "type": "string"
+    },
+    "vendorcredits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "vendor_credit_id": {
+            "description": "ID of the Vendor Credit",
+            "type": "string"
+          },
+          "vendor_credit_number": {
+            "description": "Number of the Vendor Credit",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "reference_number": {
+            "description": "Reference number for the refund recorded.",
+            "type": "string"
+          },
+          "date": {
+            "description": "The date the vendor credit is created. [yyyy-mm-dd]",
+            "type": "string"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "balance": {
+            "description": "Balance in the Vendor Credit",
+            "type": "number",
+            "format": "double"
+          },
+          "vendor_id": {
+            "description": "ID of the vendor the vendor credit associated with the Vendor Credit",
+            "type": "string"
+          },
+          "vendor_name": {
+            "description": "Name of the Vendor Associated with the Vendor Credit",
+            "type": "string"
+          },
+          "currency_id": {
+            "description": "ID of the Currency Involved in the Vendor Credit",
+            "type": "string"
+          },
+          "currency_code": {
+            "description": "Code of the Currency Involved in the Vendor Credit",
+            "type": "string"
+          },
+          "created_time": {
+            "description": "Time of Vendor Credit Creation",
+            "type": "string"
+          },
+          "last_modified_time": {
+            "description": "Last Modified Time of Vendor Credit",
+            "type": "string"
+          },
+          "has_attachment": {
+            "description": "Check if Vendor Credit has attachment",
+            "type": "boolean"
+          },
+          "exchange_rate": {
+            "description": "Exchange rate of the currency.",
+            "type": "number",
+            "format": "double"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

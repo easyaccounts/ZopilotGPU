@@ -1,0 +1,433 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "create_contact API Request (ZOHOBOOKS)",
+  "description": "Schema for create_contact - extracted from zohobooks OpenAPI spec",
+  "type": "object",
+  "properties": {
+    "contact_name": {
+      "description": "Display Name of the contact. Max-length [200]",
+      "type": "string"
+    },
+    "company_name": {
+      "description": "Company Name of the contact. Max-length [200]",
+      "type": "string"
+    },
+    "website": {
+      "description": "Website of the contact.",
+      "type": "string"
+    },
+    "language_code": {
+      "description": "language of a contact. allowed values <code>de,en,es,fr,it,ja,nl,pt,pt_br,sv,zh,en_gb</code>",
+      "type": "string"
+    },
+    "contact_type": {
+      "description": "Contact type of the contact",
+      "type": "string"
+    },
+    "customer_sub_type": {
+      "description": "Type of the customer",
+      "type": "string"
+    },
+    "credit_limit": {
+      "description": "Credit limit for a customer",
+      "type": "number",
+      "format": "double"
+    },
+    "tags": {
+      "description": "Filter all your reports based on the tag",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tag_id": {
+            "description": "ID of the reporting tag",
+            "type": "string"
+          },
+          "tag_option_id": {
+            "description": "ID of the reporting tag's option",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "is_portal_enabled": {
+      "description": "To enable client portal for the contact.  Allowed value is <code>true</code> and <code>false</code>.",
+      "type": "boolean"
+    },
+    "currency_id": {
+      "description": "Currency ID of the customer's currency.",
+      "type": "string"
+    },
+    "payment_terms": {
+      "description": "Net payment term for the customer.",
+      "type": "integer"
+    },
+    "payment_terms_label": {
+      "description": "Label for the paymet due details.",
+      "type": "string"
+    },
+    "notes": {
+      "description": "Commennts about the payment made by the contact.",
+      "type": "string"
+    },
+    "billing_address": {
+      "description": "Billing address of the contact.",
+      "type": "object",
+      "properties": {
+        "attention": {
+          "type": "string"
+        },
+        "address": {
+          "description": "Max-length [500]",
+          "type": "string"
+        },
+        "street2": {
+          "type": "string"
+        },
+        "state_code": {
+          "type": "string"
+        },
+        "city": {
+          "description": "City of the customer’s billing address.",
+          "type": "string"
+        },
+        "state": {
+          "description": "State of the customer’s billing address.",
+          "type": "string"
+        },
+        "zip": {
+          "description": "Zip code of the customer’s billing address.",
+          "type": "string"
+        },
+        "country": {
+          "description": "Country of the customer’s billing address.",
+          "type": "string"
+        },
+        "fax": {
+          "description": "Customer's fax number.",
+          "type": "string"
+        },
+        "phone": {
+          "description": "Search contacts by phone number of the contact person. Variants: <code>phone_startswith</code> and <code>phone_contains</code>",
+          "type": "string"
+        }
+      }
+    },
+    "shipping_address": {
+      "description": "Customer's shipping address object.",
+      "type": "object",
+      "properties": {
+        "attention": {
+          "type": "string"
+        },
+        "address": {
+          "description": "Max-length [500]",
+          "type": "string"
+        },
+        "street2": {
+          "type": "string"
+        },
+        "state_code": {
+          "type": "string"
+        },
+        "city": {
+          "description": "City of the customer’s billing address.",
+          "type": "string"
+        },
+        "state": {
+          "description": "State of the customer’s billing address.",
+          "type": "string"
+        },
+        "zip": {
+          "description": "Zip code of the customer’s billing address.",
+          "type": "string"
+        },
+        "country": {
+          "description": "Country of the customer’s billing address.",
+          "type": "string"
+        },
+        "fax": {
+          "description": "Customer's fax number.",
+          "type": "string"
+        },
+        "phone": {
+          "description": "Search contacts by phone number of the contact person. Variants: <code>phone_startswith</code> and <code>phone_contains</code>",
+          "type": "string"
+        }
+      }
+    },
+    "contact_persons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "salutation": {
+            "description": "Salutation for the contact",
+            "type": "string"
+          },
+          "first_name": {
+            "description": "Max-length [100]",
+            "type": "string"
+          },
+          "last_name": {
+            "description": "Max-length [100]",
+            "type": "string"
+          },
+          "email": {
+            "description": "Email address of the contact person.",
+            "type": "string"
+          },
+          "phone": {
+            "description": "Search contacts by phone number of the contact person. Variants: <code>phone_startswith</code> and <code>phone_contains</code>",
+            "type": "string"
+          },
+          "mobile": {
+            "description": "Search contacts by mobile number of the contact person.",
+            "type": "string"
+          },
+          "designation": {
+            "description": "Designation for the contact person.",
+            "type": "string"
+          },
+          "department": {
+            "description": "Department for the contact person.",
+            "type": "string"
+          },
+          "skype": {
+            "description": "Skype details for the contact person.",
+            "type": "string"
+          },
+          "is_primary_contact": {
+            "description": "To mark contact person as primary for contact. Allowed value is <code>true</code> only.",
+            "type": "boolean"
+          },
+          "enable_portal": {
+            "description": "To enable client portal for the primary contact. Allowed value is <code>true</code> and <code>false</code>.",
+            "type": "boolean"
+          }
+        }
+      },
+      "default": "Contact persons of a contact."
+    },
+    "default_templates": {
+      "type": "object",
+      "properties": {
+        "invoice_template_id": {
+          "description": "Default invoice template id used for this contact while creating invoice.",
+          "type": "string"
+        },
+        "estimate_template_id": {
+          "description": "Default estimate template id used for this contact while creating estimate.",
+          "type": "string"
+        },
+        "creditnote_template_id": {
+          "description": "Default credit note template id used for this contact while creating credit note.",
+          "type": "string"
+        },
+        "purchaseorder_template_id": {
+          "description": "Default purchase order template id used for this contact while creating purchase order(for Vendors only).",
+          "type": "string"
+        },
+        "salesorder_template_id": {
+          "description": "Default sales order template id used for this contact while creating sales order.",
+          "type": "string"
+        },
+        "retainerinvoice_template_id": {
+          "description": "Default retainer invoice template id used for this contact while creating retainer invoice.",
+          "type": "string"
+        },
+        "paymentthankyou_template_id": {
+          "description": "Default payment thankyou template id used for this contact while sending payment thankyou note.",
+          "type": "string"
+        },
+        "retainerinvoice_paymentthankyou_template_id": {
+          "description": "Default retainer invoice paymnet thankyou template id used for this contact while sending payment thankyou note for retainer invoice.",
+          "type": "string"
+        },
+        "invoice_email_template_id": {
+          "description": "Default invoice email template id used for this contact while sending invoices.",
+          "type": "string"
+        },
+        "estimate_email_template_id": {
+          "description": "Default estimate email template id used for this contact while sending estimates.",
+          "type": "string"
+        },
+        "creditnote_email_template_id": {
+          "description": "Default credit note email template id used for this contact while sending credit notes.",
+          "type": "string"
+        },
+        "purchaseorder_email_template_id": {
+          "description": "Default purchase order template id used for this contact while creating purchase order(for Vendors only).",
+          "type": "string"
+        },
+        "salesorder_email_template_id": {
+          "description": "Default sales order template id used for this contact while creating sales order.",
+          "type": "string"
+        },
+        "retainerinvoice_email_template_id": {
+          "description": "Default retainer invoice template id used for this contact while creating retainer invoice.",
+          "type": "string"
+        },
+        "paymentthankyou_email_template_id": {
+          "description": "Default payment thankyou template id used for this contact while sending payment thankyou note.",
+          "type": "string"
+        },
+        "retainerinvoice_paymentthankyou_email_template_id": {
+          "description": "Default retainer invoice paymnet thankyou template id used for this contact while sending payment thankyou note for retainer invoice.",
+          "type": "string"
+        }
+      }
+    },
+    "custom_fields": {
+      "description": "Custom fields of the contact.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "description": "Index of the custom field. It can hold any value from 1 to 10.",
+            "type": "integer"
+          },
+          "value": {
+            "description": "Value of the custom field.",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "opening_balances": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "location_id": {
+            "description": "Location ID",
+            "type": "string"
+          },
+          "exchange_rate": {
+            "description": "Exchange rate for the opening balance.",
+            "type": "number",
+            "format": "double"
+          },
+          "opening_balance_amount": {
+            "description": "Opening balance amount for a contact.",
+            "type": "number",
+            "format": "double"
+          }
+        }
+      }
+    },
+    "vat_reg_no": {
+      "description": "<b>For UK Edition:</b> VAT Registration number of a contact with length should be between 2 and 12 characters.<br/> <b>For Avalara:</b> If you are doing sales in the European Union (EU) then provide VAT Registration Number of your customers here. This is used to calculate VAT for B2B sales, from Avalara.",
+      "type": "string"
+    },
+    "owner_id": {
+      "description": "<b>For Customer Only :</b> If a contact is assigned to any particular user, that user can manage transactions for the contact.",
+      "type": "string"
+    },
+    "tax_reg_no": {
+      "description": "<b>For GCC Edition:</b> 15 digit Tax Registration number of a contact with Tax treatment as <code>vat_registered</code>,<code>gcc_vat_registered</code>,<code>dz_vat_registered</code>.<br/><b>For Mexico Edition:</b> 12 digit Tax Registration number of a contact with Tax treatment as </br> <code>home_country_mexico</code>, <code>border_region_mexico</code>, <code>non_mexico</code>.</br> Consumers generic RFC: <code>XAXX010101000</code>, Overseas generic RFC: <code>XEXX010101000</code>.<br/><b>For Kenya Edition:</b> 11 digit Tax Registration number of a contact with Tax treatment as <code>vat_registered</code><br/><b>For SouthAfrica Edition:</b> 10 digit Tax Registration number of a contact with Tax treatment as <code>vat_registered</code>",
+      "type": "string"
+    },
+    "tax_exemption_certificate_number": {
+      "description": "Tax Exemption Certificate number is issued by the Kenya Revenue Authority (KRA) to organizations or individuals who qualify for tax exemption",
+      "type": "string"
+    },
+    "country_code": {
+      "description": "<b>For UK Edition:</b> Two letter country code of a contact<br/> <b>For Avalara:</b> Two letter country code for the customer country, if your customer is not in US. Refer [AvaTax Codes for Countries and States][2].<br/> <b>For GCC Editions :</b> Two Letter country code for the GCC Country or the UAE emirate of the contact which will be considered as <b>place of supply</b>.<br/>Supported codes for UAE emirates are : </br>Abu Dhabi - <code>AB</code>,</br>Ajman - <code>AJ</code>,</br>Dubai - <code>DU</code>,</br>Fujairah - <code>FU</code>,</br>Ras al-Khaimah - <code>RA</code>,</br>Sharjah - <code>SH</code>,</br>Umm al-Quwain - <code>UM</code>.<br/>Supported codes for the GCC countries are : </br>United Arab Emirates - <code>AE</code>,</br>Saudi Arabia - <code>SA</code>,</br>Bahrain - <code>BH</code>,</br>Kuwait - <code>KW</code>,</br>Oman - <code>OM</code>,</br>Qatar - <code>QA</code>.",
+      "type": "string"
+    },
+    "vat_treatment": {
+      "description": "VAT treatment of the contact.Allowed Values: <br/><code>uk</code> (A business that is located in the UK.),<br/><code>eu_vat_registered</code> (A business that is reg for VAT and trade goods between Northern Ireland and EU. This node is available only for organizations enabled for NI protocal in VAT Settings.) and<br/><code>overseas</code> (A business that is located outside UK. Pre Brexit, this was split as <code>eu_vat_registered</code>, <code>eu_vat_not_registered</code> and <code>non_eu</code> ).",
+      "type": "string"
+    },
+    "tax_treatment": {
+      "description": "VAT treatment of the contact.<br/>Allowed Values: <code>vat_registered</code>,<code>vat_not_registered</code>,<code>gcc_vat_not_registered</code>,<code>gcc_vat_registered</code>,<code>non_gcc</code>,<code>dz_vat_registered</code> and <code>dz_vat_not_registered</code></br><code>home_country_mexico</code> (A business that is located within MX)</br><code>border_region_mexico</code> (A business that is located in the northern and southern border regions in MX)</br><code>non_mexico</code> (A business that is located outside MX).<br/><b>For Kenya Edition:</b> <code>vat_registered</code> ,<code>vat_not_registered</code> ,<code>non_kenya</code>(A business that is located outside Kenya).<br/><b>For SouthAfrica Edition:</b> <code>vat_registered</code>, <code>vat_not_registered</code>, <code>overseas</code>(A business that is located outside SouthAfrica).",
+      "type": "string"
+    },
+    "tax_regime": {
+      "description": "Tax Regime of the contact.Allowed Values: <code>general_legal_person</code>, <code>legal_entities_non_profit</code>, <code>resident_abroad</code>, <code>production_cooperative_societies</code>, <code>agricultural_livestock</code>, <code>optional_group_of_companies</code>, <code>coordinated</code>, <code>simplified_trust</code>, <code>wages_salaries_income</code>, <code>lease</code>, <code>property_disposal_acquisition</code>, <code>other_income</code>, <code>resident_abroad</code>, <code>divident_income</code>, <code>individual_business_professional</code>, <code>interest_income</code>, <code>income_obtaining_price</code>, <code>no_tax_obligation</code>, <code>tax_incorporation</code>, <code>income_through_technology_platform</code>, <code>simplified_trust</code>.",
+      "type": "string"
+    },
+    "legal_name": {
+      "description": "Legal Name of the contact.",
+      "type": "string"
+    },
+    "is_tds_registered": {
+      "description": "Boolean to check if tax is registered.",
+      "type": "boolean"
+    },
+    "place_of_contact": {
+      "description": "Location of the contact. (This node identifies the place of supply and source of supply when invoices/bills are raised for the customer/vendor respectively. This is not applicable for Overseas contacts)",
+      "type": "string"
+    },
+    "gst_no": {
+      "description": "15 digit GST identification number of the customer/vendor.",
+      "type": "string"
+    },
+    "gst_treatment": {
+      "description": "Choose whether the contact is GST registered/unregistered/consumer/overseas. Allowed values are <code> business_gst </code> , <code> business_none </code> , <code> overseas </code> , <code> consumer </code>.",
+      "type": "string"
+    },
+    "tax_authority_name": {
+      "description": "Enter tax authority name.",
+      "type": "string"
+    },
+    "avatax_exempt_no": {
+      "description": "Exemption certificate number of the customer.",
+      "type": "string"
+    },
+    "avatax_use_code": {
+      "description": "Used to group like customers for exemption purposes. It is a custom value that links customers to a tax rule. Select from Avalara [standard codes][1] or enter a custom code.",
+      "type": "string"
+    },
+    "tax_exemption_id": {
+      "description": "ID of the tax exemption.",
+      "type": "string"
+    },
+    "tax_exemption_code": {
+      "description": "Enter tax exemption code",
+      "type": "string"
+    },
+    "tax_authority_id": {
+      "description": "ID of the tax authority. Tax authority depends on the location of the customer. For example, if the customer is located in NY, then the tax authority is NY tax authority.",
+      "type": "string"
+    },
+    "tax_id": {
+      "description": "ID of the tax or tax group that can be collected from the contact. Tax can be given only if <code>is_taxable</code> is <code>true</code>.",
+      "type": "string"
+    },
+    "tds_tax_id": {
+      "description": "ID of the TDS tax.",
+      "type": "string"
+    },
+    "is_taxable": {
+      "description": "Boolean to track the taxability of the customer.",
+      "type": "boolean"
+    },
+    "facebook": {
+      "description": "Facebook profile account. max-length [100]",
+      "type": "string"
+    },
+    "twitter": {
+      "description": "Twitter account. max-length [100]",
+      "type": "string"
+    },
+    "track_1099": {
+      "description": "Boolean to track a contact for 1099 reporting.",
+      "type": "boolean"
+    },
+    "tax_id_type": {
+      "description": "Tax ID type of the contact, it can be SSN, ATIN, ITIN or EIN.",
+      "type": "string"
+    },
+    "tax_id_value": {
+      "description": "Tax ID of the contact.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "contact_name"
+  ],
+  "additionalProperties": false
+}
