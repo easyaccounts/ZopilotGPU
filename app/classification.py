@@ -117,7 +117,7 @@ def classify_stage1(prompt: str, context: Dict[str, Any], generation_config: Opt
     top_k = generation_config.get('top_k', 50)
     repetition_penalty = generation_config.get('repetition_penalty', 1.1)
     max_input_length = generation_config.get('max_input_length', 29491)
-    use_outlines = context.get('use_outlines', True) if context else True  # Default: try Outlines
+    use_outlines = context.get('use_outlines', False) if context else False  # DISABLED: Outlines has unterminated string bug with Mixtral
     
     # Validate token limits (Mixtral max: 32768)
     if max_new_tokens > 32768:
@@ -404,7 +404,7 @@ def classify_stage2_5_entity_extraction(prompt: str, context: Dict[str, Any], ge
         max_input_length = generation_config.get('max_input_length', max_input_length)
     
     entity_types = context.get('entity_types', []) if context else []
-    use_outlines = context.get('use_outlines', True) if context else True  # Default: try Outlines
+    use_outlines = context.get('use_outlines', False) if context else False  # DISABLED: Outlines has unterminated string bug with Mixtral
     logger.info(f"[Stage 2.5] Extracting fields for entity types: {entity_types}")
     logger.info(f"[Stage 2.5] Outlines enabled: {use_outlines}")
     logger.info(f"[Stage 2.5] Config: max_tokens={max_new_tokens}, temp={temperature}, top_p={top_p}, top_k={top_k}")
@@ -682,7 +682,7 @@ def classify_stage2(prompt: str, context: Dict[str, Any], generation_config: Opt
     """
     action_name = context.get('action', context.get('actions', ['unknown'])[0] if context.get('actions') else 'unknown')
     action_count = context.get('action_count', 1)
-    use_outlines = context.get('use_outlines', True) if context else True  # Default: try Outlines
+    use_outlines = context.get('use_outlines', False) if context else False  # DISABLED: Outlines has unterminated string bug with Mixtral
     
     if action_count > 1:
         logger.info(f"🎯 [Stage 4] Starting BATCH field mapping for {action_count} actions")
